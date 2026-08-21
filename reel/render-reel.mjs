@@ -2,12 +2,15 @@
 /**
  * Thin render wrapper for the daily job.
  *
- *   node render-reel.mjs <slate.json> [out.mp4]
+ *   node render-reel.mjs [--check] <slate.json> [out.mp4]
  *
  * Defaults: slate = ./sample-slate.json, out = ./out/reel-<date>.mp4
  *
- * It validates the slate against the data contract, then invokes the Remotion
- * CLI:  npx remotion render Reel <out> --props=<slate>
+ * It validates the slate against the data contract (see SLATE_CONTRACT.md), then
+ * invokes the Remotion CLI:  npx remotion render Reel <out> --props=<slate>
+ *
+ * With --check it validates and exits 0 WITHOUT rendering — the fast CI gate and
+ * the pipeline seam smoke-test (Python writes the slate; see content/reel_slate.py).
  *
  * The Python pipeline calls this after writing the day's slate JSON.
  */
@@ -18,7 +21,12 @@ import {fileURLToPath} from 'node:url';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 
-const slatePath = resolve(process.argv[2] ?? resolve(HERE, 'sample-slate.json'));
+// Args: [--check] <slate.json> [out.mp4].  --check validates only (no render).
+const argv = process.argv.slice(2);
+const checkOnly = argv.includes('--check');
+const positional = argv.filter((a) => !a.startsWith('--'));
+
+const slatePath = resolve(positional[0] ?? resolve(HERE, 'sample-slate.json'));
 
 if (!existsSync(slatePath)) {
   console.error(`[render-reel] slate not found: ${slatePath}`);
@@ -64,10 +72,15 @@ if (problems.length) {
   process.exit(1);
 }
 
+if (checkOnly) {
+  console.log(`[render-reel] slate OK — ${slate.slate.length} game(s). (--check: not rendering)`);
+  process.exit(0);
+}
+
 // ---- Resolve output path ---------------------------------------------------
 const safeDate = String(slate.date).replace(/[^A-Za-z0-9]+/g, '-').replace(/^-|-$/g, '').toLowerCase();
 const defaultOut = resolve(HERE, 'out', `reel-${safeDate || 'output'}.mp4`);
-const outPath = resolve(process.argv[3] ?? defaultOut);
+const outPath = resolve(positional[1] ?? defaultOut);
 mkdirSync(dirname(outPath), {recursive: true});
 
 console.log(`[render-reel] slate : ${slatePath}`);

@@ -5,8 +5,11 @@ name: Nightly Data Refresh & Cache
 # weekly_retrain.yml. Fits the free Actions tier (~30-40 min/run incl. R2 download).
 
 on:
-  schedule:
-    - cron: '0 8 * * *'   # 08:00 UTC daily, after games finish
+  # DARK until M5 (BUILD_PLAN): the scheduled trigger is disabled so this pipeline
+  # does not auto-run on the fresh public repo before secrets + publishing are wired.
+  # Run manually via the Actions "Run workflow" button until M5 activates it.
+  # schedule:
+  #   - cron: '0 8 * * *'   # 08:00 UTC daily, after games finish
   workflow_dispatch:
 
 jobs:

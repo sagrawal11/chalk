@@ -11,8 +11,10 @@ name: Weekly Full Retrain
 # nightly_pipeline.yml) use the most recent weekly models.
 
 on:
-  schedule:
-    - cron: '0 9 * * 0'   # Sundays 09:00 UTC, after the 08:00 daily refresh
+  # DARK until M5 (BUILD_PLAN): scheduled trigger disabled on the fresh public repo.
+  # Run manually via workflow_dispatch until orchestration is wired in M5.
+  # schedule:
+  #   - cron: '0 9 * * 0'   # Sundays 09:00 UTC, after the 08:00 daily refresh
   workflow_dispatch:
 
 jobs:

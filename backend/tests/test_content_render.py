@@ -41,8 +41,9 @@ def test_record_card(tmp_path):
 
 
 def test_caption_includes_compliance():
+    # Locked disclaimer (CONTENT_SPEC §1): "A research project. Not betting advice."
     c = caption_for_score(_gp()).lower()
-    assert "not betting advice" in c and "21+" in c
+    assert "a research project" in c and "not betting advice" in c
 
 
 def test_render_slate_writes_cards_and_captions(tmp_path):

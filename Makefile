@@ -1,7 +1,7 @@
-# NBA Prediction System — local dev (Hybrid: Docker services + native Vite).
-# Run `make setup` once, then `make dev`.
+# CHALK — local dev (Hybrid: Docker services + native Vite).
+# Run `make setup` once, then `make dev`. Run `make test` for the suite.
 
-.PHONY: help setup build up down restart logs ps frontend dev seed-r2 cache redis-cli backend-shell
+.PHONY: help setup build up down restart logs ps frontend dev seed-r2 cache redis-cli backend-shell test
 
 help:
 	@echo "Targets:"
@@ -16,6 +16,7 @@ help:
 	@echo "  seed-r2     One-time: push local data/artifacts into MinIO"
 	@echo "  cache       Warm Redis baselines (the original failing command)"
 	@echo "  redis-cli   Open redis-cli in the redis container"
+	@echo "  test        Run the backend test suite in the pinned Python 3.10 image"
 
 setup:
 	./scripts/dev-setup.sh
@@ -54,3 +55,10 @@ redis-cli:
 
 backend-shell:
 	docker compose exec backend /bin/bash
+
+# Canonical test path: build the pinned Python 3.10 image (backend/Dockerfile),
+# mount the code, run pytest. No external services needed (hermetic suite).
+# NOT the checked-in venv and NOT anaconda base (see cache-baselines env skew).
+test:
+	docker build -t chalk-backend backend
+	docker run --rm -v "$(CURDIR)/backend:/app/backend" chalk-backend python -m pytest tests/ -q

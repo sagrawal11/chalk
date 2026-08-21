@@ -1,0 +1,55 @@
+name: CI
+
+# M0 gate: the pinned Python 3.10 image builds and the backend suite passes on
+# every push / PR, and the reel slate contract stays valid + renders (discrepancy
+# #1 pinned). The nightly/weekly pipelines stay DARK until M5.
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend-tests:
+    name: Backend suite (Docker 3.10)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the pinned Python 3.10 image
+        run: docker build -t chalk-backend backend
+      - name: Run pytest in the image
+        run: |
+          docker run --rm -v "${{ github.workspace }}/backend:/app/backend" \
+            chalk-backend python -m pytest tests/ -q
+
+  reel-contract:
+    name: Reel slate contract + sample render
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: reel
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: reel/package-lock.json
+      - name: Install reel deps
+        run: npm ci
+      # Hard gate: the committed sample slate must satisfy the data contract and
+      # render-reel.mjs must run under Node. Fast, no browser needed.
+      - name: Validate the committed sample slate (contract gate)
+        run: node render-reel.mjs --check sample-slate.json
+      # Best-effort in M0 (Remotion pulls a headless browser); becomes a hard gate
+      # in M3 when the reel is fully pipeline-wired.
+      - name: Render the sample slate to MP4 (best-effort)
+        continue-on-error: true
+        run: node render-reel.mjs sample-slate.json out/ci-sample.mp4
+      - name: Upload rendered reel (if produced)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sample-reel
+          path: reel/out/ci-sample.mp4
+          if-no-files-found: ignore

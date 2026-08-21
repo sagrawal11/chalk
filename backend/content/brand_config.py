@@ -2,7 +2,7 @@
 
 Identity/voice tokens (name, handle, accent color, disclaimer, hashtags) are
 configurable without touching code:
-  1. edit ``content/brand.json`` (friendliest — just fill in your values), or
+  1. edit ``content/brand.json`` (optional override — absent by default), or
   2. set env vars ``BRAND_BRAND`` / ``BRAND_HANDLE`` / ``BRAND_ACCENT_HEX`` /
      ``BRAND_DISCLAIMER`` / ``BRAND_HASHTAGS`` (env wins, handy for CI).
 The dark palette, fonts, and canvas sizes are fixed design defaults.
@@ -14,16 +14,17 @@ import os
 from pathlib import Path
 from typing import Tuple
 
-# --- configurable identity/voice (defaults are placeholders — set your own) ---
+# --- configurable identity/voice (CHALK is the correct default in code;
+#     content/brand.json or BRAND_* env vars can override) ---
 _DEFAULTS = {
-    "BRAND": "HOOPS ORACLE",
-    "HANDLE": "@hoops.oracle",
-    "ACCENT_HEX": "#F5C518",
-    "DISCLAIMER": (
-        "Model projections for entertainment only — not betting advice. 21+ (18+ where legal). "
-        "If you or someone you know has a gambling problem, call 1-800-GAMBLER."
-    ),
-    "HASHTAGS": "#NBA #NBAPredictions #PlayerProps #NBAPicks #Hoops",
+    "BRAND": "CHALK",
+    "HANDLE": "@playthechalk",
+    # Locked "Editorial Terminal" red accent (CONTENT_SPEC §2). The full
+    # cream/ink palette port lands in M3; this identity token is correct now.
+    "ACCENT_HEX": "#D6482B",
+    # Copy law #1 (CONTENT_SPEC §1): "a research project" — never "entertainment".
+    "DISCLAIMER": "A research project. Not betting advice.",
+    "HASHTAGS": "#CHALK",
 }
 
 

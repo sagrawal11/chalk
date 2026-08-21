@@ -202,7 +202,13 @@ def build_team_game_frame(parquet_path: Path = KAGGLE_TEAM_GAMES_PARQUET) -> pd.
     if av is not None:
         df = df.merge(av[["team", "game_date"] + _AVC], on=["team", "game_date"], how="left")
     for c in _AVC:
-        df[c] = pd.to_numeric(df.get(c), errors="coerce").fillna(0.0)
+        # When availability data is absent entirely (fresh clone / CI without the
+        # parquet), the whole column is missing -> default to 0.0. (df.get(c) then
+        # returns None, and pd.to_numeric(None) is a scalar, not a Series.)
+        if c in df.columns:
+            df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0.0)
+        else:
+            df[c] = 0.0
 
     home = df[df["is_home_team"] == 1].set_index("game_id")
     away = df[df["is_home_team"] == 0].set_index("game_id")
