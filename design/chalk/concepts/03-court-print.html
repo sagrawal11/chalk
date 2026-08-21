@@ -1,0 +1,47 @@
+<!doctype html><html><head><meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{width:1080px;height:1350px}
+  .card{width:1080px;height:1350px;position:relative;overflow:hidden;
+    background:linear-gradient(150deg,#FF6A00 0%,#FF1E9C 100%);color:#0A0A0A;font-family:'Archivo',sans-serif}
+  .halftone{position:absolute;inset:0;opacity:.14;
+    background-image:radial-gradient(#0A0A0A 3px,transparent 3.5px);background-size:26px 26px;mix-blend-mode:multiply}
+  .pad{position:absolute;inset:0;padding:60px 60px 54px;display:flex;flex-direction:column}
+  .top{display:flex;justify-content:space-between;align-items:center}
+  .word{font-family:'Anton';font-size:64px;letter-spacing:2px;color:#0A0A0A;-webkit-text-stroke:0}
+  .algo{background:#0A0A0A;color:#fff;font-weight:800;letter-spacing:2px;font-size:20px;padding:12px 18px;border-radius:4px;transform:rotate(-2deg)}
+  .names{margin-top:30px}
+  .big{font-family:'Anton';font-size:200px;line-height:.82;letter-spacing:1px;color:#0A0A0A;text-transform:uppercase}
+  .big .sc{float:right;color:#fff;-webkit-text-stroke:4px #0A0A0A}
+  .loser{opacity:.5}
+  .loser .sc{color:#0A0A0A;-webkit-text-stroke:0}
+  .vs{font-family:'Anton';font-size:40px;color:#0A0A0A;margin:6px 0 6px}
+  .badge{position:absolute;right:70px;top:520px;width:220px;height:220px;border-radius:50%;background:#0A0A0A;color:#fff;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;transform:rotate(9deg);border:6px solid #fff;box-shadow:0 14px 0 #0000001f}
+  .badge .l{font-family:'Anton';font-size:34px;letter-spacing:3px}
+  .badge .p{font-family:'Anton';font-size:70px;line-height:.8}
+  .badge .c{font-weight:700;font-size:18px;letter-spacing:2px;opacity:.8}
+  .spacer{flex:1}
+  .why{background:#0A0A0A;color:#fff;font-weight:600;font-size:30px;line-height:1.4;padding:26px 30px;border-radius:10px}
+  .why b{color:#FFCf00}
+  .foot{display:flex;justify-content:space-between;align-items:center;margin-top:26px}
+  .pick{font-family:'Anton';font-size:44px;color:#0A0A0A;letter-spacing:1px}
+  .handle{font-weight:800;font-size:30px;color:#0A0A0A;letter-spacing:1px}
+</style></head>
+<body><div class="card"><div class="halftone"></div>
+  <div class="pad">
+    <div class="top"><div class="word">CHALK</div><div class="algo">100% ALGORITHMIC</div></div>
+    <div class="names">
+      <div class="big">LAKERS<span class="sc">112</span></div>
+      <div class="vs">VS</div>
+      <div class="big loser">CELTICS<span class="sc">108</span></div>
+    </div>
+    <div class="badge"><div class="l">LOCK</div><div class="p">78</div><div class="c">CONFIDENCE</div></div>
+    <div class="spacer"></div>
+    <div class="pick">CHALK CALLS: LAKERS</div>
+    <div class="why">Pace + second-chance points bury a Boston team on a <b>road back-to-back</b>. L.A. takes it by four.</div>
+    <div class="foot"><div class="handle">@playthechalk</div><div class="handle">NBA · JAN 17</div></div>
+  </div>
+</div></body></html>

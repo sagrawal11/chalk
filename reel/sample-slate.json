@@ -1,0 +1,111 @@
+{
+  "date": "SAT · FEB 8, 2026",
+  "trackRecord": { "winPct": 61.5, "nPicks": 43583 },
+  "yesterday": { "correct": 6, "total": 8 },
+  "slate": [
+    {
+      "homeName": "Lakers",
+      "homeShort": "Lakers",
+      "homeCity": "Los Angeles",
+      "awayName": "Warriors",
+      "awayShort": "Warriors",
+      "awayCity": "Golden State",
+      "homeScore": 112,
+      "awayScore": 108,
+      "winnerSide": "home",
+      "confidence": 64,
+      "reasoning": "L.A. grades out ahead at home; our model sees the Warriors' road defense giving up the edge late."
+    },
+    {
+      "homeName": "Celtics",
+      "homeShort": "Celtics",
+      "homeCity": "Boston",
+      "awayName": "Knicks",
+      "awayShort": "Knicks",
+      "awayCity": "New York",
+      "homeScore": 119,
+      "awayScore": 110,
+      "winnerSide": "home",
+      "confidence": 71,
+      "reasoning": "Boston's offense projects well above New York's defense over a full 48."
+    },
+    {
+      "homeName": "Nuggets",
+      "homeShort": "Nuggets",
+      "homeCity": "Denver",
+      "awayName": "Suns",
+      "awayShort": "Suns",
+      "awayCity": "Phoenix",
+      "homeScore": 121,
+      "awayScore": 116,
+      "winnerSide": "home",
+      "confidence": 58,
+      "reasoning": "Altitude and interior scoring tilt a close one Denver's way."
+    },
+    {
+      "homeName": "Heat",
+      "homeShort": "Heat",
+      "homeCity": "Miami",
+      "awayName": "Bucks",
+      "awayShort": "Bucks",
+      "awayCity": "Milwaukee",
+      "homeScore": 104,
+      "awayScore": 111,
+      "winnerSide": "away",
+      "confidence": 62,
+      "reasoning": "Milwaukee's rim pressure travels; our model favors the Bucks despite the road spot."
+    },
+    {
+      "homeName": "Mavericks",
+      "homeShort": "Mavericks",
+      "homeCity": "Dallas",
+      "awayName": "Timberwolves",
+      "awayShort": "Wolves",
+      "awayCity": "Minnesota",
+      "homeScore": 115,
+      "awayScore": 109,
+      "winnerSide": "home",
+      "confidence": 55,
+      "reasoning": "A near coin-flip; Dallas' half-court creation is the tiebreaker at home."
+    },
+    {
+      "homeName": "76ers",
+      "homeShort": "76ers",
+      "homeCity": "Philadelphia",
+      "awayName": "Cavaliers",
+      "awayShort": "Cavaliers",
+      "awayCity": "Cleveland",
+      "homeScore": 102,
+      "awayScore": 113,
+      "winnerSide": "away",
+      "confidence": 66,
+      "reasoning": "Cleveland's defense projects to smother a short-handed Philly rotation."
+    },
+    {
+      "homeName": "Kings",
+      "homeShort": "Kings",
+      "homeCity": "Sacramento",
+      "awayName": "Grizzlies",
+      "awayShort": "Grizzlies",
+      "awayCity": "Memphis",
+      "homeScore": 124,
+      "awayScore": 118,
+      "winnerSide": "home",
+      "confidence": 59,
+      "reasoning": "Pace favors Sacramento; the model expects the home side to win the track meet."
+    },
+    {
+      "homeName": "Thunder",
+      "homeShort": "Thunder",
+      "homeCity": "Oklahoma City",
+      "awayName": "Pelicans",
+      "awayShort": "Pelicans",
+      "awayCity": "New Orleans",
+      "homeScore": 126,
+      "awayScore": 112,
+      "winnerSide": "home",
+      "confidence": 74,
+      "reasoning": "OKC is our strongest call of the night — elite two-way rating at home."
+    }
+  ]
+}

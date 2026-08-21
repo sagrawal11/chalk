@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+
+# Rendered output
+out/
+*.mp4
+
+# Remotion
+.remotion/
+
+# Logs / OS cruft
+npm-debug.log*
+.DS_Store

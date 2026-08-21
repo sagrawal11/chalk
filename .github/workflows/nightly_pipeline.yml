@@ -1,0 +1,67 @@
+name: Nightly Data Refresh & Cache
+
+# Daily, LIGHT path (no retrain): refresh data sources, warm the Redis prediction
+# cache, and delta-upload changed files to R2. Models are retrained separately by
+# weekly_retrain.yml. Fits the free Actions tier (~30-40 min/run incl. R2 download).
+
+on:
+  schedule:
+    - cron: '0 8 * * *'   # 08:00 UTC daily, after games finish
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r config/requirements.txt
+          # nfl_data_py pins pandas<2 / numpy<2 (unsolvable vs our pandas 2.3.2) but
+          # runs fine on pandas 2.x; install it without deps (deps are in requirements).
+          pip install --no-deps nfl_data_py==0.3.3
+
+      - name: Download dataset from R2
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          cd backend
+          python -c "
+          from utils.storage import download_full_training_bundle
+          import os
+          bucket = os.environ.get('R2_BUCKET_NAME')
+          if bucket:
+              download_full_training_bundle(bucket)
+          else:
+              print('R2_BUCKET_NAME not set')
+          "
+
+      - name: Refresh data + warm cache (no retrain)
+        env:
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          UPSTASH_REDIS_URL: ${{ secrets.UPSTASH_REDIS_URL }}
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+        run: |
+          cd backend
+          # Kaggle/sqlite refresh -> B-Ref scrape -> team stats -> DvP -> injuries
+          # -> cache baselines -> delta R2 upload. NO feature rebuild / retrain.
+          python pipeline/nightly.py

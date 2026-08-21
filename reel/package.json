@@ -1,0 +1,28 @@
+{
+  "name": "chalk-reel",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CHALK daily sports-prediction REEL — 1080x1920 30fps MP4, rendered programmatically with Remotion in the locked 'Editorial Terminal' design.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio",
+    "preview": "remotion studio",
+    "render": "remotion render Reel out/reel.mp4 --props=./sample-slate.json",
+    "render:sample": "node render-reel.mjs sample-slate.json out/reel.mp4",
+    "still": "remotion still Reel out/still.png --props=./sample-slate.json --frame=40",
+    "upgrade": "remotion upgrade"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.507",
+    "@remotion/google-fonts": "4.0.507",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "remotion": "4.0.507"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.0",
+    "@types/react-dom": "19.0.0",
+    "typescript": "5.5.4"
+  }
+}
