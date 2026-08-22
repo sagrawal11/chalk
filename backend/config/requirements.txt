@@ -49,5 +49,8 @@ kaggle>=1.6
 # here is appdirs (fastparquet is declared but unused by the import paths we call).
 appdirs>=1.4
 
+# Config / experiment harness (experiments/roadmap.yaml)
+PyYAML>=6.0
+
 # Dev / Testing
 pytest>=7.4.0

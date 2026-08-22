@@ -32,6 +32,11 @@ RESIDUAL_FEATURE_COLS: List[str] = _TEAM_COLS + WEATHER_COLS + CTX_COLS
 MARGIN_ANCHOR, TOTAL_ANCHOR = "MARKET_SPREAD", "MARKET_TOTAL"
 _FILL = {"OFF": 22.0, "DEF": 22.0, "WINPCT": 0.5, "FORM": 0.0, "REST": 7.0, "PRIOR_DIFF": 0.0}
 _GAME_FILL = {"MARKET_SPREAD": 0.0, "MARKET_TOTAL": 44.0, "IS_DOME": 0, "WIND": 5.0, "TEMP": 60.0, "DIV_GAME": 0}
+# Opponent-adjusted OFF/DEF (Rung 3, NFL-10/11). Kept as SEPARATE columns so
+# TEAM_FEATURE_COLS / RESIDUAL_FEATURE_COLS (the existing trainer's set) are
+# unchanged — the experiment harness toggles these via explicit feature_cols.
+_OPP_ADJ = ["OFF_ADJ", "DEF_ADJ"]
+OPP_ADJ_COLS = [f"HOME_{k}" for k in _OPP_ADJ] + [f"AWAY_{k}" for k in _OPP_ADJ]
 
 
 def _team_timeline(tg: pd.DataFrame) -> pd.DataFrame:
@@ -47,6 +52,21 @@ def _team_timeline(tg: pd.DataFrame) -> pd.DataFrame:
     tg["WINPCT"] = grp["win"].transform(lambda s: s.shift(1).expanding().mean())
     tg["FORM"] = grp["diff"].transform(lambda s: s.shift(1).rolling(3, min_periods=1).mean())
     tg["REST"] = tg.groupby("team", sort=False)["game_date"].diff().dt.days.clip(lower=0, upper=21)
+
+    # Opponent adjustment (leakage-safe): attach each opponent's prior-only OFF/DEF
+    # for THIS game (self-join on game_id, other team), then take the prior-only
+    # mean over opponents already faced this season (schedule strength) and subtract
+    # it from raw OFF/DEF. Both terms are prior-only -> no leakage.
+    pair = tg[["game_id", "team", "OFF", "DEF"]].rename(
+        columns={"team": "team_opp", "OFF": "OPP_OFF", "DEF": "OPP_DEF"})
+    tg = tg.merge(pair, on="game_id")
+    tg = tg[tg["team"] != tg["team_opp"]].drop(columns=["team_opp"])
+    tg = tg.sort_values(["team", "game_date"]).reset_index(drop=True)
+    g2 = tg.groupby(["team", "season"], sort=False)
+    tg["OFF_ADJ"] = tg["OFF"] - g2["OPP_DEF"].transform(lambda s: s.shift(1).expanding().mean())
+    tg["DEF_ADJ"] = tg["DEF"] - g2["OPP_OFF"].transform(lambda s: s.shift(1).expanding().mean())
+    tg[_OPP_ADJ] = tg[_OPP_ADJ].fillna(0.0)      # first-of-season: neutral
+    tg = tg.drop(columns=["OPP_OFF", "OPP_DEF"])
 
     # prior-season point differential carried into the next season
     sd = tg.groupby(["team", "season"])["diff"].mean().reset_index().rename(columns={"diff": "PRIOR_DIFF"})
@@ -80,6 +100,9 @@ def build_team_game_frame(years) -> pd.DataFrame:
         h = {k: float(r[f"{k}_h"]) for k in _ORDER}
         a = {k: float(r[f"{k}_a"]) for k in _ORDER}
         feat = _assemble(h, a)
+        for k in _OPP_ADJ:   # opponent-adjusted OFF/DEF (Rung 3)
+            feat[f"HOME_{k}"] = float(r[f"{k}_h"])
+            feat[f"AWAY_{k}"] = float(r[f"{k}_a"])
         feat.update({
             "game_id": gid, "season": int(r["season_h"]), "game_date": r["game_date_h"],
             "home": r["team_h"], "away": r["team_a"],

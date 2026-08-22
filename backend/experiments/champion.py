@@ -33,8 +33,24 @@ FEATURE_BUILDERS: Dict[str, Dict[str, List[str]]] = {
         "NFL-03": ["NET_DIFF"],                             # net point differential
         "NFL-04": ["HOME_WINPCT", "AWAY_WINPCT"],           # season-to-date win pct
         "NFL-05": ["HOME_PRIOR_DIFF", "AWAY_PRIOR_DIFF"],   # prior-season carryover
+        # Rung 2+ builders that are buildable from the cached schedule frame today.
+        "NFL-06": ["HOME_FORM", "AWAY_FORM"],               # last-3 form (Rung 2)
+        "NFL-10": ["HOME_OFF_ADJ", "AWAY_OFF_ADJ"],         # opponent-adjusted offense (Rung 3)
+        "NFL-11": ["HOME_DEF_ADJ", "AWAY_DEF_ADJ"],         # opponent-adjusted defense (Rung 3)
+        "NFL-14": ["HOME_REST", "AWAY_REST", "REST_DIFF"],  # rest / rest diff (Rung 4)
+        "NFL-37": ["DIV_GAME"],                             # divisional game (Rung 7)
+        "NFL-38": ["IS_DOME", "WIND", "TEMP"],              # weather (Rung 7)
     },
 }
+
+
+def bump_version(model_version: str) -> str:
+    """'nfl-v1' -> 'nfl-v2'."""
+    import re
+    m = re.match(r"^(.*-v)(\d+)$", str(model_version))
+    if not m:
+        raise ValueError(f"unversioned model_version: {model_version!r}")
+    return f"{m.group(1)}{int(m.group(2)) + 1}"
 
 
 def resolve_feature_cols(sport: str, builders: List[str]) -> List[str]:

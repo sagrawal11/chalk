@@ -63,30 +63,29 @@ def _pick_holdout(frame: pd.DataFrame, min_frac: float = 0.5) -> int:
     return int(full.index.max())
 
 
-def evaluate(champ: ChampionConfig, *, start: int, end: int) -> dict:
-    frame = _build_frame(champ.sport, start, end)
+def backtest_feature_set(sport: str, feature_cols: list, *, start: int, end: int) -> dict:
+    """Walk-forward backtest of an arbitrary feature set over TRAIN+CV seasons only
+    (the final full season is held untouched). Shared by the champion eval and the
+    experiment runner so champion + challenger are measured on identical windows."""
+    frame = _build_frame(sport, start, end)
     frame["season"] = frame["season"].astype(int)
     holdout = _pick_holdout(frame)
     traincv = frame[frame["season"] < holdout].copy()   # final season stays UNTOUCHED
-
-    bt = walk_forward_backtest(
-        traincv, sport=champ.sport, feature_cols=champ.feature_cols,
-        params=DETERMINISTIC_PARAMS,
-    )
-    agg = summarize(bt)
-    scored = sorted(int(r) for r in traincv["season"].unique()
-                    if str(champ.sport) not in ("nba", "nhl"))  # ints for the window
-    predicted_labels = bt["season"].tolist() if not bt.empty else []
-    eval_window = (f"{predicted_labels[0]}–{predicted_labels[-1]}"
-                   if predicted_labels else None)
+    bt = walk_forward_backtest(traincv, sport=sport, feature_cols=feature_cols,
+                               params=DETERMINISTIC_PARAMS)
+    labels = bt["season"].tolist() if not bt.empty else []
     return {
-        "metrics": agg,
+        "metrics": summarize(bt),
         "per_season": bt.to_dict(orient="records"),
-        "eval_window": eval_window,
+        "eval_window": f"{labels[0]}–{labels[-1]}" if labels else None,
         "holdout_season": holdout,
         "n_seasons_available": int(frame["season"].nunique()),
         "final_season_excluded": holdout not in set(int(x) for x in traincv["season"].unique()),
     }
+
+
+def evaluate(champ: ChampionConfig, *, start: int, end: int) -> dict:
+    return backtest_feature_set(champ.sport, champ.feature_cols, start=start, end=end)
 
 
 def _refit_shipped(champ: ChampionConfig, *, start: int, end: int) -> None:
