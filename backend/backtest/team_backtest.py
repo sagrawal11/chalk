@@ -1,10 +1,12 @@
 """Walk-forward team-market backtest: for each season S, train margin & total on
 seasons < S, predict S out-of-sample, and grade straight-up (winner) accuracy +
-MAE. If historical odds are supplied (game_key -> {spread_home, total}), also
-grade against-the-spread and over/under hit rates.
+MAE + winner log-loss. If historical odds are supplied (game_key -> {spread_home,
+total}), also grade against-the-spread and over/under hit rates.
 
 Honest by construction: a season is only ever predicted by a model that never
-saw it. This is the "would our picks have won" reliability check.
+saw it. This is the "would our picks have won" reliability check. It is
+market-blind by construction — the line is NEVER a model input; ``odds`` is used
+only to grade ATS/O-U. This is the shared eval the experiment harness reuses.
 """
 from __future__ import annotations
 
@@ -13,6 +15,7 @@ from typing import Any, Dict, Optional
 
 import numpy as np
 import pandas as pd
+from scipy.stats import norm
 
 from model_training.train_team_model import TEAM_LGBM_PARAMS
 from predictions.schema import make_game_key
@@ -22,9 +25,18 @@ from sports.nba.teams import season_int_to_str
 logger = logging.getLogger(__name__)
 
 
+def _season_label(sport: str, s: int) -> str:
+    """Format a season int for display. NBA/NHL span two calendar years
+    (2024 -> '2024-25'); NFL/CFB/MLB/soccer are single-year (2024 -> '2024')."""
+    if str(sport).lower() in ("nba", "nhl"):
+        return season_int_to_str(int(s))
+    return str(int(s))
+
+
 def _fit(train_df: pd.DataFrame, col: str, params: Dict[str, Any], feature_cols):
     """Fit one LightGBM regressor with a random inner-val early stop (same
-    philosophy as model_training.validation — random split avoids era drift)."""
+    philosophy as model_training.validation — random split avoids era drift).
+    Returns ``(model, sigma)`` where sigma is the inner-val residual std."""
     from lightgbm import LGBMRegressor, early_stopping
 
     X = train_df[feature_cols].replace([np.inf, -np.inf], np.nan).fillna(0.0)
@@ -95,7 +107,7 @@ def walk_forward_backtest(
         if len(te) < 50 or len(tr) < 500:
             continue
 
-        mm, _ = _fit(tr, "y_margin", params, feature_cols)
+        mm, sigma_m = _fit(tr, "y_margin", params, feature_cols)
         mt, _ = _fit(tr, "y_total", params, feature_cols)
         Xte = te[feature_cols].replace([np.inf, -np.inf], np.nan).fillna(0.0)
         mu_m = mm.predict(Xte)
@@ -103,10 +115,18 @@ def walk_forward_backtest(
         am = te["y_margin"].to_numpy()
         at = te["y_total"].to_numpy()
 
+        # Winner probability from the margin distribution (market-blind):
+        # P(home win) = P(margin > 0) = Phi(mu_margin / sigma_margin).
+        sd = max(float(sigma_m), 1e-6)
+        p_home = np.clip(norm.cdf(mu_m / sd), 1e-15, 1 - 1e-15)
+        home_won = (am > 0).astype(float)
+        winner_logloss = float(-np.mean(home_won * np.log(p_home) + (1 - home_won) * np.log(1 - p_home)))
+
         row = {
-            "season": season_int_to_str(s),
+            "season": _season_label(sport, s),
             "n": int(len(te)),
             "su_acc": round(float(((mu_m > 0) == (am > 0)).mean()), 4),
+            "winner_logloss": round(winner_logloss, 4),
             "margin_mae": round(float(np.mean(np.abs(mu_m - am))), 3),
             "total_mae": round(float(np.mean(np.abs(mu_t - at))), 3),
         }
@@ -180,6 +200,9 @@ def summarize(bt: pd.DataFrame) -> Dict[str, Any]:
         "margin_mae": round(float((bt["margin_mae"] * bt["n"]).sum() / bt["n"].sum()), 3),
         "total_mae": round(float((bt["total_mae"] * bt["n"]).sum() / bt["n"].sum()), 3),
     }
+    if "winner_logloss" in bt.columns and bt["winner_logloss"].notna().any():
+        w = bt.dropna(subset=["winner_logloss"])
+        out["winner_logloss"] = round(float((w["winner_logloss"] * w["n"]).sum() / w["n"].sum()), 4)
     if "ats_pct" in bt.columns and bt["ats_pct"].notna().any():
         w = bt.dropna(subset=["ats_pct"])
         out["ats_pct"] = round(float((w["ats_pct"] * w["market_games"]).sum() / w["market_games"].sum()), 4)

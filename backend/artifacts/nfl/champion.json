@@ -1,0 +1,37 @@
+{
+  "sport": "nfl",
+  "model_version": "nfl-v1",
+  "rung": 1,
+  "active_feature_builders": [
+    "NFL-01",
+    "NFL-02",
+    "NFL-03",
+    "NFL-04",
+    "NFL-05"
+  ],
+  "feature_cols": [
+    "HOME_OFF",
+    "AWAY_OFF",
+    "HOME_DEF",
+    "AWAY_DEF",
+    "NET_DIFF",
+    "HOME_WINPCT",
+    "AWAY_WINPCT",
+    "HOME_PRIOR_DIFF",
+    "AWAY_PRIOR_DIFF"
+  ],
+  "cumulative_metrics": {
+    "seasons": 23,
+    "games": 6214,
+    "su_acc": 0.6249,
+    "margin_mae": 10.73,
+    "total_mae": 10.953,
+    "winner_logloss": 0.6451,
+    "eval_window": "2002\u20132024",
+    "measured_at": "2026-08-22"
+  },
+  "holdout_season": 2025,
+  "eval_window": "2002\u20132024",
+  "created_at": "2026-08-22",
+  "notes": "Day-1 NFL champion (M1): deliberately-simple Rung-1 box-score baseline, market-blind. Unimpressive by design \u2014 the climb starts here."
+}
