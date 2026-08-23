@@ -111,3 +111,6 @@ backend/content_output/
 # M4 publish queue runtime state (keep the dir via .gitkeep)
 backend/publish/queue/*.json
 backend/publish/queue/*.jsonl
+
+# M5 orchestration run summaries (runtime state)
+backend/processed/

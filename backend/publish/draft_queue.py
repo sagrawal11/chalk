@@ -39,8 +39,9 @@ class Draft:
 
 
 class DraftQueue:
-    def __init__(self, path: Path = DRAFTS_PATH):
-        self.path = Path(path)
+    def __init__(self, path: Optional[Path] = None):
+        # Late-bound default so tests can monkeypatch DRAFTS_PATH.
+        self.path = Path(path) if path is not None else DRAFTS_PATH
 
     def _load(self) -> List[Dict[str, Any]]:
         if not self.path.exists():

@@ -39,8 +39,9 @@ class PostRef:
 class PostStore:
     """Append-only idempotency store: (draft_id, platform) -> PostRef."""
 
-    def __init__(self, path: Path = POSTED_PATH):
-        self.path = Path(path)
+    def __init__(self, path: Optional[Path] = None):
+        # Late-bound default so tests can monkeypatch POSTED_PATH.
+        self.path = Path(path) if path is not None else POSTED_PATH
 
     def _rows(self):
         if not self.path.exists():
