@@ -36,6 +36,10 @@ _cors_origins = [o.strip() for o in os.environ.get(
     "CORS_ORIGINS", "http://localhost:8080,http://localhost:5173").split(",") if o.strip()]
 CORS(app, resources={r"/api/*": {"origins": _cors_origins}})
 
+# Public progression feed (the "changelog") — ARCHITECTURE §5l.
+from web.experiments_api import bp as _experiments_bp  # noqa: E402
+app.register_blueprint(_experiments_bp)
+
 redis_client = None
 redis_url = os.environ.get("REDIS_URL") or os.environ.get("UPSTASH_REDIS_URL")
 if redis_url:

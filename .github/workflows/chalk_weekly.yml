@@ -1,0 +1,38 @@
+name: CHALK Weekly Retrain
+
+# Heavy weekly refit of each champion's shipped model at its validated config
+# (ARCHITECTURE §5c/§5j, OPS_RUNBOOK §3). Deterministic 🟢 work — never posts.
+# DARK schedule until launch: run manually via workflow_dispatch; the owner enables the
+# cron at go-live. Daily predictions use the most recent weekly champion artifacts.
+on:
+  # schedule:
+  #   - cron: '0 9 * * 0'    # Sundays 09:00 UTC, after the daily refresh — enable at launch
+  workflow_dispatch:
+
+jobs:
+  retrain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+      R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+      R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      R2_BUCKET_NAME: ${{ secrets.R2_BUCKET_NAME }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: pip
+      - name: Install deps
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r config/requirements.txt
+          pip install --no-deps nfl_data_py==0.3.3
+      - name: Refit champions (shipped models, pinned per model_version)
+        run: |
+          cd backend
+          # One line per sport with a champion; add sports as they come online (M7).
+          python -m experiments.eval_champion --sport nfl --refit
