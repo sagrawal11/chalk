@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- CHALK pinned triptych (CONTENT_SPEC §3.5): one 3240x1350 continuous panorama,
+     sliced into 3x 1080x1350 tiles (post right->middle->left). No sport icon.
+     Reconstructed from triptych-1.png / triptych-2.png. Numbers filled server-side. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Archivo:wght@700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#F4F1EA;--ink:#141210;--red:#D6482B;--mut:#8C8677;--mut2:#B7B0A0;--hair:#D8D2C4;--panel:#EBE6D9;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:3240px;height:1350px;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;font-family:"Inter",sans-serif;}
+  #card{position:relative;width:3240px;height:1350px;overflow:hidden;}
+  #card::before{content:"";position:absolute;top:0;left:0;right:0;height:8px;background:var(--red);z-index:5;}
+  .mono{font-family:"IBM Plex Mono",monospace;font-weight:500;text-transform:uppercase;letter-spacing:.16em;}
+  .num{font-family:"Archivo";font-weight:800;font-feature-settings:"tnum" 1;}
+  .seam{position:absolute;top:0;bottom:0;width:1px;background:rgba(20,18,16,.05);}   /* tile guides */
+  .abs{position:absolute;}
+
+  .wm{left:120px;top:96px;font-family:"Fraunces",serif;font-weight:800;font-size:96px;letter-spacing:-.01em;}
+  .wm .dot{color:var(--red);}
+  .kick{left:124px;top:250px;color:var(--mut);font-size:20px;}
+  .title{left:120px;top:288px;font-family:"Fraunces",serif;font-weight:800;font-size:66px;line-height:1.04;letter-spacing:-.02em;}
+  .title .dot{color:var(--red);}
+  .trule{left:124px;top:470px;width:70px;height:3px;background:var(--red);}
+  .lede{left:124px;top:508px;width:760px;font-size:27px;line-height:1.5;color:var(--mut);}
+  .lede b{color:var(--ink);font-weight:600;}
+
+  /* accuracy-over-time chart panel (upper middle) */
+  .chart{left:1180px;top:170px;width:760px;height:250px;background:var(--panel);border-radius:10px;padding:26px 30px;}
+  .chart .h{color:var(--mut);font-size:16px;line-height:1.5;}
+  .chart svg{position:absolute;left:300px;top:44px;}
+
+  /* pipeline spine */
+  .spine{position:absolute;left:150px;right:150px;top:770px;height:3px;background:var(--hair);}
+  .spine .red{position:absolute;left:0;top:0;height:3px;background:var(--red);}
+  .node{position:absolute;top:748px;transform:translateX(-50%);text-align:center;width:300px;}
+  .node .dotc{width:46px;height:46px;border-radius:50%;border:3px solid var(--red);background:var(--paper);
+    margin:0 auto;display:flex;align-items:center;justify-content:center;}
+  .node .dotc i{width:20px;height:20px;border-radius:50%;background:var(--red);display:block;}
+  .node.open .dotc i{background:transparent;}
+  .node .no{position:absolute;top:-56px;left:50%;transform:translateX(-50%);color:var(--mut2);font-size:18px;}
+  .node .nm{margin-top:20px;font-weight:800;font-size:34px;letter-spacing:.02em;}
+  .node .nm.big{color:var(--ink);}
+  .node .sub{margin-top:8px;color:var(--mut);font-size:20px;}
+  .node .sub.red{color:var(--red);font-family:"IBM Plex Mono";text-transform:uppercase;letter-spacing:.12em;font-size:16px;}
+
+  /* guarantees */
+  .guar{position:absolute;width:360px;}
+  .guar .lab{color:var(--red);font-size:16px;}
+  .guar .txt{font-size:24px;font-weight:600;margin-top:8px;}
+  .guar .txt b{color:var(--red);}
+  .gdash{position:absolute;border-left:2px dashed var(--red);}
+  .gicon{width:34px;height:34px;border:3px solid var(--red);border-radius:50%;position:relative;display:inline-block;vertical-align:middle;margin-right:12px;}
+  .gicon::after{content:"";position:absolute;left:2px;top:14px;width:26px;height:3px;background:var(--red);transform:rotate(-45deg);}
+
+  /* hero numbers */
+  .sports{position:absolute;left:1180px;top:1070px;display:flex;gap:0;}
+  .sblk{width:300px;text-align:center;}
+  .sblk+.sblk{border-left:1px solid var(--hair);}
+  .sblk .s{color:var(--mut);font-size:20px;}
+  .sblk .v{font-family:"Archivo";font-weight:800;font-size:88px;font-feature-settings:"tnum" 1;}
+  .sblk .v .u{font-size:34px;color:var(--mut);}
+  .sblk.nba .v{color:var(--red);}
+
+  .hero{position:absolute;left:2320px;top:150px;width:760px;}
+  .hero .cap{color:var(--mut);font-size:20px;}
+  .hero .big{font-family:"Archivo";font-weight:800;font-size:210px;line-height:.86;color:var(--ink);font-feature-settings:"tnum" 1;margin-top:8px;}
+  .hero .big .u{font-size:76px;color:var(--red);}
+  .hero .sub{font-size:24px;color:var(--mut);margin-top:6px;}
+  .hero .sub b{color:var(--ink);}
+
+  footer{position:absolute;left:120px;right:120px;bottom:60px;}
+  footer .frule{height:1px;background:var(--hair);margin-bottom:20px;}
+  footer .frow{display:flex;justify-content:space-between;align-items:center;}
+  footer .h{font-family:"IBM Plex Mono";font-weight:500;letter-spacing:.12em;font-size:20px;}
+  footer .d{color:var(--mut);font-size:20px;}
+</style>
+</head>
+<body>
+<div id="card">
+  <div class="seam" style="left:1080px"></div>
+  <div class="seam" style="left:2160px"></div>
+
+  <!-- tile 1: thesis -->
+  <div class="abs wm">CHALK<span class="dot">.</span></div>
+  <div class="abs kick mono">A RESEARCH PROJECT · IN THE OPEN</div>
+  <div class="abs title">A market-blind model,<br>learning in the open<span class="dot">.</span></div>
+  <div class="abs trule"></div>
+  <div class="abs lede">The gap between the model's call and the market is what the market knows that it doesn't. <b>One tested idea at a time, honestly graded.</b></div>
+
+  <!-- accuracy over time -->
+  <div class="abs chart">
+    <div class="h mono">ACCURACY OVER TIME<br>VS. 50% COIN FLIP</div>
+    <svg width="420" height="150" viewBox="0 0 420 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <line x1="0" y1="118" x2="420" y2="118" stroke="#B7B0A0" stroke-width="2" stroke-dasharray="3 6"/>
+      <text x="392" y="112" font-family="IBM Plex Mono" font-size="14" fill="#8C8677">50</text>
+      <polyline points="0,74 70,70 140,66 210,54 280,58 350,44 412,40" stroke="#D6482B" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="412" cy="40" r="6" fill="#D6482B"/>
+      <text x="360" y="30" font-family="Archivo" font-weight="800" font-size="20" fill="#141210">%%OVERALL_PCT%%</text>
+    </svg>
+  </div>
+
+  <!-- pipeline spine + nodes -->
+  <div class="spine"><div class="red" style="width:100%"></div></div>
+
+  <div class="abs node" style="left:330px"><span class="no mono">01</span><div class="dotc"><i></i></div><div class="nm">DATA</div><div class="sub">Free public stats.</div></div>
+  <div class="abs node open" style="left:930px"><span class="no mono">02</span><div class="dotc"><i></i></div><div class="nm">FEATURES</div><div class="sub">Prior games only.</div></div>
+  <div class="abs node" style="left:1620px"><span class="no mono">03</span><div class="dotc"><i></i></div><div class="nm big">MODEL</div><div class="sub red">— No odds in —</div></div>
+  <div class="abs node open" style="left:2280px"><span class="no mono">04</span><div class="dotc"><i></i></div><div class="nm">PREDICTION</div><div class="sub">Winner + score.</div></div>
+  <div class="abs node" style="left:2900px"><span class="no mono">05</span><div class="dotc"><i></i></div><div class="nm">LOCKED</div><div class="sub">Hashed before tip.</div></div>
+
+  <!-- guarantees -->
+  <div class="abs gdash" style="left:1620px;top:600px;height:150px;"></div>
+  <div class="abs guar" style="left:1400px;top:520px;"><div class="lab mono"><span class="gicon"></span>GUARANTEE 1</div><div class="txt">No market data ever enters.</div></div>
+
+  <div class="abs gdash" style="left:2900px;top:800px;height:120px;"></div>
+  <div class="abs guar" style="left:2740px;top:930px;"><div class="lab mono">GUARANTEE 2</div><div class="txt"><b>Before</b> the game.</div></div>
+
+  <!-- per-sport numbers (lower middle) -->
+  <div class="abs sports">
+    <div class="sblk nba"><div class="s mono">NBA</div><div class="v">%%NBA_PCT%%<span class="u">%</span></div></div>
+    <div class="sblk"><div class="s mono">NFL</div><div class="v">%%NFL_PCT%%<span class="u">%</span></div></div>
+  </div>
+
+  <!-- hero overall number (tile 3) -->
+  <div class="abs hero">
+    <div class="cap mono">STRAIGHT-UP, GRADED IN THE OPEN</div>
+    <div class="big">%%OVERALL_PCT%%<span class="u">%</span></div>
+    <div class="sub"><b>%%GAMES%%</b> games graded · win or lose</div>
+  </div>
+
+  <footer>
+    <div class="frule"></div>
+    <div class="frow"><span class="h mono">@playthechalk</span><span class="d">A research project.</span></div>
+  </footer>
+</div>
+</body>
+</html>

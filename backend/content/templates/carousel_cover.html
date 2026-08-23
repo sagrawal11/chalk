@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- CHALK multi-sport carousel COVER (CONTENT_SPEC §3.4), Editorial Terminal,
+     reconstructed from locked-carousel-cover.png. Interior slides = score cards (§3.1).
+     Rows + masthead icons built in Python. 1080x1350 @2x. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Archivo:wght@700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#F4F1EA;--ink:#141210;--red:#D6482B;--mut:#8C8677;--mut2:#B7B0A0;--hair:#DCD6C7;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:1080px;height:1350px;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;}
+  #card{position:relative;width:1080px;height:1350px;padding:64px 84px 56px;overflow:hidden;}
+  #card::before{content:"";position:absolute;top:0;left:0;right:0;height:6px;background:var(--red);}
+  .num{font-family:"Archivo",sans-serif;font-weight:800;font-feature-settings:"tnum" 1;}
+  .mono{font-family:"IBM Plex Mono",monospace;font-weight:500;text-transform:uppercase;letter-spacing:.14em;}
+  body{font-family:"Inter",sans-serif;}
+  .mast{display:flex;align-items:center;justify-content:space-between;padding-top:8px;}
+  .wm{font-family:"Fraunces",serif;font-weight:800;font-size:40px;letter-spacing:-.01em;}
+  .wm .dot{color:var(--red);}
+  .icons{display:flex;gap:16px;align-items:center;}
+  .rule{height:1px;background:var(--hair);margin-top:26px;}
+  .kick{color:var(--mut);font-size:14px;margin-top:34px;}
+  .kick b{color:var(--ink);}
+  h1{font-family:"Fraunces",serif;font-weight:800;font-size:60px;line-height:1.02;letter-spacing:-.02em;margin-top:10px;}
+  h1 .dot{color:var(--red);}
+
+  .list{margin-top:22px;}
+  .crow{display:flex;align-items:center;gap:20px;padding:19px 2px;border-bottom:1px solid var(--hair);}
+  .crow .ic{width:34px;height:30px;display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+  .crow .mt{font-size:26px;font-weight:600;}
+  .crow .mt .vs{color:var(--mut);font-weight:500;margin:0 4px;}
+  .crow .res{margin-left:auto;display:flex;align-items:baseline;gap:12px;}
+  .crow .res .ar{color:var(--mut2);font-size:22px;}
+  .crow .res .win{font-size:24px;font-weight:700;}
+  .crow .res .sc{font-family:"Archivo";font-weight:800;font-size:26px;color:var(--red);font-feature-settings:"tnum" 1;}
+  .crow .res .cf{color:var(--mut);font-size:16px;}
+  .crow .res .cf b{font-family:"Archivo";font-weight:700;color:var(--mut);}
+
+  .swipe{margin-top:40px;display:flex;align-items:center;gap:16px;color:var(--mut);}
+  .swipe .r{width:44px;height:2px;background:var(--red);}
+
+  footer{position:absolute;left:84px;right:84px;bottom:44px;}
+  footer .frule{height:1px;background:var(--hair);margin-bottom:16px;}
+  footer .frow{display:flex;justify-content:space-between;align-items:center;}
+  footer .h{font-family:"IBM Plex Mono";font-weight:500;letter-spacing:.1em;font-size:14px;}
+  footer .d{color:var(--mut);font-size:14px;}
+</style>
+</head>
+<body>
+<div id="card">
+  <div class="mast">
+    <div class="wm">CHALK<span class="dot">.</span></div>
+    <div class="icons">%%MAST_ICONS%%</div>
+  </div>
+  <div class="rule"></div>
+
+  <div class="kick mono">TODAY · %%DATE%% · <b>THE SLATE</b></div>
+  <h1>Today's calls<span class="dot">.</span></h1>
+
+  <div class="list">%%ROWS%%</div>
+
+  <div class="swipe"><span class="r"></span><span class="mono">SWIPE FOR EACH →</span></div>
+
+  <footer>
+    <div class="frule"></div>
+    <div class="frow"><span class="h mono">%%HANDLE%%</span><span class="d">A research project.</span></div>
+  </footer>
+</div>
+</body>
+</html>

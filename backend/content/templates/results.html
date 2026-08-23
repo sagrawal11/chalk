@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- CHALK results / graded card (CONTENT_SPEC §3.3), Editorial Terminal,
+     reconstructed from locked-results.png. Rows built in Python. 1080x1350 @2x. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Archivo:wght@700;800&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#F4F1EA;--ink:#141210;--red:#D6482B;--mut:#8C8677;--mut2:#B7B0A0;--hair:#DCD6C7;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:1080px;height:1350px;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;}
+  #card{position:relative;width:1080px;height:1350px;padding:64px 84px 56px;overflow:hidden;}
+  #card::before{content:"";position:absolute;top:0;left:0;right:0;height:6px;background:var(--red);}
+  .num{font-family:"Archivo",sans-serif;font-weight:800;font-feature-settings:"tnum" 1;}
+  .mono{font-family:"IBM Plex Mono",monospace;font-weight:500;text-transform:uppercase;letter-spacing:.14em;}
+  body{font-family:"Inter",sans-serif;}
+  .mast{display:flex;align-items:center;justify-content:space-between;padding-top:8px;}
+  .wm{font-family:"Fraunces",serif;font-weight:800;font-size:40px;letter-spacing:-.01em;}
+  .wm .dot{color:var(--red);}
+  .icon{width:62px;height:41px;}
+  .rule{height:1px;background:var(--hair);margin-top:26px;}
+  .kick{color:var(--mut);font-size:14px;margin-top:34px;}
+  .kick b{color:var(--ink);}
+  h1{font-family:"Fraunces",serif;font-weight:800;font-size:60px;line-height:1.02;letter-spacing:-.02em;margin-top:10px;}
+  h1 .dot{color:var(--red);}
+
+  .list{margin-top:26px;}
+  .grow{display:flex;align-items:center;gap:22px;padding:19px 2px;border-bottom:1px solid var(--hair);}
+  .badge{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:20px;font-weight:700;flex:0 0 auto;}
+  .badge.hit{background:#F6DAD1;color:var(--red);}
+  .badge.miss{background:#E6E1D5;color:var(--mut);}
+  .g .team{font-size:27px;font-weight:700;line-height:1.1;}
+  .g .det{font-family:"IBM Plex Mono";font-size:12px;letter-spacing:.06em;color:var(--mut);margin-top:5px;text-transform:uppercase;}
+  .g .det b{color:var(--ink);}
+  .verdict{margin-left:auto;font-family:"IBM Plex Mono";font-weight:500;letter-spacing:.14em;font-size:14px;}
+  .verdict.hit{color:var(--red);} .verdict.miss{color:var(--mut2);}
+
+  .record{display:flex;gap:64px;margin-top:44px;}
+  .rblk{display:flex;flex-direction:column;}
+  .rblk+.rblk{padding-left:64px;border-left:1px solid var(--hair);}
+  .rblk .cap{color:var(--mut);font-size:12px;}
+  .rbig{font-family:"Archivo";font-weight:800;font-size:72px;line-height:1;margin-top:10px;font-feature-settings:"tnum" 1;}
+  .rbig .w{color:var(--red);} .rbig .d{color:var(--mut2);} .rbig .l{color:var(--ink);}
+
+  .honest{margin-top:40px;}
+  .honest .r{width:44px;height:2px;background:var(--red);margin-bottom:16px;}
+  .honest .t{font-size:20px;color:var(--ink);}
+
+  footer{position:absolute;left:84px;right:84px;bottom:44px;}
+  footer .frule{height:1px;background:var(--hair);margin-bottom:16px;}
+  footer .frow{display:flex;justify-content:space-between;align-items:center;}
+  footer .h{font-family:"IBM Plex Mono";font-weight:500;letter-spacing:.1em;font-size:14px;}
+  footer .d{color:var(--mut);font-size:14px;}
+</style>
+</head>
+<body>
+<div id="card">
+  <div class="mast">
+    <div class="wm">CHALK<span class="dot">.</span></div>
+    <svg class="icon" viewBox="0 0 120 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14 40 Q60 9 106 40 Q60 71 14 40 Z" stroke="#141210" stroke-width="5" stroke-linejoin="round"/>
+      <path d="M60 26 V54" stroke="#D6482B" stroke-width="4.5" stroke-linecap="round"/>
+      <path d="M50 33 H70 M50 40 H70 M50 47 H70" stroke="#D6482B" stroke-width="4.5" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div class="rule"></div>
+
+  <div class="kick mono">RESULTS · <b>%%DAY%%</b></div>
+  <h1>How the calls landed<span class="dot">.</span></h1>
+
+  <div class="list">%%ROWS%%</div>
+
+  <div class="record">
+    <div class="rblk">
+      <div class="cap mono">TODAY</div>
+      <div class="rbig"><span class="w">%%TODAY_W%%</span><span class="d">–</span><span class="l">%%TODAY_L%%</span></div>
+    </div>
+    <div class="rblk">
+      <div class="cap mono">SEASON</div>
+      <div class="rbig"><span class="w">%%SEASON_W%%</span><span class="d">–</span><span class="l">%%SEASON_L%%</span></div>
+    </div>
+  </div>
+
+  <div class="honest">
+    <div class="r"></div>
+    <div class="t">We grade every call — the misses too.</div>
+  </div>
+
+  <footer>
+    <div class="frule"></div>
+    <div class="frow"><span class="h mono">%%HANDLE%%</span><span class="d">A research project.</span></div>
+  </footer>
+</div>
+</body>
+</html>
