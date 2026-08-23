@@ -52,3 +52,26 @@ def _flag(name: str, default: bool) -> bool:
 def market_blind() -> bool:
     """True => predictions ignore the betting line entirely (the brand default)."""
     return _flag("MARKET_BLIND", default=True)
+
+
+# --- Publishing / autonomy (M4) — every default is the safe, DARK posture. ---
+_AUTONOMY_MODES = ("approve_all", "batch", "auto")
+
+
+def autonomy_mode() -> str:
+    """The 🟡 loosening dial (OPS_RUNBOOK §6). ``approve_all`` (default) => every
+    Yellow item waits for the owner; ``batch`` => one daily batch to clear; ``auto``
+    => gated items auto-post. The single tighten-back switch is AUTONOMY_MODE=approve_all."""
+    raw = (_read_env("AUTONOMY_MODE") or "").strip().lower()
+    return raw if raw in _AUTONOMY_MODES else "approve_all"
+
+
+def publishing_killed() -> bool:
+    """Global kill switch (OPS_RUNBOOK §11): when True, NO Publisher posts anything."""
+    return _flag("CHALK_KILL_SWITCH", default=False)
+
+
+def dry_run_default() -> bool:
+    """When True (the dark default until launch), publishers LOG intent and never call
+    a real platform API. Flip CHALK_DRY_RUN=0 only once creds + go-live are ready."""
+    return _flag("CHALK_DRY_RUN", default=True)
