@@ -59,6 +59,21 @@ FEATURE_BUILDERS: Dict[str, Dict[str, List[str]]] = {
         "MLB-20": ["HOME_SP_RA", "AWAY_SP_RA", "SP_RA_DIFF"],     # starter rolling runs-allowed
         "MLB-21": ["HOME_SP_ERA", "AWAY_SP_ERA", "SP_ERA_DIFF"],  # starter rolling ERA
     },
+    "nhl": {
+        # Rung 1 — basic box stats (goals for/against), the day-1 baseline. Every
+        # column already exists in sports/nhl/team_features.build_team_game_frame.
+        "NHL-01": ["HOME_OFF", "AWAY_OFF"],                 # season-to-date goals scored
+        "NHL-02": ["HOME_DEF", "AWAY_DEF"],                 # season-to-date goals allowed
+        "NHL-03": ["NET_DIFF"],                             # net goal differential
+        "NHL-04": ["HOME_WINPCT", "AWAY_WINPCT"],           # season-to-date win pct
+        "NHL-05": ["HOME_PRIOR_DIFF", "AWAY_PRIOR_DIFF"],   # prior-season carryover
+        # Rung 2 — recent form + rest (NHL plays dense back-to-backs, so rest may bite).
+        "NHL-06": ["HOME_FORM", "AWAY_FORM"],               # last-10 form (Rung 2)
+        "NHL-07": ["HOME_REST", "AWAY_REST", "REST_DIFF"],  # rest / rest diff (Rung 2)
+        # The dominant NHL swing — the starting GOALIE — needs the boxscore endpoint
+        # (the schedule only exposes the post-game winner), so it's a needs_builder
+        # future rung, not wired here. Market-blind throughout: no MARKET_* column.
+    },
 }
 
 

@@ -1,0 +1,40 @@
+{
+  "sport": "nhl",
+  "model_version": "nhl-v2",
+  "rung": 2,
+  "active_feature_builders": [
+    "NHL-01",
+    "NHL-02",
+    "NHL-03",
+    "NHL-04",
+    "NHL-05",
+    "NHL-06"
+  ],
+  "feature_cols": [
+    "HOME_OFF",
+    "AWAY_OFF",
+    "HOME_DEF",
+    "AWAY_DEF",
+    "NET_DIFF",
+    "HOME_WINPCT",
+    "AWAY_WINPCT",
+    "HOME_PRIOR_DIFF",
+    "AWAY_PRIOR_DIFF",
+    "HOME_FORM",
+    "AWAY_FORM"
+  ],
+  "cumulative_metrics": {
+    "seasons": 7,
+    "games": 8469,
+    "su_acc": 0.5765,
+    "margin_mae": 2.147,
+    "total_mae": 1.865,
+    "winner_logloss": 0.675,
+    "eval_window": "2018-19\u20132024-25",
+    "measured_at": "2026-08-24"
+  },
+  "holdout_season": 2025,
+  "eval_window": "2018-19\u20132024-25",
+  "created_at": "2026-08-24",
+  "notes": "Promoted from nhl-v1 by NHL-06 (Last-10-game form (FORM))."
+}

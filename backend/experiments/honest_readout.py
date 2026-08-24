@@ -16,7 +16,7 @@ import datetime as dt
 import json
 import logging
 
-from backtest.team_backtest import walk_forward_backtest
+from backtest.team_backtest import _season_label, walk_forward_backtest
 from experiments import ledger
 from experiments.champion import load_champion
 from experiments.eval_champion import DETERMINISTIC_PARAMS, _build_frame, _pick_holdout
@@ -34,7 +34,9 @@ def honest_readout(sport: str, *, start: int, end: int) -> dict:
     # trained on every prior (train+CV) season — the honest untouched-test number.
     bt = walk_forward_backtest(frame, sport=sport, feature_cols=champ.feature_cols,
                                params=DETERMINISTIC_PARAMS)
-    row = bt[bt["season"] == str(holdout)]
+    # Match the holdout row by the sport's own season label — two-year sports
+    # (NHL/NBA) label 2025 as "2025-26", so str(holdout) would never match.
+    row = bt[bt["season"] == _season_label(sport, holdout)]
     untouched = row.iloc[0].to_dict() if not row.empty else {}
     selected = champ.cumulative_metrics or {}
 

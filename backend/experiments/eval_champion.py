@@ -53,6 +53,14 @@ _SEEDS = {
               "market-blind. MLB is low-signal from team stats alone — the starting "
               "pitcher is the climb.",
     ),
+    "nhl": dict(
+        model_version="nhl-v1", rung=1,
+        active_feature_builders=["NHL-01", "NHL-02", "NHL-03", "NHL-04", "NHL-05"],
+        notes="Day-1 NHL champion (M7): deliberately-simple Rung-1 box-score "
+              "baseline (goals for/against, win%, goal-diff, prior-year carryover), "
+              "market-blind. More team signal than MLB; the starting goalie is the "
+              "eventual climb (needs the boxscore endpoint).",
+    ),
 }
 
 
@@ -66,7 +74,10 @@ def _build_frame(sport: str, start: int, end: int, feature_cols: list | None = N
         # test; the box-score / SP_RA ladder builds from the schedule alone.
         need_era = feature_cols is None or any("SP_ERA" in c for c in feature_cols)
         return build_team_game_frame(range(start, end + 1), fetch_sp_era=need_era)
-    raise ValueError(f"eval_champion: sport '{sport}' not wired yet (M1=nfl, M7=mlb)")
+    if sport == "nhl":
+        from sports.nhl.team_features import build_team_game_frame
+        return build_team_game_frame(range(start, end + 1))
+    raise ValueError(f"eval_champion: sport '{sport}' not wired yet (M1=nfl, M7=mlb/nhl)")
 
 
 def _pick_holdout(frame: pd.DataFrame, min_frac: float = 0.5) -> int:

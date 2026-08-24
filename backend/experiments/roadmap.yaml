@@ -117,3 +117,29 @@ sports:
         eval_metric: winner_logloss
         act: 1
         status: queued
+
+  nhl:
+    baseline_version: nhl-v1   # Rung-1 box-score champion (M7)
+    baseline_builders: [NHL-01, NHL-02, NHL-03, NHL-04, NHL-05]
+    experiments:
+      - id: NHL-06
+        rung: 2
+        name: Last-10-game form (FORM)
+        builders: [NHL-06]
+        hypothesis: A recent hot/cold streak captures momentum and injuries that the season goal average smooths over.
+        eval_metric: winner_logloss
+        act: 1
+        status: queued
+      - id: NHL-07
+        rung: 2
+        name: Rest days & rest differential
+        builders: [NHL-07]
+        hypothesis: NHL schedules are dense with back-to-backs; a tired team on the second night, or a rest edge over the opponent, should move margin.
+        eval_metric: winner_logloss
+        act: 1
+        status: queued
+      # ---- Needs a new feature-builder first (not in the cached schedule frame) ----
+      # The starting GOALIE is the dominant NHL swing, but the schedule endpoint only
+      # exposes the post-game winning goalie; a pre-game goalie signal needs the
+      # boxscore endpoint (a new builder) — see FEATURE_ROADMAP.md.
+      - {id: NHL-20, rung: 3, name: Starting goalie — rolling save%/GAA, builders: [NHL-20], act: 1, status: needs_builder}

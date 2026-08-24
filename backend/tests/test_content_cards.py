@@ -32,6 +32,21 @@ _MLB_SCORE = {
     "away_score": 5, "home_score": 4, "winner_side": "away", "confidence": 0.55,
 }
 
+_NHL_RESULT = {  # the real NHL-06 ledger row (FORM kept -> nhl-v2) — the first NHL climb
+    "id": "NHL-06", "sport": "nhl", "rung": 2, "name": "Last-10-game form (FORM)",
+    "eval_window": "2018-19–2024-25", "decision": "keep",
+    "hypothesis": "A recent hot/cold streak captures momentum the season goal average smooths over.",
+    "champion_metrics": {"su_acc": 0.5728, "winner_logloss": 0.676, "margin_mae": 2.15, "total_mae": 1.865},
+    "challenger_metrics": {"su_acc": 0.5765, "winner_logloss": 0.675, "margin_mae": 2.147, "total_mae": 1.865},
+}
+
+_NHL_SCORE = {
+    "league": "NHL", "when": "SAT · 7:00 PM ET",
+    "away_name": "Colorado Avalanche", "home_name": "Vegas Golden Knights",
+    "away_city": "Colorado", "home_city": "Vegas",
+    "away_score": 2, "home_score": 4, "winner_side": "home", "confidence": 0.57,
+}
+
 
 def _no_unfilled(html: str) -> None:
     assert "%%" not in html, "template has an unfilled %%TOKEN%%"
@@ -75,11 +90,29 @@ def test_score_card_builds():
     assert "Buffalo Bills" in html and "Not betting advice" in html
 
 
+def test_experiment_log_renders_for_nhl_keep():
+    # An NHL KEEP (the first NHL climb) renders with the "kept" styling + NEXT block.
+    html = build_experiment_log_html(
+        _NHL_RESULT, metric="auto",
+        next_exp={"id": "NHL-07", "name": "Rest days & rest differential",
+                  "hypothesis": "Dense back-to-backs should tire a team."})
+    _no_unfilled(html)
+    assert "Last-10-game form" in html and "KEPT" in html
+    assert "A research project." in html
+
+
 def test_score_card_renders_for_mlb():
     html = build_score_html(_MLB_SCORE)
     _no_unfilled(html)
     assert "San Diego Padres" in html and "Los Angeles Dodgers" in html
     assert "MLB" in html and "Not betting advice" in html
+
+
+def test_score_card_renders_for_nhl():
+    html = build_score_html(_NHL_SCORE)
+    _no_unfilled(html)
+    assert "Vegas Golden Knights" in html and "Colorado Avalanche" in html
+    assert "NHL" in html and "Not betting advice" in html
 
 
 def test_results_card_builds():
