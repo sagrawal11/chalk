@@ -24,8 +24,10 @@ def experiments_for(rm: dict, sport: str) -> List[dict]:
 
 
 def keep_rule_for(rm: dict, sport: str, exp: dict) -> Dict[str, Any]:
-    """Global default keep-rule, overridden by any per-experiment keep_rule."""
+    """Global default keep-rule, overridden by a per-SPORT keep_rule (e.g. soccer's
+    3-way logloss), then by any per-experiment keep_rule."""
     base = dict(rm.get("defaults", {}).get("keep_rule", {}))
+    base.update(rm.get("sports", {}).get(sport, {}).get("keep_rule", {}) or {})
     base.update(exp.get("keep_rule") or {})
     return base
 

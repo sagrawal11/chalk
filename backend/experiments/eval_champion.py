@@ -160,6 +160,10 @@ def main() -> None:
     ap.add_argument("--refit", action="store_true", help="also refit + save the shipped model")
     args = ap.parse_args()
 
+    if args.sport == "soccer":   # 3-way Poisson path (different model + metric)
+        from experiments import soccer as soccer_exp
+        return soccer_exp.eval_cli(args)
+
     if args.seed:
         champ = _seed(args.sport)
         print(f"seeded {champ.sport} champion {champ.model_version} (rung {champ.rung}); "

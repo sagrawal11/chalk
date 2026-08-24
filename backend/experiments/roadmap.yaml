@@ -143,3 +143,40 @@ sports:
       # exposes the post-game winning goalie; a pre-game goalie signal needs the
       # boxscore endpoint (a new builder) — see FEATURE_ROADMAP.md.
       - {id: NHL-20, rung: 3, name: Starting goalie — rolling save%/GAA, builders: [NHL-20], act: 1, status: needs_builder}
+
+  soccer:
+    baseline_version: soccer-v1   # Rung-1 baseline Poisson 3-way champion (M7)
+    baseline_builders: [SOC-01]
+    # Soccer is 3-way (home/draw/away): the keep-rule is on THREE-way logloss, not the
+    # binary winner_logloss. Guarded so three-way accuracy can't drop. Pre-registered.
+    keep_rule:
+      metric: three_way_logloss
+      improve: lower
+      min_delta: 0.001
+      guard_metric: three_way_acc
+      guard_improve: higher
+    experiments:
+      - id: SOC-02
+        rung: 2
+        name: Dixon-Coles low-score correction
+        builders: [SOC-02]
+        hypothesis: The independent-Poisson model under-predicts draws; the Dixon-Coles correlation correction on 0-0/1-0/0-1/1-1 should better calibrate the draw and improve 3-way log-loss.
+        eval_metric: three_way_logloss
+        act: 1
+        status: queued
+      - id: SOC-03
+        rung: 2
+        name: Cross-season prior (cold-start fix)
+        builders: [SOC-03]
+        hypothesis: Ratings reset to neutral each August; carrying a shrunk prior-season strength into the early season should sharpen predictions before the rolling window fills.
+        eval_metric: three_way_logloss
+        act: 1
+        status: queued
+      - id: SOC-04
+        rung: 3
+        name: Stronger home-field prior
+        builders: [SOC-04]
+        hypothesis: A single empirical home multiplier may understate home advantage; a larger prior could fit the home-win rate better — or overshoot (an honest test).
+        eval_metric: three_way_logloss
+        act: 1
+        status: queued

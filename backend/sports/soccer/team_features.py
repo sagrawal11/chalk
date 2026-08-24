@@ -38,6 +38,8 @@ _SEASON_CODES: Dict[int, str] = {2021: "2122", 2022: "2223", 2023: "2324", 2024:
 ROLL = 6            # rolling window (matches) for a team's attack/defense form
 MIN_PRIOR = 3       # usage gate: need >= this many prior games for a data-backed rating
 MAX_GOALS = 10      # scoreline grid cap for the Poisson sum
+PRIOR_K = 5.0       # cross-season shrinkage pseudo-count: early-season ratings pull
+                    # toward the team's prior-season level instead of neutral 1.0
 HOME_FIELD = 1.19   # home multiplier on home attack; empirical EPL home/away goal
                     # ratio over 2021-22..2024-25 (mean home goals / mean away goals)
 _LEAGUE_AVG_GOALS = 1.35  # a-priori per-team goals/game fallback when a season is thin
@@ -55,7 +57,30 @@ def _prior_count(s: pd.Series) -> pd.Series:
     return s.shift(1).rolling(len(s), min_periods=1).count().fillna(0.0)
 
 
-def add_team_features(matches: pd.DataFrame) -> pd.DataFrame:
+def _blend_prior_season(long: pd.DataFrame, la: Dict) -> None:
+    """In-place: shrink each (team, venue) attack/defense toward its PRIOR-SEASON
+    average with a PRIOR_K pseudo-count, weighted by how few prior games exist this
+    season. Leakage-safe — only the strictly-earlier season feeds the blend, and a
+    team with no prior season keeps the neutral 1.0 cold-start."""
+    seas = long.groupby(["season", "team", "venue"], sort=False).agg(
+        s_gf=("gf", "mean"), s_ga=("ga", "mean")).reset_index()
+    la_by = seas["season"].map(la).fillna(_LEAGUE_AVG_GOALS)
+    seas["s_attack"] = seas["s_gf"] / la_by
+    seas["s_defense"] = seas["s_ga"] / la_by
+    # carry each season's average forward one season, preserving the key dtype so the
+    # merge aligns whether seasons are ints or year-strings ("2021").
+    nxt = seas["season"].astype(int) + 1
+    seas["season"] = nxt.astype(str) if long["season"].dtype == object else nxt
+    merged = long.merge(seas[["season", "team", "venue", "s_attack", "s_defense"]],
+                        on=["season", "team", "venue"], how="left")
+    w_prior = PRIOR_K / (long["n_prior"].to_numpy(dtype=float) + PRIOR_K)
+    for col, scol in (("attack", "s_attack"), ("defense", "s_defense")):
+        prior_val = merged[scol].fillna(1.0).to_numpy()   # no prior season -> neutral
+        long[col] = (1.0 - w_prior) * long[col].to_numpy() + w_prior * prior_val
+
+
+def add_team_features(matches: pd.DataFrame, *, roll: int = ROLL,
+                      cross_season: bool = False) -> pd.DataFrame:
     """Attach leakage-safe rolling attack/defense ratings (per venue) to a match
     frame with columns season/date/home/away/fthg/ftag.
 
@@ -64,6 +89,13 @@ def add_team_features(matches: pd.DataFrame) -> pd.DataFrame:
     HOME rows (from that team's home games) and AWAY rows (from away games). The
     result carries, per match, the four ratings the Poisson model needs plus the
     prior-game counts for the usage gate.
+
+    ``roll`` sizes the rolling form window. ``cross_season`` (default off) blends
+    each team's PRIOR-SEASON average rating into the current season with a
+    ``PRIOR_K`` pseudo-count, so early-season matches lean on last year's strength
+    instead of the neutral 1.0 cold-start (still leakage-safe — the prior season is
+    strictly earlier). Both are pre-registered experiment knobs; the defaults
+    reproduce the shipped predictor exactly.
     """
     if matches.empty:
         return matches.assign(
@@ -95,14 +127,17 @@ def add_team_features(matches: pd.DataFrame) -> pd.DataFrame:
     long = long.sort_values(["season", "team", "venue", "date"]).reset_index(drop=True)
 
     g = long.groupby(["season", "team", "venue"], sort=False)
-    long["gf_roll"] = g["gf"].transform(lambda s: _prior_mean(s, ROLL))
-    long["ga_roll"] = g["ga"].transform(lambda s: _prior_mean(s, ROLL))
+    long["gf_roll"] = g["gf"].transform(lambda s: _prior_mean(s, roll))
+    long["ga_roll"] = g["ga"].transform(lambda s: _prior_mean(s, roll))
     long["n_prior"] = g["gf"].transform(_prior_count)
 
     la_series = long["season"].map(la).fillna(_LEAGUE_AVG_GOALS)
     # Ratings relative to the league; default to 1.0 (neutral) with no prior games.
     long["attack"] = (long["gf_roll"] / la_series).fillna(1.0)
     long["defense"] = (long["ga_roll"] / la_series).fillna(1.0)
+
+    if cross_season:
+        _blend_prior_season(long, la)
 
     hk = long[long["venue"] == "home"].set_index(["season", "team", "date"])
     ak = long[long["venue"] == "away"].set_index(["season", "team", "date"])
@@ -140,13 +175,28 @@ def _poisson_pmf_vec(lam: float, kmax: int) -> np.ndarray:
 
 
 def three_way_from_lambdas(lambda_home: float, lambda_away: float,
-                           max_goals: int = MAX_GOALS) -> Dict[str, float]:
+                           max_goals: int = MAX_GOALS, *,
+                           dixon_coles_rho: float = 0.0) -> Dict[str, float]:
     """P(home win)/P(draw)/P(away win) by summing independent Poisson scoreline
     probabilities over the 0..max_goals grid. Renormalized so the three sum to 1
-    (mass beyond the grid cap is negligible but we normalize to be exact)."""
+    (mass beyond the grid cap is negligible but we normalize to be exact).
+
+    ``dixon_coles_rho`` (0 = off, default) applies the Dixon-Coles (1997) low-score
+    dependence correction to the four cells {0-0, 0-1, 1-0, 1-1} before summing —
+    a negative rho inflates 0-0/1-1 (draws) and is the standard fix for the
+    independent-Poisson model under-predicting draws. rho is pre-registered per
+    experiment (not fit on the test set)."""
     ph = _poisson_pmf_vec(lambda_home, max_goals)
     pa = _poisson_pmf_vec(lambda_away, max_goals)
     grid = np.outer(ph, pa)  # grid[i, j] = P(home=i, away=j)
+    if dixon_coles_rho:
+        lh, la = max(1e-6, float(lambda_home)), max(1e-6, float(lambda_away))
+        rho = float(dixon_coles_rho)
+        grid[0, 0] *= 1.0 - lh * la * rho
+        grid[0, 1] *= 1.0 + lh * rho
+        grid[1, 0] *= 1.0 + la * rho
+        grid[1, 1] *= 1.0 - rho
+        np.clip(grid, 0.0, None, out=grid)   # a large rho can push a tiny cell negative
     p_home = float(np.tril(grid, -1).sum())   # i > j
     p_away = float(np.triu(grid, 1).sum())    # j > i
     p_draw = float(np.trace(grid))            # i == j
@@ -263,10 +313,10 @@ def _fetch_season(start_year: int) -> pd.DataFrame:
     return out.dropna(subset=["home", "away", "fthg", "ftag"]).reset_index(drop=True)
 
 
-def build_epl_matches(seasons: Sequence[int] = (2021, 2022, 2023, 2024)) -> pd.DataFrame:
-    """Fetch (and per-season cache) the football-data.co.uk EPL match results for
-    the given season START years, returned as a tidy frame with attack/defense
-    features attached. Reruns are fast: completed seasons are read from parquet."""
+def load_epl_raw(seasons: Sequence[int] = (2021, 2022, 2023, 2024)) -> pd.DataFrame:
+    """Raw EPL match results (season/date/home/away/fthg/ftag) for the given season
+    START years, cached per season. No features attached — the experiment harness
+    applies ``add_team_features`` with each challenger's params."""
     from datetime import datetime
     cur = datetime.now().year
     frames: List[pd.DataFrame] = []
@@ -281,5 +331,11 @@ def build_epl_matches(seasons: Sequence[int] = (2021, 2022, 2023, 2024)) -> pd.D
             _CACHE_DIR.mkdir(parents=True, exist_ok=True)
             df.to_parquet(cache, index=False)
         frames.append(df)
-    raw = pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=_MATCH_COLS)
-    return add_team_features(raw)
+    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=_MATCH_COLS)
+
+
+def build_epl_matches(seasons: Sequence[int] = (2021, 2022, 2023, 2024)) -> pd.DataFrame:
+    """Fetch (and per-season cache) the football-data.co.uk EPL match results,
+    returned with the shipped-default attack/defense features attached (reruns are
+    fast: completed seasons read from parquet)."""
+    return add_team_features(load_epl_raw(seasons))

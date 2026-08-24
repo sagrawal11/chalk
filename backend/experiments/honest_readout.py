@@ -60,6 +60,9 @@ def main() -> None:
     ap.add_argument("--start", type=int, default=1999)
     ap.add_argument("--end", type=int, default=dt.date.today().year)
     args = ap.parse_args()
+    if args.sport == "soccer":   # 3-way Poisson path (different model + metric)
+        from experiments import soccer as soccer_exp
+        return soccer_exp.readout_cli(args)
     r = honest_readout(args.sport, start=args.start, end=args.end)
     u, s, g, mc = (r["untouched_test"], r["selected_traincv"],
                    r["gap_untouched_minus_selected"], r["multiple_comparisons"])

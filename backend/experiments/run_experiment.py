@@ -140,6 +140,9 @@ def main() -> None:
     ap.add_argument("--write", action="store_true", help="persist to the ledger + promote a kept challenger")
     ap.add_argument("--refit", action="store_true", help="on a keep, also refit the shipped model")
     args = ap.parse_args()
+    if args.sport == "soccer":   # 3-way Poisson path (different model + metric)
+        from experiments import soccer as soccer_exp
+        return soccer_exp.run_cli(args)
     r = run_experiment(args.sport, exp_id=args.id, start=args.start, end=args.end,
                        write=args.write, refit=args.refit)
     _print(r)

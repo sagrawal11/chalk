@@ -47,6 +47,14 @@ _NHL_SCORE = {
     "away_score": 2, "home_score": 4, "winner_side": "home", "confidence": 0.57,
 }
 
+_SOCCER_RESULT = {  # the real SOC-03 ledger row (cross-season prior kept -> soccer-v2)
+    "id": "SOC-03", "sport": "soccer", "rung": 2, "name": "Cross-season prior (cold-start fix)",
+    "eval_window": "2021–2023", "decision": "keep",
+    "hypothesis": "Carrying a shrunk prior-season strength into the early season sharpens predictions.",
+    "champion_metrics": {"three_way_logloss": 1.1466, "three_way_acc": 0.499, "total_mae": 1.63},
+    "challenger_metrics": {"three_way_logloss": 1.0487, "three_way_acc": 0.522, "total_mae": 1.506},
+}
+
 
 def _no_unfilled(html: str) -> None:
     assert "%%" not in html, "template has an unfilled %%TOKEN%%"
@@ -113,6 +121,18 @@ def test_score_card_renders_for_nhl():
     _no_unfilled(html)
     assert "Vegas Golden Knights" in html and "Colorado Avalanche" in html
     assert "NHL" in html and "Not betting advice" in html
+
+
+def test_experiment_log_renders_for_soccer_3way():
+    # Soccer's experiment-log reuses the card with the 3-way metric map. Option C
+    # features 3-way ACCURACY here (it moved +2.3pp); log-loss is the primary metric.
+    html = build_experiment_log_html(
+        _SOCCER_RESULT, metric="auto",
+        next_exp={"id": "SOC-04", "name": "Stronger home-field prior",
+                  "hypothesis": "A larger home multiplier could fit better — or overshoot."})
+    _no_unfilled(html)
+    assert "Cross-season prior" in html and "KEPT" in html
+    assert "3-WAY ACCURACY" in html and "A research project." in html
 
 
 def test_results_card_builds():

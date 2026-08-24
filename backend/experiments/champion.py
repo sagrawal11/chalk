@@ -77,6 +77,33 @@ FEATURE_BUILDERS: Dict[str, Dict[str, List[str]]] = {
 }
 
 
+# Param-based sports (soccer): the champion is a set of Poisson MODEL PARAMS, not
+# feature columns, because the market-blind soccer champion is a parametric 3-way
+# Poisson model (not a LightGBM margin regressor). A "builder" here toggles a model
+# knob; builders fold over the baseline (backtest.soccer_backtest.BASELINE_PARAMS).
+SOCCER_BUILDERS: Dict[str, Dict[str, Any]] = {
+    "SOC-01": {},                          # baseline Poisson (the seed champion)
+    "SOC-02": {"dixon_coles": True},       # Dixon-Coles low-score correction (draws)
+    "SOC-03": {"cross_season": True},      # cross-season prior (early-season cold-start)
+    "SOC-04": {"home_field": 1.30},        # a stronger home-field prior (tunable knob)
+}
+PARAM_BUILDERS: Dict[str, Dict[str, Dict[str, Any]]] = {"soccer": SOCCER_BUILDERS}
+
+
+def resolve_model_params(sport: str, builders: List[str]) -> Dict[str, Any]:
+    """Fold active param-builders over the sport's baseline model params (later
+    builders win). Used by param-based sports (soccer) instead of resolve_feature_cols."""
+    reg = PARAM_BUILDERS.get(sport, {})
+    unknown = [b for b in builders if b not in reg]
+    if unknown:
+        raise ValueError(f"unknown {sport} model-param builder(s): {unknown}")
+    from backtest.soccer_backtest import BASELINE_PARAMS
+    params = dict(BASELINE_PARAMS)
+    for b in builders:
+        params.update(reg[b])
+    return params
+
+
 def bump_version(model_version: str) -> str:
     """'nfl-v1' -> 'nfl-v2'."""
     import re
@@ -107,6 +134,7 @@ class ChampionConfig:
     rung: int
     active_feature_builders: List[str]
     feature_cols: List[str] = field(default_factory=list)
+    model_params: Dict[str, Any] = field(default_factory=dict)   # param-based sports (soccer)
     cumulative_metrics: Dict[str, Any] = field(default_factory=dict)
     holdout_season: Optional[int] = None
     eval_window: Optional[str] = None
@@ -122,6 +150,11 @@ class ChampionConfig:
             raise ValueError("champion.rung must be an int >= 1")
         if not self.active_feature_builders:
             raise ValueError("champion.active_feature_builders must be non-empty")
+        if self.sport in PARAM_BUILDERS:
+            # Param-based sport (soccer): builders resolve to model params, not columns.
+            self.model_params = resolve_model_params(self.sport, self.active_feature_builders)
+            self.feature_cols = []
+            return self
         resolved = resolve_feature_cols(self.sport, self.active_feature_builders)
         if self.feature_cols and self.feature_cols != resolved:
             raise ValueError(

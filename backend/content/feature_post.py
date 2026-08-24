@@ -26,6 +26,9 @@ _METRICS = {
     "winner_logloss": ("LOG-LOSS",    "",    False, 0.010, lambda v: f"{v:.4f}"),
     "margin_mae":     ("MARGIN MAE",  "pts", False, 0.400, lambda v: f"{v:.2f}"),
     "total_mae":      ("TOTAL MAE",   "pts", False, 0.400, lambda v: f"{v:.2f}"),
+    # Soccer is 3-way (home/draw/away): a draw is a real outcome, so the metrics differ.
+    "three_way_logloss": ("3-WAY LOG-LOSS", "",   False, 0.010, lambda v: f"{v:.4f}"),
+    "three_way_acc":     ("3-WAY ACCURACY", "pp", True,  0.020, lambda v: f"{v * 100:.1f}%"),
 }
 
 _DESC = {
@@ -33,6 +36,8 @@ _DESC = {
     "winner_logloss": "Winner log-loss — lower means better-calibrated.",
     "margin_mae": "Average points off the final margin — lower is better.",
     "total_mae": "Average points off the game total — lower is better.",
+    "three_way_logloss": "Home/draw/away log-loss — lower means better-calibrated.",
+    "three_way_acc": "Home/draw/away hit rate, walk-forward.",
 }
 
 
@@ -44,6 +49,9 @@ def pick_display_metric(result: Dict[str, Any]) -> str:
     total MAE (>= 0.02 pts); if nothing moved much, show accuracy honestly (held/flat)
     rather than reaching for jargon (log-loss)."""
     cm, hm = result["champion_metrics"], result["challenger_metrics"]
+    if "three_way_logloss" in cm:   # soccer (3-way): accuracy if it moved, else log-loss
+        dacc = abs((hm.get("three_way_acc", 0) - cm.get("three_way_acc", 0)) * 100)
+        return "three_way_acc" if dacc >= 0.25 else "three_way_logloss"
     dsu = abs((hm.get("su_acc", 0) - cm.get("su_acc", 0)) * 100)
     dmae = abs(hm.get("margin_mae", 0) - cm.get("margin_mae", 0))
     dtot = abs(hm.get("total_mae", 0) - cm.get("total_mae", 0))
