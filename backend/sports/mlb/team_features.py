@@ -7,6 +7,15 @@ differential). Built from MLB StatsAPI team game logs (``sports.mlb.data``).
 v1 is a team-strength model (runs for/against). The dominant MLB signal — the
 probable STARTING PITCHER — and a market-total anchor are the planned next
 enhancements (the MLB analogs of NFL's QB + line).
+
+``fetch_sp_era`` gates the one network-heavy feature: the rolling starter ERA
+needs a per-pitcher game-log backfill (``pitcher_data.build_pitcher_starts`` —
+~100+ HTTP calls/season, cached thereafter). Every other feature (incl. the
+coarse SP_RA proxy) comes from the already-loaded schedule, so the box-score
+ladder can build the frame with ``fetch_sp_era=False`` and skip that backfill
+entirely (SP_ERA then falls back to the league-average fill). Default True keeps
+the trainer/predictor behavior unchanged; the experiment harness flips it off
+unless an SP_ERA column is actually being tested.
 """
 from __future__ import annotations
 
@@ -59,7 +68,7 @@ def _sp_era_by_game(years) -> pd.DataFrame:
     return s[["pitcher_id", "date", "SP_ERA"]]
 
 
-def _team_timeline(tg: pd.DataFrame) -> pd.DataFrame:
+def _team_timeline(tg: pd.DataFrame, *, fetch_sp_era: bool = True) -> pd.DataFrame:
     tg = tg.copy()
     tg["game_date"] = pd.to_datetime(tg["game_date"])
     tg = tg.sort_values(["team", "game_date"]).reset_index(drop=True)
@@ -86,8 +95,10 @@ def _team_timeline(tg: pd.DataFrame) -> pd.DataFrame:
     # date (prior starts only, from the ER-bearing pitcher_starts cache). Sharper
     # than SP_RA because it isolates the starter's own earned runs from the
     # bullpen. Missing SP / no ER cache / too-few-prior-starts -> league-avg fill.
+    # Skipped when fetch_sp_era=False (the box-score ladder), avoiding the
+    # per-pitcher game-log backfill; SP_ERA then stays the league-average fill.
     tg["SP_ERA"] = np.nan
-    if "sp" in tg.columns:
+    if fetch_sp_era and "sp" in tg.columns:
         era = _sp_era_by_game(sorted(tg["season"].dropna().astype(int).unique().tolist()))
         if not era.empty:
             key = tg["sp"].astype("Float64").astype("Int64")   # NaN-safe int key
@@ -115,11 +126,11 @@ def _assemble(h: Dict[str, float], a: Dict[str, float]) -> Dict[str, float]:
     return row
 
 
-def build_team_game_frame(years) -> pd.DataFrame:
+def build_team_game_frame(years, *, fetch_sp_era: bool = True) -> pd.DataFrame:
     tg = load_team_games(list(years))
     if tg.empty:
         return pd.DataFrame()
-    tl = _team_timeline(tg)
+    tl = _team_timeline(tg, fetch_sp_era=fetch_sp_era)
     home = tl[tl["is_home"] == 1].set_index("game_id")
     away = tl[tl["is_home"] == 0].set_index("game_id")
     g = home.join(away, lsuffix="_h", rsuffix="_a", how="inner")

@@ -41,6 +41,24 @@ FEATURE_BUILDERS: Dict[str, Dict[str, List[str]]] = {
         "NFL-37": ["DIV_GAME"],                             # divisional game (Rung 7)
         "NFL-38": ["IS_DOME", "WIND", "TEMP"],              # weather (Rung 7)
     },
+    "mlb": {
+        # Rung 1 — basic box stats (the deliberately-simple day-1 baseline). All
+        # columns already exist in sports/mlb/team_features.build_team_game_frame,
+        # so an MLB rung is a config change, not new feature code.
+        "MLB-01": ["HOME_OFF", "AWAY_OFF"],                 # season-to-date runs scored
+        "MLB-02": ["HOME_DEF", "AWAY_DEF"],                 # season-to-date runs allowed
+        "MLB-03": ["NET_DIFF"],                             # net run differential
+        "MLB-04": ["HOME_WINPCT", "AWAY_WINPCT"],           # season-to-date win pct
+        "MLB-05": ["HOME_PRIOR_DIFF", "AWAY_PRIOR_DIFF"],   # prior-season carryover
+        # Rung 2 — recent form (last-10 run differential).
+        "MLB-06": ["HOME_FORM", "AWAY_FORM"],               # last-10 form (Rung 2)
+        "MLB-07": ["HOME_REST", "AWAY_REST", "REST_DIFF"],  # rest / rest diff (Rung 2)
+        # Rung 3 — the STARTING PITCHER (the dominant MLB signal; the MLB analog of
+        # NFL's QB). SP_RA is schedule-only (cheap); SP_ERA needs the pitcher-log
+        # backfill (see team_features.fetch_sp_era) — both stay market-blind.
+        "MLB-20": ["HOME_SP_RA", "AWAY_SP_RA", "SP_RA_DIFF"],     # starter rolling runs-allowed
+        "MLB-21": ["HOME_SP_ERA", "AWAY_SP_ERA", "SP_ERA_DIFF"],  # starter rolling ERA
+    },
 }
 
 

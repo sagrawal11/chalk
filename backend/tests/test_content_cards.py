@@ -16,6 +16,22 @@ _RESULT = {  # a ledger-row-shaped ExperimentResult (NFL-10 keep)
     "challenger_metrics": {"su_acc": 0.6247, "winner_logloss": 0.6442, "margin_mae": 10.704, "total_mae": 10.933},
 }
 
+_MLB_RESULT = {  # the real MLB-20 ledger row (SP_RA drop) — content is sport-generic
+    "id": "MLB-20", "sport": "mlb", "rung": 3,
+    "name": "Starting pitcher — rolling runs allowed (SP_RA)",
+    "eval_window": "2018–2024", "decision": "drop",
+    "hypothesis": "Who takes the mound tonight should move the line more than any team-level stat.",
+    "champion_metrics": {"su_acc": 0.5667, "winner_logloss": 0.6816, "margin_mae": 3.449, "total_mae": 3.564},
+    "challenger_metrics": {"su_acc": 0.567, "winner_logloss": 0.6825, "margin_mae": 3.457, "total_mae": 3.562},
+}
+
+_MLB_SCORE = {
+    "league": "MLB", "when": "WED · 7:05 PM ET",
+    "away_name": "Los Angeles Dodgers", "home_name": "San Diego Padres",
+    "away_city": "Los Angeles", "home_city": "San Diego",
+    "away_score": 5, "home_score": 4, "winner_side": "away", "confidence": 0.55,
+}
+
 
 def _no_unfilled(html: str) -> None:
     assert "%%" not in html, "template has an unfilled %%TOKEN%%"
@@ -41,10 +57,29 @@ def test_experiment_log_drop_is_styled_muted():
     assert "DROPPED" in html and 'class="dropped"' in html
 
 
+def test_experiment_log_renders_for_mlb():
+    # Content generators are sport-generic: an MLB ledger row renders the same
+    # experiment-log card, honest DROP styling, disclaimer intact.
+    html = build_experiment_log_html(
+        _MLB_RESULT, metric="auto",
+        next_exp={"id": "MLB-21", "name": "Starting pitcher — rolling ERA (SP_ERA)",
+                  "hypothesis": "ERA isolates the starter's own runs from the bullpen."})
+    _no_unfilled(html)
+    assert "Starting pitcher" in html and "DROPPED" in html
+    assert "SP_ERA" in html and "A research project." in html
+
+
 def test_score_card_builds():
     html = build_score_html(_SAMPLE_SCORE)
     _no_unfilled(html)
     assert "Buffalo Bills" in html and "Not betting advice" in html
+
+
+def test_score_card_renders_for_mlb():
+    html = build_score_html(_MLB_SCORE)
+    _no_unfilled(html)
+    assert "San Diego Padres" in html and "Los Angeles Dodgers" in html
+    assert "MLB" in html and "Not betting advice" in html
 
 
 def test_results_card_builds():

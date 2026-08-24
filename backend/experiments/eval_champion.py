@@ -37,7 +37,7 @@ DETERMINISTIC_PARAMS = {
     "force_row_wise": True, "verbose": -1,
 }
 
-# Initial champions seeded by --seed (M1 = NFL Rung-1 only).
+# Initial champions seeded by --seed (M1 = NFL; M7 = MLB fan-out).
 _SEEDS = {
     "nfl": dict(
         model_version="nfl-v1", rung=1,
@@ -45,14 +45,28 @@ _SEEDS = {
         notes="Day-1 NFL champion (M1): deliberately-simple Rung-1 box-score "
               "baseline, market-blind. Unimpressive by design — the climb starts here.",
     ),
+    "mlb": dict(
+        model_version="mlb-v1", rung=1,
+        active_feature_builders=["MLB-01", "MLB-02", "MLB-03", "MLB-04", "MLB-05"],
+        notes="Day-1 MLB champion (M7): deliberately-simple Rung-1 box-score "
+              "baseline (runs for/against, win%, run-diff, prior-year carryover), "
+              "market-blind. MLB is low-signal from team stats alone — the starting "
+              "pitcher is the climb.",
+    ),
 }
 
 
-def _build_frame(sport: str, start: int, end: int) -> pd.DataFrame:
+def _build_frame(sport: str, start: int, end: int, feature_cols: list | None = None) -> pd.DataFrame:
     if sport == "nfl":
         from sports.nfl.team_features import build_team_game_frame
         return build_team_game_frame(range(start, end + 1))
-    raise ValueError(f"eval_champion: sport '{sport}' not wired yet (M1 = nfl)")
+    if sport == "mlb":
+        from sports.mlb.team_features import build_team_game_frame
+        # Only pay the per-pitcher SP_ERA backfill when an SP_ERA column is under
+        # test; the box-score / SP_RA ladder builds from the schedule alone.
+        need_era = feature_cols is None or any("SP_ERA" in c for c in feature_cols)
+        return build_team_game_frame(range(start, end + 1), fetch_sp_era=need_era)
+    raise ValueError(f"eval_champion: sport '{sport}' not wired yet (M1=nfl, M7=mlb)")
 
 
 def _pick_holdout(frame: pd.DataFrame, min_frac: float = 0.5) -> int:
@@ -67,7 +81,7 @@ def backtest_feature_set(sport: str, feature_cols: list, *, start: int, end: int
     """Walk-forward backtest of an arbitrary feature set over TRAIN+CV seasons only
     (the final full season is held untouched). Shared by the champion eval and the
     experiment runner so champion + challenger are measured on identical windows."""
-    frame = _build_frame(sport, start, end)
+    frame = _build_frame(sport, start, end, feature_cols)
     frame["season"] = frame["season"].astype(int)
     holdout = _pick_holdout(frame)
     traincv = frame[frame["season"] < holdout].copy()   # final season stays UNTOUCHED
@@ -97,7 +111,7 @@ def _refit_shipped(champ: ChampionConfig, *, start: int, end: int) -> None:
     from config.paths import ARTIFACTS_DIR
     from model_training.validation import walk_forward_train
 
-    frame = _build_frame(champ.sport, start, end)
+    frame = _build_frame(champ.sport, start, end, champ.feature_cols)
     frame["season"] = frame["season"].astype(int)
     X = frame[champ.feature_cols].replace([np.inf, -np.inf], np.nan).fillna(0.0)
     out = ARTIFACTS_DIR / champ.sport / champ.model_version

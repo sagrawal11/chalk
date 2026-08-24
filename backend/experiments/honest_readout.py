@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 def honest_readout(sport: str, *, start: int, end: int) -> dict:
     champ = load_champion(sport)
-    frame = _build_frame(sport, start, end)
+    frame = _build_frame(sport, start, end, champ.feature_cols)
     frame["season"] = frame["season"].astype(int)
     holdout = _pick_holdout(frame)
 

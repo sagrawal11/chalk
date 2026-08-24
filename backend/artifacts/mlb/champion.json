@@ -1,0 +1,37 @@
+{
+  "sport": "mlb",
+  "model_version": "mlb-v1",
+  "rung": 1,
+  "active_feature_builders": [
+    "MLB-01",
+    "MLB-02",
+    "MLB-03",
+    "MLB-04",
+    "MLB-05"
+  ],
+  "feature_cols": [
+    "HOME_OFF",
+    "AWAY_OFF",
+    "HOME_DEF",
+    "AWAY_DEF",
+    "NET_DIFF",
+    "HOME_WINPCT",
+    "AWAY_WINPCT",
+    "HOME_PRIOR_DIFF",
+    "AWAY_PRIOR_DIFF"
+  ],
+  "cumulative_metrics": {
+    "seasons": 7,
+    "games": 15557,
+    "su_acc": 0.5667,
+    "margin_mae": 3.449,
+    "total_mae": 3.564,
+    "winner_logloss": 0.6816,
+    "eval_window": "2018\u20132024",
+    "measured_at": "2026-08-24"
+  },
+  "holdout_season": 2025,
+  "eval_window": "2018\u20132024",
+  "created_at": "2026-08-24",
+  "notes": "Day-1 MLB champion (M7): deliberately-simple Rung-1 box-score baseline (runs for/against, win%, run-diff, prior-year carryover), market-blind. MLB is low-signal from team stats alone \u2014 the starting pitcher is the climb."
+}
