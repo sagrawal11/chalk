@@ -4,8 +4,8 @@ pre-registered roadmap; swaps in the 3-way Poisson eval (backtest.soccer_backtes
 because soccer's outcome (H/D/A) and champion model (parametric Poisson, not a
 LightGBM margin regressor) both differ from the other sports.
 
-Market-blind: a soccer champion is a set of Poisson MODEL PARAMS; the betting line
-is never one of them. The two shared CLIs (eval_champion / run_experiment /
+A soccer champion is a set of Poisson MODEL PARAMS; the betting line is never one
+of them. The two shared CLIs (eval_champion / run_experiment /
 honest_readout) delegate here when --sport soccer, so the UX is identical.
 
     python -m experiments.eval_champion  --sport soccer --seed
@@ -32,8 +32,8 @@ _SEED = dict(
     model_version="soccer-v1", rung=1,
     active_feature_builders=["SOC-01"],
     notes="Day-1 soccer champion (M7): baseline independent-Poisson team-strength "
-          "3-way model (EPL, market-blind). Soccer is the most efficient market of "
-          "all: the widest blind-vs-market gap, and draws make it genuinely 3-way.",
+          "3-way model (EPL). Draws make soccer genuinely 3-way, which is the "
+          "modeling challenge here.",
 )
 
 
@@ -145,7 +145,7 @@ def honest_readout() -> dict:
 def _print_eval(champ: ChampionConfig, res: dict) -> None:
     m = res["metrics"]
     print(f"\n=== SOCCER champion {champ.model_version} (rung {champ.rung}) "
-          f"- market-blind 3-way walk-forward (EPL) ===")
+          f"- 3-way walk-forward (EPL) ===")
     print(f"builders: {', '.join(champ.active_feature_builders)}")
     print(f"params: {champ.model_params}")
     print(f"eval window: {res['eval_window']}   holdout (untouched): {res['holdout_season']}")

@@ -1,4 +1,4 @@
-"""Evaluate a champion's market-blind walk-forward number (M1 harness proof).
+"""Evaluate a champion's walk-forward number (M1 harness proof).
 
 Builds the sport's team-game frame, then runs the EXISTING walk-forward backtest
 (``backtest/team_backtest.walk_forward_backtest``) on the champion's ``feature_cols``
@@ -43,22 +43,22 @@ _SEEDS = {
         model_version="nfl-v1", rung=1,
         active_feature_builders=["NFL-01", "NFL-02", "NFL-03", "NFL-04", "NFL-05"],
         notes="Day-1 NFL champion (M1): deliberately-simple Rung-1 box-score "
-              "baseline, market-blind. Unimpressive by design; the climb starts here.",
+              "baseline. Unimpressive by design; the climb starts here.",
     ),
     "mlb": dict(
         model_version="mlb-v1", rung=1,
         active_feature_builders=["MLB-01", "MLB-02", "MLB-03", "MLB-04", "MLB-05"],
         notes="Day-1 MLB champion (M7): deliberately-simple Rung-1 box-score "
-              "baseline (runs for/against, win%, run-diff, prior-year carryover), "
-              "market-blind. MLB is low-signal from team stats alone; the starting "
+              "baseline (runs for/against, win%, run-diff, prior-year carryover). "
+              "MLB is low-signal from team stats alone; the starting "
               "pitcher is the climb.",
     ),
     "nhl": dict(
         model_version="nhl-v1", rung=1,
         active_feature_builders=["NHL-01", "NHL-02", "NHL-03", "NHL-04", "NHL-05"],
         notes="Day-1 NHL champion (M7): deliberately-simple Rung-1 box-score "
-              "baseline (goals for/against, win%, goal-diff, prior-year carryover), "
-              "market-blind. More team signal than MLB; the starting goalie is the "
+              "baseline (goals for/against, win%, goal-diff, prior-year carryover). "
+              "More team signal than MLB; the starting goalie is the "
               "eventual climb (needs the boxscore endpoint).",
     ),
 }
@@ -137,7 +137,7 @@ def _refit_shipped(champ: ChampionConfig, *, start: int, end: int) -> None:
             meta.get("holdout_resid_std") or np.std(frame[target]))
         joblib.dump({"model": model, "target": target, "sigma": sigma,
                      "feature_cols": champ.feature_cols, "model_version": champ.model_version,
-                     "market_blind": True, "metrics": meta}, out / f"{target}.joblib")
+                     "metrics": meta}, out / f"{target}.joblib")
         print(f"  refit {target}: holdout_mae={ho_mae} best_iter={meta.get('best_iteration')}"
               f" -> {out / f'{target}.joblib'}")
 
@@ -151,7 +151,7 @@ def _seed(sport: str) -> ChampionConfig:
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    ap = argparse.ArgumentParser(description="Evaluate a market-blind champion (walk-forward).")
+    ap = argparse.ArgumentParser(description="Evaluate a champion (walk-forward).")
     ap.add_argument("--sport", default="nfl")
     ap.add_argument("--start", type=int, default=1999)
     ap.add_argument("--end", type=int, default=dt.date.today().year)
@@ -174,7 +174,7 @@ def main() -> None:
     res = evaluate(champ, start=args.start, end=args.end)
     m = res["metrics"]
     print(f"\n=== {champ.sport.upper()} champion {champ.model_version} (rung {champ.rung}) "
-          f"- market-blind walk-forward ===")
+          f"- walk-forward ===")
     print(f"builders: {', '.join(champ.active_feature_builders)}")
     print(f"features ({len(champ.feature_cols)}): {', '.join(champ.feature_cols)}")
     print(f"eval window: {res['eval_window']}   holdout (untouched): {res['holdout_season']}   "

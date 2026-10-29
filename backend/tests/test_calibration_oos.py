@@ -3,8 +3,7 @@
 
 Hermetic: synthetic multi-season team-game frames, no network / no artifacts.
 Verifies (1) the eval-model holds out the LAST season and never trains on it
-(a leakage probe), (2) predictions are returned on the level scale, and (3) the
-NFL market-anchor path reconstructs the level as ``model_residual + anchor``.
+(a leakage probe), and (2) predictions are returned on the level scale.
 """
 import numpy as np
 import pandas as pd
@@ -16,10 +15,7 @@ _FAST_PARAMS = dict(n_estimators=60, learning_rate=0.1, num_leaves=15, min_child
 
 
 def _synth_frame(seasons=("2019", "2020", "2021", "2022"), per_season=200, seed=0):
-    """A few seasons of games with a learnable signal (y_margin ~ NET_DIFF).
-
-    ``anchor`` is a deliberately biased proxy of y_margin so we can prove the
-    anchored path adds the anchor back (level != raw model output)."""
+    """A few seasons of games with a learnable signal (y_margin ~ NET_DIFF)."""
     rng = np.random.default_rng(seed)
     rows = []
     day = pd.Timestamp("2019-01-01")
@@ -33,8 +29,6 @@ def _synth_frame(seasons=("2019", "2020", "2021", "2022"), per_season=200, seed=
                 "season": s, "game_date": day,
                 "NET_DIFF": net, "PACE_SUM": pace,
                 "y_margin": y_margin, "y_total": y_total,
-                # biased anchor: y minus a big constant so level reconstruction is testable
-                "MARKET_SPREAD": y_margin - 40.0,
             })
             day += pd.Timedelta(days=1)
     return pd.DataFrame(rows)
@@ -71,20 +65,6 @@ def test_holdout_season_never_trained_on():
     # If the holdout had leaked into training, mu would be pulled toward 500.
     assert mu.mean() < 100.0                              # nowhere near the injected 500
     assert abs(mu.mean()) < 60.0                          # stays in the prior-season margin range
-
-
-def test_anchor_path_reconstructs_level():
-    """NFL path: the model learns ``y - anchor``; the returned mu must be the
-    LEVEL (mu = model_residual + anchor), so it tracks y_margin, not the residual."""
-    df = _synth_frame()
-    hs, mu, y_true, _ = _oos_holdout_predictions(
-        df, ["NET_DIFF", "PACE_SUM"], "y_margin", df["season"], df["game_date"],
-        _FAST_PARAMS, anchor_col="MARKET_SPREAD")
-    # anchor = y - 40, and residual (=+40) is nearly constant => level ~ y_margin.
-    assert float(np.mean(np.abs(mu - y_true))) < 8.0     # good level fit
-    # Sanity: the reconstructed level is ~40 above the anchor it was built from.
-    anchor = df.loc[df["season"] == hs, "MARKET_SPREAD"].to_numpy()
-    assert float(np.mean(mu - anchor)) == pytest.approx(40.0, abs=6.0)
 
 
 def test_requires_two_seasons():

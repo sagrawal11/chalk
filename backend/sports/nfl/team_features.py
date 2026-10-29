@@ -18,23 +18,19 @@ import pandas as pd
 from sports.nfl.data import game_context, load_team_games
 
 _ORDER = ["OFF", "DEF", "WINPCT", "FORM", "REST", "PRIOR_DIFF"]
-# Game-level context features (market line, weather, division), all pregame-known.
-MARKET_COLS = ["MARKET_SPREAD", "MARKET_TOTAL"]
+# Game-level context features (weather, division), all pregame-known.
 WEATHER_COLS = ["IS_DOME", "WIND", "TEMP"]
 CTX_COLS = ["DIV_GAME"]
-GAME_COLS = MARKET_COLS + WEATHER_COLS + CTX_COLS
+GAME_COLS = WEATHER_COLS + CTX_COLS
 _TEAM_COLS = [f"HOME_{k}" for k in _ORDER] + [f"AWAY_{k}" for k in _ORDER] + ["NET_DIFF", "REST_DIFF"]
+# The score model learns the absolute margin/total from team + weather + context
+# signal only; no betting line is ever an input.
 TEAM_FEATURE_COLS: List[str] = _TEAM_COLS + GAME_COLS
-# The score model ANCHORS on the market line (efficient market = accuracy ceiling)
-# and learns only the residual from team/weather/context signal. Anchor columns
-# (MARKET_SPREAD -> margin, MARKET_TOTAL -> total) are NOT residual features.
-RESIDUAL_FEATURE_COLS: List[str] = _TEAM_COLS + WEATHER_COLS + CTX_COLS
-MARGIN_ANCHOR, TOTAL_ANCHOR = "MARKET_SPREAD", "MARKET_TOTAL"
 _FILL = {"OFF": 22.0, "DEF": 22.0, "WINPCT": 0.5, "FORM": 0.0, "REST": 7.0, "PRIOR_DIFF": 0.0}
-_GAME_FILL = {"MARKET_SPREAD": 0.0, "MARKET_TOTAL": 44.0, "IS_DOME": 0, "WIND": 5.0, "TEMP": 60.0, "DIV_GAME": 0}
+_GAME_FILL = {"IS_DOME": 0, "WIND": 5.0, "TEMP": 60.0, "DIV_GAME": 0}
 # Opponent-adjusted OFF/DEF (Rung 3, NFL-10/11). Kept as SEPARATE columns so
-# TEAM_FEATURE_COLS / RESIDUAL_FEATURE_COLS (the existing trainer's set) are
-# unchanged; the experiment harness toggles these via explicit feature_cols.
+# TEAM_FEATURE_COLS (the base trainer's set) is unchanged; the experiment
+# harness toggles these via explicit feature_cols.
 _OPP_ADJ = ["OFF_ADJ", "DEF_ADJ"]
 OPP_ADJ_COLS = [f"HOME_{k}" for k in _OPP_ADJ] + [f"AWAY_{k}" for k in _OPP_ADJ]
 
@@ -134,7 +130,7 @@ def matchup_features(home: str, away: str, latest: Dict[str, Dict[str, float]],
     h = latest.get(home, dict(_FILL))
     a = latest.get(away, dict(_FILL))
     row = _assemble(h, a)
-    ctx = {**_GAME_FILL, **(context or {})}  # neutral game context unless caller supplies odds/weather
+    ctx = {**_GAME_FILL, **(context or {})}  # neutral game context unless caller supplies weather/context
     row.update({k: ctx[k] for k in GAME_COLS})
     return pd.DataFrame([row])[TEAM_FEATURE_COLS]
 

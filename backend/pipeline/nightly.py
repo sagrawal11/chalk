@@ -143,13 +143,6 @@ def step_collect_injuries(dry_run: bool) -> None:
     _run(_python(str(BACKEND / "data_collection" / "collect_injuries.py")), dry_run)
 
 
-def step_collect_odds(dry_run: bool) -> None:
-    """Snapshot today's free odds (PrizePicks live props + any configured book) into
-    the live store + append-only history. Non-critical: a scraper going down just
-    yields an empty snapshot, and yesterday's history stays intact."""
-    _run(_python(str(BACKEND / "odds" / "collect_odds.py"), "--sport", "nba"), dry_run)
-
-
 def step_fit_archetypes(dry_run: bool, max_players: int | None) -> None:
     cmd = _python(str(BACKEND / "archetype_engine.py"))
     if max_players:
@@ -212,8 +205,6 @@ def _sport_trainers(max_players: int | None) -> list[tuple[str, str, list[str]]]
     return [
         ("train_nba_player_v3", "train_nba_player_v3.py", mp),
         ("train_nfl_team", "train_nfl_team_model.py", []),
-        # Market-blind NFL model (absolute target, no line): the brand default path.
-        ("train_nfl_team_blind", "train_nfl_team_model.py", ["--blind"]),
         ("train_nfl_player", "train_nfl_player_model.py", []),
         ("train_mlb_team", "train_mlb_team_model.py", []),
         ("train_mlb_pitcher", "train_mlb_pitcher_model.py", []),
@@ -396,7 +387,6 @@ def main() -> int:
         ("team_stats", lambda: step_team_stats(args.dry_run), False, 0),
         ("collect_dvp", lambda: step_collect_dvp(args.dry_run), False, 0),
         ("collect_injuries", lambda: step_collect_injuries(args.dry_run), False, 1),
-        ("collect_odds", lambda: step_collect_odds(args.dry_run), False, 1),
     ]
     if args.fit_archetypes:
         plan.append(("fit_archetypes", lambda: step_fit_archetypes(args.dry_run, args.max_players), False, 0))

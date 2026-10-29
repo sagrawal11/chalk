@@ -1,6 +1,6 @@
 """NHL fan-out into the feature-experiment harness (M7). Hermetic (no NHL API).
 
-Covers the NHL builder registry (market-blind), full frame-column coverage, the
+Covers the NHL builder registry (team features only), full frame-column coverage, the
 pre-registered roadmap queue, the seed, the shared walk-forward on a synthetic NHL
 frame (two-year season labels), and frame assembly from a synthetic team-game frame.
 The real data-dependent run is exercised against the cached/live NHL API in the M7 demo.
@@ -12,11 +12,11 @@ from experiments import roadmap
 from experiments.champion import FEATURE_BUILDERS, ChampionConfig, resolve_feature_cols
 
 
-def test_nhl_rung1_resolves_and_is_market_blind():
+def test_nhl_rung1_resolves_without_market_cols():
     cols = resolve_feature_cols("nhl", ["NHL-01", "NHL-02", "NHL-03", "NHL-04", "NHL-05"])
     assert cols == ["HOME_OFF", "AWAY_OFF", "HOME_DEF", "AWAY_DEF", "NET_DIFF",
                     "HOME_WINPCT", "AWAY_WINPCT", "HOME_PRIOR_DIFF", "AWAY_PRIOR_DIFF"]
-    assert not any("MARKET" in c for c in cols)  # champion is market-blind
+    assert not any("MARKET" in c for c in cols)  # no betting line in features
 
 
 def test_nhl_form_and_rest_builders_resolve():

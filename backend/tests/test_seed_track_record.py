@@ -1,5 +1,5 @@
-"""Seed writer: market-blind walk-forward predictions -> graded, ROI-ineligible ledger
-rows. Hermetic (synthetic preds + tmp ledger)."""
+"""Seed writer: walk-forward predictions -> graded results ledger rows.
+Hermetic (synthetic preds + tmp ledger)."""
 import pandas as pd
 import pytest
 

@@ -1,12 +1,12 @@
 """Walk-forward 3-way (1X2) backtest for the soccer Poisson champion.
 
 Soccer breaks the binary margin-sign harness: a draw is a real outcome (~25% of
-matches), and the market-blind champion is the parametric Poisson team-strength
-model (``sports.soccer.team_features``), not a LightGBM margin regressor. So soccer
+matches), and the champion is the parametric Poisson team-strength model
+(``sports.soccer.team_features``), not a LightGBM margin regressor. So soccer
 gets its own honest eval here: for each match, predict 1X2 from that team's
 PRIOR-only ratings (leakage-safe within season; optional cross-season prior), then
 grade three-way log-loss (primary), three-way accuracy, total-goals MAE, and draw
-calibration. Still market-blind: the betting line is never an input.
+calibration. The betting line is never an input.
 
 Reused by ``experiments.soccer`` (champion/challenger) exactly the way the binary
 sports reuse ``team_backtest.walk_forward_backtest``.
@@ -47,7 +47,7 @@ def three_way_logloss(outcomes, p_home, p_draw, p_away) -> float:
 
 def predict_matches(matches: pd.DataFrame, params: Optional[dict] = None) -> pd.DataFrame:
     """Attach 1X2 probs + predicted total to each gated match, from prior-only
-    ratings built with the given params (market-blind)."""
+    ratings built with the given params (team ratings only)."""
     p = {**BASELINE_PARAMS, **(params or {})}
     df = add_team_features(matches, roll=int(p["roll"]), cross_season=bool(p["cross_season"]))
     if df.empty:

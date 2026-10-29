@@ -22,15 +22,10 @@ SOCCER_DATA_DIR = DATA_DIR / "soccer"
 AUXILIARY_DIR = DATA_DIR / "auxiliary"
 PROCESSED_DIR = DATA_DIR / "processed"
 ARTIFACTS_DIR = BACKEND_ROOT / "models" / "artifacts"
-# Free-odds ingestion (Phase 2): daily live snapshot + append-only history.
-ODDS_DIR = DATA_DIR / "odds"
-ODDS_LIVE_DIR = ODDS_DIR / "live"
-ODDS_HISTORY_PARQUET = ODDS_DIR / "history" / "odds_history.parquet"
 # Rendered shareable content (Phase 4): content_output/{date}/*.png + captions.
 CONTENT_OUTPUT_DIR = BACKEND_ROOT / "content_output"
 
-for d in (TEAM_STATS_DIR, AUXILIARY_DIR, PROCESSED_DIR, ARTIFACTS_DIR, ADVANCED_DATA_DIR,
-          ODDS_LIVE_DIR, ODDS_HISTORY_PARQUET.parent):
+for d in (TEAM_STATS_DIR, AUXILIARY_DIR, PROCESSED_DIR, ARTIFACTS_DIR, ADVANCED_DATA_DIR):
     d.mkdir(parents=True, exist_ok=True)
 
 TEAM_STATS_CSV = TEAM_STATS_DIR / "all_team_stats.csv"

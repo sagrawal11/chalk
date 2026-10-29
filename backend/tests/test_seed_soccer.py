@@ -1,10 +1,9 @@
 """Soccer track-record seeding: SEASON-level leakage-safe walk-forward for the
-Poisson (Dixon-Coles-lite) model -> graded, ROI-ineligible ledger rows.
+Poisson (Dixon-Coles-lite) model -> graded results ledger rows.
 
 Hermetic: a synthetic EPL-shaped matches frame is INJECTED (no football-data.co.uk
-network). Verifies (a) rows are produced, (b) the market-blind winner is the model's
-favored side and NEVER a draw, (c) grading is correct including draw == LOSS, and
-(d) rows are ROI-ineligible (odds_american None -> units NaN)."""
+network). Verifies (a) rows are produced, (b) the predicted winner is the model's
+favored side and NEVER a draw, and (c) grading is correct including draw == LOSS."""
 import pandas as pd
 import pytest
 

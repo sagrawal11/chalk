@@ -15,7 +15,7 @@ def test_nfl_rung1_resolves_expected_cols():
     cols = resolve_feature_cols("nfl", ["NFL-01", "NFL-02", "NFL-03", "NFL-04", "NFL-05"])
     assert cols == ["HOME_OFF", "AWAY_OFF", "HOME_DEF", "AWAY_DEF", "NET_DIFF",
                     "HOME_WINPCT", "AWAY_WINPCT", "HOME_PRIOR_DIFF", "AWAY_PRIOR_DIFF"]
-    assert not any("MARKET" in c for c in cols)  # champion is market-blind
+    assert not any("MARKET" in c for c in cols)  # no betting line in features
 
 
 def test_unknown_builder_raises():
