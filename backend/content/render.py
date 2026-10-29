@@ -195,9 +195,9 @@ def render_record_card(record: Dict[str, Any], out_dir: Path, size=B.FEED, title
     _center(draw, W / 2, 520, f"{units:+.1f} UNITS", _font(70, True), B.WIN if units >= 0 else B.LOSE)
 
     wp = record.get("win_pct")
-    wp_txt = f"{wp * 100:.0f}%" if wp is not None else "—"
+    wp_txt = f"{wp * 100:.0f}%" if wp is not None else "-"
     streak = record.get("streak", 0)
-    streak_txt = (f"W{streak}" if streak > 0 else f"L{-streak}") if streak else "—"
+    streak_txt = (f"W{streak}" if streak > 0 else f"L{-streak}") if streak else "-"
     _center(draw, W / 2, 660, f"Win rate {wp_txt}    Streak {streak_txt}    ({record.get('n_picks', 0)} picks)", _font(36, True), B.TEXT)
     _footer(draw, size)
 
@@ -214,20 +214,20 @@ def caption_for_score(gp) -> str:
         p_away = float(gp.p_away_win if gp.p_away_win is not None else 1.0 - p_home)
         pick, pp = max([(gp.home, p_home), ("Draw", p_draw), (gp.away, p_away)], key=lambda t: t[1])
         pick_txt = "a draw" if pick == "Draw" else f"{pick} to win"
-        return (f"{gp.home} vs {gp.away} — our model projects "
+        return (f"{gp.home} vs {gp.away}, our model projects "
                 f"{gp.pred_home_pts:.1f}-{gp.pred_away_pts:.1f}, {pick_txt} ({pp * 100:.0f}%). "
                 f"Home {p_home * 100:.0f}% / Draw {p_draw * 100:.0f}% / Away {p_away * 100:.0f}%.\n\n"
                 f"{B.DISCLAIMER}\n\n{B.hashtags_for(gp.sport)}")
     home_wins = gp.pred_home_pts >= gp.pred_away_pts
     winner = gp.home if home_wins else gp.away
     wp = gp.p_home_win if home_wins else (1 - gp.p_home_win)
-    return (f"{gp.away} @ {gp.home} — our model projects "
+    return (f"{gp.away} @ {gp.home}, our model projects "
             f"{gp.pred_away_pts:.0f}-{gp.pred_home_pts:.0f}, {winner} to win ({wp * 100:.0f}%).\n\n"
             f"{B.DISCLAIMER}\n\n{B.hashtags_for(gp.sport)}")
 
 
 def caption_for_pick(pick) -> str:
-    return (f"BEST BET: {_describe_pick(pick)} — {pick.edge * 100:.1f}% edge "
+    return (f"BEST BET: {_describe_pick(pick)}, {pick.edge * 100:.1f}% edge "
             f"(model {pick.model_prob * 100:.0f}% vs market {pick.fair_prob * 100:.0f}%).\n\n"
             f"{B.DISCLAIMER}\n\n{B.hashtags_for(getattr(pick, 'sport', 'nba'))}")
 
@@ -304,7 +304,7 @@ def caption_for_props(player_name: str, projections: Dict[str, float], matchup: 
     hero = _present_stats(projections, sport)[:3]
     line = " / ".join(f"{val:.{dec}f} {lbl}" for lbl, val, dec in hero)
     mt = f" {matchup}" if matchup else ""
-    return f"{player_name}{mt} — we project {line}.\n\n{B.DISCLAIMER}\n\n{B.hashtags_for(sport)}"
+    return f"{player_name}{mt}, we project {line}.\n\n{B.DISCLAIMER}\n\n{B.hashtags_for(sport)}"
 
 
 # --- orchestration ---

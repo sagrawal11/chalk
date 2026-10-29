@@ -1,12 +1,12 @@
-"""Reel slate seam — the Python↔Remotion wiring for the daily predictions reel.
+"""Reel slate seam: the Python↔Remotion wiring for the daily predictions reel.
 
 `reel/render-reel.mjs` renders a 1080×1920 MP4 from a *slate JSON* (see
 `reel/SLATE_CONTRACT.md`, whose single source of truth is the validator inside
 render-reel.mjs). This module is the Python side of that seam:
 
-  * ``build_slate(...)``  — assemble a day's data into the contract shape.
-  * ``write_slate(...)``  — serialize it to JSON.
-  * ``render_reel(path)`` — invoke render-reel.mjs on a written slate.
+  * ``build_slate(...)``  : assemble a day's data into the contract shape.
+  * ``write_slate(...)``  : serialize it to JSON.
+  * ``render_reel(path)`` : invoke render-reel.mjs on a written slate.
 
 M0 lands the *seam* (contract + writer + invoker). Assembling ``games`` from real
 market-blind predictions + the graded track record is wired into

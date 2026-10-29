@@ -23,7 +23,7 @@ def _fill(tpl: str, tokens: Dict[str, Any]) -> str:
 
 def build_score_html(p: Dict[str, Any], *, handle: str = "@playthechalk") -> str:
     """Fill the score card from a GamePrediction-shaped dict. The winner's numeral
-    renders red, the loser's grey — regardless of home/away."""
+    renders red, the loser's grey, regardless of home/away."""
     home_win = p["winner_side"] == "home"
     winner = p["home_name"] if home_win else p["away_name"]
     conf = round(float(p["confidence"]) * 100)
@@ -86,7 +86,7 @@ _SAMPLE_RESULTS = {
 
 def main() -> None:
     import argparse
-    ap = argparse.ArgumentParser(description="Render a score/results card (HTML) — representative draft.")
+    ap = argparse.ArgumentParser(description="Render a score/results card (HTML), representative draft.")
     ap.add_argument("--kind", required=True, choices=["score", "results"])
     ap.add_argument("--out", required=True)
     a = ap.parse_args()

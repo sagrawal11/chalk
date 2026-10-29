@@ -2,7 +2,7 @@
 
 Identity/voice tokens (name, handle, accent color, disclaimer, hashtags) are
 configurable without touching code:
-  1. edit ``content/brand.json`` (optional override — absent by default), or
+  1. edit ``content/brand.json`` (optional override, absent by default), or
   2. set env vars ``BRAND_BRAND`` / ``BRAND_HANDLE`` / ``BRAND_ACCENT_HEX`` /
      ``BRAND_DISCLAIMER`` / ``BRAND_HASHTAGS`` (env wins, handy for CI).
 The dark palette, fonts, and canvas sizes are fixed design defaults.
@@ -22,7 +22,7 @@ _DEFAULTS = {
     # Locked "Editorial Terminal" red accent (CONTENT_SPEC §2). The full
     # cream/ink palette port lands in M3; this identity token is correct now.
     "ACCENT_HEX": "#D6482B",
-    # Copy law #1 (CONTENT_SPEC §1): "a research project" — never "entertainment".
+    # Copy law #1 (CONTENT_SPEC §1): "a research project", never "entertainment".
     "DISCLAIMER": "A research project. Not betting advice.",
     "HASHTAGS": "#CHALK",
 }
