@@ -8,7 +8,7 @@ Typical schedule (after games finish, e.g. 1:30 AM ET):
 Default (no extra flags):
   - Refresh Kaggle team data + advanced SQLite, scrape new player logs.
   - Rebuild team stats parquets, DvP table, injuries.
-  - Warm the Redis baseline cache and upload the training bundle to R2.
+  - Upload the training bundle to R2.
 
 Optional heavy steps:
   --rebuild-features   Rebuild *_features.parquet for every active player
@@ -227,24 +227,6 @@ def step_train_sport(script: str, extra_args: list[str], dry_run: bool) -> None:
     _run(_python(str(BACKEND / "model_training" / script), *extra_args), dry_run)
 
 
-def step_cache_baselines(dry_run: bool) -> None:
-    _run(_python(str(BACKEND / "pipeline" / "cache_baselines.py")), dry_run)
-
-
-def step_daily_content(dry_run: bool) -> None:
-    """Generate today's shareable cards + review page across ALL five sports, and
-    grade yesterday's locked slates against final scores. Runs after data refresh +
-    caching so the models and odds snapshot are fresh. `--sport all` iterates every
-    registered sport best-effort (an out-of-season or feed-down sport is skipped, not
-    fatal)."""
-    from datetime import timedelta
-
-    today = datetime.now().strftime("%Y-%m-%d")
-    yday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
-    _run(_python(str(BACKEND / "pipeline" / "daily_content.py"),
-                 "--sport", "all", "--date", today, "--grade-date", yday), dry_run)
-
-
 def step_upload_artifacts(dry_run: bool) -> None:
     """Upload the cleaned ML dataset to R2 (~2.8 GB)."""
     if dry_run:
@@ -431,8 +413,6 @@ def main() -> int:
         plan.append(("rebuild_features", lambda: step_rebuild_all_features(args.dry_run, args.max_players), True, 0))
     if args.retrain_global:
         plan.append(("train", lambda: step_train_global(args.dry_run, args.max_players), True, 0))
-    plan.append(("cache_baselines", lambda: step_cache_baselines(args.dry_run), True, 1))
-    plan.append(("daily_content", lambda: step_daily_content(args.dry_run), False, 0))
     plan.append(("upload_artifacts", lambda: step_upload_artifacts(args.dry_run), False, 2))
 
     results: list[StepResult] = []

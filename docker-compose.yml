@@ -1,10 +1,10 @@
 name: nba-betting
 
-# Local dev stack (Hybrid): Compose owns the stateful backing services + the Flask
-# backend (pinned to Python 3.10). Vite runs natively on the host (see `make frontend`).
+# Local dev stack: redis + minio (R2 stand-in) backing services, plus a pinned
+# Python 3.10 backend dev container for shell/seed tasks. No web API or frontend.
 
 services:
-  # ── Cache (local stand-in for Upstash; app.py reads REDIS_URL) ──
+  # ── Cache (local stand-in for Upstash) ──
   redis:
     image: redis:7-alpine
     command: ["redis-server", "--appendonly", "yes"]
@@ -49,13 +49,13 @@ services:
       echo 'minio bucket ready: '$$R2_BUCKET_NAME;
       "
 
-  # ── Flask API (Python 3.10 image; code + data bind-mounted) ──
+  # ── Backend dev container (Python 3.10 image; code + data bind-mounted). Idles so
+  # `make backend-shell` / `make seed-r2` can exec into it. No web API (deferred). ──
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    ports:
-      - "5001:5001"
+    command: ["sleep", "infinity"]
     env_file:
       - .env
     depends_on:

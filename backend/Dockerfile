@@ -14,13 +14,9 @@ RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir -r config/requirements.txt
 
 ENV PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app/backend \
-    FLASK_APP=web.app
-
-EXPOSE 5001
+    PYTHONPATH=/app/backend
 
 # Code, data, and model artifacts are bind-mounted by docker-compose at runtime,
-# so the image stays small and edits hot-reload.
-# We use `flask run` (not `python web/app.py`) to bind 0.0.0.0 without editing
-# app.py, which hardcodes host=127.0.0.1 (backlog 10.1).
-CMD ["flask", "run", "--host=0.0.0.0", "--port=5001", "--debug"]
+# so the image stays small. The image runs the test suite (`make test` overrides
+# the command with pytest) and serves as an idle dev container; no web API.
+CMD ["sleep", "infinity"]

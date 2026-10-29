@@ -4,7 +4,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-echo "==> NBA local dev setup"
+echo "==> CHALK local dev setup"
 
 # 1. Ensure .env exists (compose requires it).
 if [ ! -f .env ]; then
@@ -27,23 +27,13 @@ docker compose build
 echo "==> Starting services (redis, minio, minio-init, backend)..."
 docker compose up -d
 
-# 4. Wait for the backend to answer (any HTTP response = process is up).
-echo "==> Waiting for backend on http://localhost:5001 ..."
-for _ in $(seq 1 45); do
-  if curl -s -o /dev/null http://localhost:5001/ 2>/dev/null; then
-    echo "    backend is up."
-    break
-  fi
-  sleep 2
-done
-
 cat <<'EOF'
 
-==> Services are up. Next steps:
+==> Services are up (backend is an idle dev container; no web API). Next steps:
 
-  make seed-r2     # one-time: push local data + model artifacts into MinIO
-  make cache       # warm Redis baselines (your original failing command)
-  make frontend    # start the Vite dev server on http://localhost:8080
+  make test            # run the backend suite in the pinned Python 3.10 image
+  make seed-r2         # one-time: push local data + model artifacts into MinIO
+  make backend-shell   # shell into the backend container
 
 Diagnostics:
   make ps          # service status
