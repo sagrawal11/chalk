@@ -1,6 +1,5 @@
-"""Aggregate the graded ledger into the public record: win%, units, ROI, and the
-current streak, sliceable by sport / market / time window. Feeds both the
-track-record content card and the control-room dashboard.
+"""Aggregate the graded ledger into the public record: straight-up win%, the current
+streak, and predicted-score MAE, sliceable by sport / time window.
 """
 from __future__ import annotations
 
@@ -9,20 +8,26 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 
+def score_mae(ledger: pd.DataFrame) -> Optional[float]:
+    """Mean absolute error of the predicted final scores, from the per-side score-error
+    columns (``home_pts_err``/``away_pts_err``). None when those columns are absent."""
+    if ledger is None or ledger.empty:
+        return None
+    cols = [c for c in ("home_pts_err", "away_pts_err") if c in ledger.columns]
+    if not cols:
+        return None
+    errs = pd.concat([ledger[c] for c in cols], ignore_index=True).dropna()
+    return round(float(errs.abs().mean()), 3) if len(errs) else None
+
+
 def _agg(g: pd.DataFrame) -> pd.Series:
     wins = int((g["result"] == "win").sum())
     losses = int((g["result"] == "loss").sum())
-    pushes = int((g["result"] == "push").sum())
     settled = wins + losses
-    priced = g[g["units"].notna()]           # only genuinely-priced picks count for ROI
-    roi_n = int(len(priced))
-    units = float(priced["units"].sum())
     return pd.Series({
-        "n": int(len(g)), "wins": wins, "losses": losses, "pushes": pushes,
+        "n": int(len(g)), "wins": wins, "losses": losses,
         "win_pct": (wins / settled if settled else float("nan")),
-        "units": round(units, 3),
-        "roi_eligible_n": roi_n,
-        "roi": (round(units / roi_n, 4) if roi_n else float("nan")),
+        "score_mae": score_mae(g),
     })
 
 
@@ -41,7 +46,7 @@ def summarize(ledger: pd.DataFrame, group_cols: Optional[List[str]] = None) -> p
 
 
 def current_streak(ledger: pd.DataFrame) -> int:
-    """+N win streak / -N loss streak over settled (non-push) picks, most-recent first."""
+    """+N win streak / -N loss streak over graded games, most-recent first."""
     s = ledger[ledger["result"].isin(["win", "loss"])].sort_values("game_date")
     streak = 0
     for r in reversed(s["result"].tolist()):
@@ -57,39 +62,16 @@ def current_streak(ledger: pd.DataFrame) -> int:
 
 
 def headline(ledger: pd.DataFrame) -> Dict[str, Any]:
-    """One-glance record for content ('22-8, 64% SU'). Winner accuracy is the hero and
-    counts every graded pick; ROI (units) is computed ONLY over genuinely-priced picks
-    (``roi_eligible_n``), so an all-unpriced market-blind ledger honestly reports 0u / 0
-    eligible ('accruing') rather than a fabricated number."""
+    """One-glance record for content ('22-8, 64% SU') plus predicted-score MAE."""
     if ledger is None or ledger.empty:
-        return {"record": "0-0", "units": 0.0, "roi": 0.0, "roi_eligible_n": 0,
-                "win_pct": None, "streak": 0, "n_picks": 0}
+        return {"record": "0-0", "win_pct": None, "streak": 0, "n": 0, "score_mae": None}
     wins = int((ledger["result"] == "win").sum())
     losses = int((ledger["result"] == "loss").sum())
-    pushes = int((ledger["result"] == "push").sum())
     settled = wins + losses
-    priced = ledger[ledger["units"].notna()]
-    roi_n = int(len(priced))
-    units = round(float(priced["units"].sum()), 2)
     return {
-        "record": f"{wins}-{losses}" + (f"-{pushes}" if pushes else ""),
-        "units": units,
-        "roi": round(units / roi_n, 4) if roi_n else 0.0,
-        "roi_eligible_n": roi_n,
+        "record": f"{wins}-{losses}",
         "win_pct": round(wins / settled, 4) if settled else None,
         "streak": current_streak(ledger),
-        "n_picks": int(len(ledger)),
+        "n": int(len(ledger)),
+        "score_mae": score_mae(ledger),
     }
-
-
-def score_mae(ledger: pd.DataFrame) -> Optional[float]:
-    """Mean absolute error of the predicted final scores, when the ledger carries
-    per-pick score errors (seed/backtest rows write ``home_pts_err``/``away_pts_err``).
-    Returns None when those columns are absent (e.g. odds-only rows)."""
-    if ledger is None or ledger.empty:
-        return None
-    cols = [c for c in ("home_pts_err", "away_pts_err") if c in ledger.columns]
-    if not cols:
-        return None
-    errs = pd.concat([ledger[c] for c in cols], ignore_index=True).dropna()
-    return round(float(errs.abs().mean()), 3) if len(errs) else None

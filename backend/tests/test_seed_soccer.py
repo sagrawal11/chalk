@@ -44,11 +44,8 @@ def test_build_soccer_seed_rows_grades_and_is_roi_ineligible():
     # Only 2024 is predicted (2023 has no prior season); all three fixtures score.
     assert len(rows) == 3
     assert (rows["sport"] == "soccer").all()
-    assert (rows["market_family"] == "moneyline").all()
     assert (rows["side"] == "home").all()             # Strong favored; NEVER a draw
     assert (rows["subject"] == "Strong").all()
-    assert rows["odds_american"].isna().all()         # market-blind: no price
-    assert rows["units"].isna().all()                 # -> ROI-ineligible
     assert (rows["source"] == "seed_backtest").all()
     # win / loss(upset) / loss(draw): a draw grades as a LOSS for the picked side.
     assert list(rows["result"]) == ["win", "loss", "loss"]
@@ -79,6 +76,4 @@ def test_write_soccer_seed_headline_is_accuracy_only(tmp_path, monkeypatch):
     h = headline(led)
     assert h["record"] == "1-2"                       # 1 win, 2 losses (one is the draw)
     assert h["win_pct"] == pytest.approx(1 / 3, abs=1e-3)
-    assert h["roi_eligible_n"] == 0                    # nothing priced -> ROI n/a
-    assert h["units"] == 0.0
     assert score_mae(led) is not None                  # predicted-score error available

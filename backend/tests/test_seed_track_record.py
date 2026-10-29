@@ -28,9 +28,8 @@ def _preds():
 def test_build_seed_rows_grades_and_is_roi_ineligible():
     rows = build_seed_rows(_preds())
     assert len(rows) == 3
-    assert rows["odds_american"].isna().all()          # market-blind: no price
-    assert rows["units"].isna().all()                  # -> ROI-ineligible
     assert (rows["source"] == "seed_backtest").all()
+    assert {"home", "away"} <= set(rows.columns)
     assert {"home_pts_err", "away_pts_err"} <= set(rows.columns)
     r0, r1, r2 = rows.iloc[0], rows.iloc[1], rows.iloc[2]
     assert r0["side"] == "home" and r0["subject"] == "LAL" and r0["result"] == "win"
@@ -45,6 +44,4 @@ def test_headline_over_seed_is_accuracy_only(tmp_path, monkeypatch):
     h = headline(led)
     assert h["record"] == "2-1"
     assert h["win_pct"] == pytest.approx(0.6667, abs=1e-3)
-    assert h["roi_eligible_n"] == 0                    # nothing priced -> ROI n/a
-    assert h["units"] == 0.0
     assert score_mae(led) is not None                  # predicted-score error available
