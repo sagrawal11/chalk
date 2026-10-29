@@ -1,5 +1,5 @@
-"""Serve NFL team-market predictions (predicted score + win/total probs) from the
-trained margin & total normals, the NFL analog of models.team_predictor. The model
+"""Serve NFL team predictions (predicted score + win prob) from the trained
+margin & total normals, the NFL analog of models.team_predictor. The model
 predicts absolute margin/total from team features (no betting line)."""
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ from sports.nfl.teams import canonical_team
 
 logger = logging.getLogger(__name__)
 # Absolute-target (line-free) team model.
-NFL_TEAM_MODEL_DIR = ARTIFACTS_DIR / "nfl_team_blind"
+NFL_TEAM_MODEL_DIR = ARTIFACTS_DIR / "nfl_team"
 
 
 class NFLTeamPredictor:

@@ -76,7 +76,6 @@ sports:
       #      cached schedule frame; wired in a later phase: see docs/FEATURE_ROADMAP.md) ----
       - {id: NFL-07, rung: 2, name: Recency-weighted OFF/DEF (EWMA), builders: [NFL-07], act: 1, status: needs_builder}
       - {id: NFL-19, rung: 5, name: Offensive EPA/play (needs PBP), builders: [NFL-19], act: 1, status: needs_builder}
-      - {id: NFL-45, rung: 8, name: Market-anchor residual & CLV probe, builders: [NFL-45], act: probe, status: needs_builder}
 
   mlb:
     baseline_version: mlb-v1   # Rung-1 box-score champion (M7)

@@ -1,11 +1,10 @@
 """Walk-forward team backtest (backend/backtest/team_backtest.py). Hermetic:
 synthetic frame with a learnable margin signal; asserts OOS winner accuracy beats
-a coin flip and the odds-grading path works."""
+a coin flip."""
 import numpy as np
 import pandas as pd
 import pytest
 
-from predictions.schema import make_game_key
 from sports.nba.team_features import TEAM_FEATURE_COLS
 
 
@@ -40,19 +39,3 @@ def test_walk_forward_beats_coin_flip():
     s = summarize(bt)
     assert s["su_acc"] > 0.6          # a real signal must beat 0.5 out-of-sample
     assert s["games"] > 0
-
-
-def test_market_grading_path():
-    pytest.importorskip("lightgbm")
-    from backtest.team_backtest import summarize, walk_forward_backtest
-
-    fr = _frame()
-    odds = {}
-    for _, r in fr.iterrows():
-        gk = make_game_key("nba", str(r["game_date"])[:10], r["away"], r["home"])
-        odds[gk] = {"spread_home": -3.5, "total": 220.0}
-
-    bt = walk_forward_backtest(fr, min_train_seasons=2, odds=odds, params={"n_estimators": 80})
-    assert "ats_pct" in bt.columns and bt["market_games"].sum() > 0
-    s = summarize(bt)
-    assert 0.0 <= s["ats_pct"] <= 1.0 and 0.0 <= s["ou_pct"] <= 1.0

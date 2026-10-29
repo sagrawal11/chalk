@@ -15,10 +15,9 @@ its honest holdout estimate, and score THAT on the untouched holdout season.
 The resulting numbers are (as expected) slightly worse than the old in-sample
 ones; that gap is the optimism we were previously hiding.
 
-Sport-agnostic: ``--sport nba`` scores the level-predicting NBA team model
-(``sports.nba.team_features``); ``--sport nfl`` scores the market-anchored NFL
-team model (``sports.nfl.team_features``), where the model learns the residual
-from the closing line and the level is reconstructed as ``pred + anchor``.
+Sport-agnostic: ``--sport nba`` and ``--sport nfl`` score the level-predicting
+team model for that sport (``sports.<sport>.team_features``); both learn the
+absolute margin/total from team features only (no betting line).
 """
 from __future__ import annotations
 
@@ -28,7 +27,7 @@ import logging
 import sys
 from pathlib import Path
 from statistics import NormalDist
-from typing import Any, Dict, List, Optional, Sequence, Tuple
+from typing import Any, Dict, List, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
@@ -115,15 +114,12 @@ def _oos_holdout_predictions(
     seasons: pd.Series,
     dates: pd.Series,
     params: Dict[str, Any],
-    anchor_col: Optional[str] = None,
 ) -> Tuple[str, np.ndarray, np.ndarray, float]:
     """Train a clean eval-model on seasons < holdout and predict the holdout.
 
-    Returns ``(holdout_season, mu_level, y_true_level, sigma)`` where ``mu_level``
-    and ``y_true_level`` are on the natural (level) scale. For anchored models
-    (NFL) the model learns ``y - anchor`` and the level is reconstructed as
-    ``pred + anchor``; ``sigma`` is derived from the eval-model's OWN holdout
-    MAE via the same MAE->sigma factor the trainers persist.
+    Returns ``(holdout_season, mu_level, y_true_level, sigma)`` on the natural
+    (level) scale; ``sigma`` is derived from the eval-model's OWN holdout MAE via
+    the same MAE->sigma factor the trainers persist.
     """
     from lightgbm import LGBMRegressor, early_stopping
 
@@ -133,9 +129,8 @@ def _oos_holdout_predictions(
     lgbm_params = {**DEFAULT_LGBM_PARAMS, **params}
 
     X = frame[feature_cols].replace([np.inf, -np.inf], np.nan).fillna(0.0)
-    # Model target: level for NBA, residual-from-anchor for NFL.
     y_level = frame[target_col].astype(float)
-    y_model = (y_level - frame[anchor_col].astype(float)) if anchor_col else y_level
+    y_model = y_level
 
     uniq = sorted(seasons.unique().tolist())
     if len(uniq) < 2:
@@ -153,13 +148,11 @@ def _oos_holdout_predictions(
         callbacks=[early_stopping(EARLY_STOPPING_ROUNDS, verbose=False)],
     )
 
-    pred_model = model.predict(X.loc[holdout_idx])
-    anchor = frame.loc[holdout_idx, anchor_col].astype(float).to_numpy() if anchor_col else 0.0
-    mu_level = pred_model + anchor
+    mu_level = model.predict(X.loc[holdout_idx])
     y_true_level = y_level.loc[holdout_idx].to_numpy()
 
-    # Sigma from this eval-model's own out-of-sample residuals (anchor cancels in
-    # the residual, so residual-MAE == level-MAE), mirrors the trainer's sigma.
+    # Sigma from this eval-model's own out-of-sample residuals, mirrors the
+    # trainer's sigma.
     ho_mae = float(np.mean(np.abs(mu_level - y_true_level)))
     sigma = float(_MAE_TO_SIGMA * ho_mae) if ho_mae else float(np.std(y_true_level - mu_level) or 1.0)
     logger.info("eval-model %s: holdout=%s n=%d oos_mae=%.3f sigma=%.3f best_iter=%s",
@@ -184,27 +177,22 @@ def _nba_config(parquet: Path) -> Dict[str, Any]:
         "seasons": frame["season"].map(season_int_to_str),
         "dates": frame["game_date"],
         "params": TEAM_LGBM_PARAMS,
-        "margin_anchor": None,
-        "total_anchor": None,
         "model_dir": ARTIFACTS_DIR / "team",
     }
 
 
 def _nfl_config(start: int, end: int) -> Dict[str, Any]:
-    from sports.nfl.team_features import (MARGIN_ANCHOR, RESIDUAL_FEATURE_COLS, TOTAL_ANCHOR,
-                                          build_team_game_frame)
+    from sports.nfl.team_features import TEAM_FEATURE_COLS, build_team_game_frame
     from model_training.train_nfl_team_model import NFL_LGBM_PARAMS
 
     frame = build_team_game_frame(range(start, end + 1))
     return {
         "sport": "nfl",
         "frame": frame,
-        "feature_cols": RESIDUAL_FEATURE_COLS,
+        "feature_cols": TEAM_FEATURE_COLS,
         "seasons": frame["season"].astype(str),
         "dates": frame["game_date"],
         "params": NFL_LGBM_PARAMS,
-        "margin_anchor": MARGIN_ANCHOR,
-        "total_anchor": TOTAL_ANCHOR,
         "model_dir": ARTIFACTS_DIR / "nfl_team",
     }
 
@@ -232,9 +220,9 @@ def evaluate_team_model(
     seasons, dates, params = cfg["seasons"], cfg["dates"], cfg["params"]
 
     hs_m, mu_margin, y_margin, sig_margin = _oos_holdout_predictions(
-        frame, feats, "y_margin", seasons, dates, params, cfg["margin_anchor"])
+        frame, feats, "y_margin", seasons, dates, params)
     hs_t, mu_total, y_total, sig_total = _oos_holdout_predictions(
-        frame, feats, "y_total", seasons, dates, params, cfg["total_anchor"])
+        frame, feats, "y_total", seasons, dates, params)
 
     y_win = (y_margin > 0).astype(float)
     p_home = np.array([1.0 - NormalDist(m, sig_margin).cdf(0.0) for m in mu_margin])

@@ -33,5 +33,5 @@
   "holdout_season": 2025,
   "eval_window": "2018\u20132024",
   "created_at": "2026-08-24",
-  "notes": "Day-1 MLB champion (M7): deliberately-simple Rung-1 box-score baseline (runs for/against, win%, run-diff, prior-year carryover), market-blind. MLB is low-signal from team stats alone \u2014 the starting pitcher is the climb."
+  "notes": "Day-1 MLB champion (M7): deliberately-simple Rung-1 box-score baseline (runs for/against, win%, run-diff, prior-year carryover). MLB is low-signal from team stats alone: the starting pitcher is the climb."
 }

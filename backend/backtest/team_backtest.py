@@ -1,12 +1,11 @@
-"""Walk-forward team-market backtest: for each season S, train margin & total on
+"""Walk-forward team backtest: for each season S, train margin & total on
 seasons < S, predict S out-of-sample, and grade straight-up (winner) accuracy +
-MAE + winner log-loss. If historical odds are supplied (game_key -> {spread_home,
-total}), also grade against-the-spread and over/under hit rates.
+MAE + winner log-loss.
 
 Honest by construction: a season is only ever predicted by a model that never
-saw it. This is the "would our picks have won" reliability check. It is
-market-blind by construction: the line is NEVER a model input; ``odds`` is used
-only to grade ATS/O-U. This is the shared eval the experiment harness reuses.
+saw it. This is the "would our picks have won" reliability check: the betting
+line is never a model input. This is the shared eval the experiment harness
+reuses.
 """
 from __future__ import annotations
 
@@ -18,7 +17,6 @@ import pandas as pd
 from scipy.stats import norm
 
 from model_training.train_team_model import TEAM_LGBM_PARAMS
-from predictions.schema import make_game_key
 from sports.nba.team_features import TEAM_FEATURE_COLS, build_team_game_frame
 from sports.nba.teams import season_int_to_str
 
@@ -52,41 +50,12 @@ def _fit(train_df: pd.DataFrame, col: str, params: Dict[str, Any], feature_cols)
     return m, sigma
 
 
-def _grade_market(te: pd.DataFrame, mu_margin, mu_total, odds: Dict[str, Dict[str, float]], sport: str):
-    """ATS + O/U hit rate: our side vs the posted line, graded on actual result."""
-    ats_correct = ou_correct = graded = 0
-    for i, (_, r) in enumerate(te.iterrows()):
-        gk = make_game_key(sport, str(r["game_date"])[:10], r["away"], r["home"])
-        line = odds.get(gk)
-        if not line:
-            continue
-        graded += 1
-        # Spread: home line s; our side = home if predicted margin beats the line.
-        if line.get("spread_home") is not None:
-            s = float(line["spread_home"])
-            our_home = (mu_margin[i] + s) > 0
-            home_covered = (r["y_margin"] + s) > 0
-            ats_correct += int(our_home == home_covered)
-        # Total: our side = over if predicted total above the line.
-        if line.get("total") is not None:
-            t = float(line["total"])
-            our_over = mu_total[i] > t
-            went_over = r["y_total"] > t
-            ou_correct += int(our_over == went_over)
-    return (
-        round(ats_correct / graded, 4) if graded else None,
-        round(ou_correct / graded, 4) if graded else None,
-        graded,
-    )
-
-
 def walk_forward_backtest(
     frame: Optional[pd.DataFrame] = None,
     *,
     sport: str = "nba",
     feature_cols: Optional[list] = None,
     min_train_seasons: int = 3,
-    odds: Optional[Dict[str, Dict[str, float]]] = None,
     params: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
     params = {**TEAM_LGBM_PARAMS, **(params or {})}
@@ -115,7 +84,7 @@ def walk_forward_backtest(
         am = te["y_margin"].to_numpy()
         at = te["y_total"].to_numpy()
 
-        # Winner probability from the margin distribution (market-blind):
+        # Winner probability from the margin distribution:
         # P(home win) = P(margin > 0) = Phi(mu_margin / sigma_margin).
         sd = max(float(sigma_m), 1e-6)
         p_home = np.clip(norm.cdf(mu_m / sd), 1e-15, 1 - 1e-15)
@@ -130,9 +99,6 @@ def walk_forward_backtest(
             "margin_mae": round(float(np.mean(np.abs(mu_m - am))), 3),
             "total_mae": round(float(np.mean(np.abs(mu_t - at))), 3),
         }
-        if odds is not None:
-            ats, ou, graded = _grade_market(te, mu_m, mu_t, odds, sport)
-            row.update({"ats_pct": ats, "ou_pct": ou, "market_games": graded})
         rows.append(row)
 
     return pd.DataFrame(rows)
@@ -146,7 +112,7 @@ def walk_forward_predictions(
     min_train_seasons: int = 3,
     params: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
-    """Per-GAME out-of-sample predictions (market-blind: team features only) for
+    """Per-GAME out-of-sample predictions (team features only, no betting line) for
     seeding the public track record. Same honest walk-forward as
     ``walk_forward_backtest``: every game is predicted by a model that never saw its
     season, but returns one row per game with predicted + actual scores."""
@@ -203,8 +169,4 @@ def summarize(bt: pd.DataFrame) -> Dict[str, Any]:
     if "winner_logloss" in bt.columns and bt["winner_logloss"].notna().any():
         w = bt.dropna(subset=["winner_logloss"])
         out["winner_logloss"] = round(float((w["winner_logloss"] * w["n"]).sum() / w["n"].sum()), 4)
-    if "ats_pct" in bt.columns and bt["ats_pct"].notna().any():
-        w = bt.dropna(subset=["ats_pct"])
-        out["ats_pct"] = round(float((w["ats_pct"] * w["market_games"]).sum() / w["market_games"].sum()), 4)
-        out["ou_pct"] = round(float((w["ou_pct"] * w["market_games"]).sum() / w["market_games"].sum()), 4)
     return out

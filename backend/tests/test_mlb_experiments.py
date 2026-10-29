@@ -1,6 +1,6 @@
 """MLB fan-out into the feature-experiment harness (M7). Hermetic (no StatsAPI).
 
-Covers the MLB builder registry (market-blind), full frame-column coverage, the
+Covers the MLB builder registry (team features only), full frame-column coverage, the
 pre-registered roadmap queue, the seed, the shared walk-forward on a synthetic MLB
 frame (single-year labels), and the SP_ERA cost gate. Building the box-score frame
 with ``fetch_sp_era=False`` must never trigger the per-pitcher game-log backfill.
@@ -13,11 +13,11 @@ from experiments import roadmap
 from experiments.champion import FEATURE_BUILDERS, ChampionConfig, resolve_feature_cols
 
 
-def test_mlb_rung1_resolves_and_is_market_blind():
+def test_mlb_rung1_resolves_without_market_cols():
     cols = resolve_feature_cols("mlb", ["MLB-01", "MLB-02", "MLB-03", "MLB-04", "MLB-05"])
     assert cols == ["HOME_OFF", "AWAY_OFF", "HOME_DEF", "AWAY_DEF", "NET_DIFF",
                     "HOME_WINPCT", "AWAY_WINPCT", "HOME_PRIOR_DIFF", "AWAY_PRIOR_DIFF"]
-    assert not any("MARKET" in c for c in cols)  # champion is market-blind
+    assert not any("MARKET" in c for c in cols)  # no betting line in features
 
 
 def test_mlb_sp_and_form_builders_resolve():

@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
-"""Seed the public track record with an HONEST market-blind backtest.
+"""Seed the public track record with an HONEST walk-forward backtest.
 
 For each team sport, walk forward season by season (a game is only ever predicted by a
-model that never saw it), turn each game into a market-blind winner + predicted-score
-pick, grade it against the known final, and append to the results ledger. Produces the
-hero metrics on day one: straight-up winner accuracy + predicted-score MAE, with ROI
-left n/a (no historical closing moneyline exists; it accrues forward from live prices).
+model that never saw it), turn each game into a winner + predicted-score pick, grade it
+against the known final, and append to the results ledger. Produces the hero metrics on
+day one: straight-up winner accuracy + predicted-score MAE.
 
 Soccer predicts 3-way via a Poisson (Dixon-Coles-lite) model, not the margin/total
 regression the other sports walk-forward covers, so it uses a SEASON-level leakage-safe
 walk-forward (``track_record.seed_writer.build_soccer_seed_rows``): for each season S,
 ratings are built from matches BEFORE S only, each match in S is predicted, and the
-more-likely of home/away is the market-blind winner (never a draw; a draw grades as a
+more-likely of home/away is the predicted winner (never a draw; a draw grades as a
 loss). Run:  python -m pipeline.seed_track_record --sport all
 """
 from __future__ import annotations
@@ -43,14 +42,13 @@ _SOCCER_SEASONS = (2021, 2022, 2023, 2024)
 
 
 def _frame_and_cols(sport: str, start: int, end: int):
-    """Build the market-blind team frame + its feature columns. NFL MUST use
-    RESIDUAL_FEATURE_COLS: its TEAM_FEATURE_COLS includes the market line."""
+    """Build the team frame + its feature columns for the walk-forward seed."""
     if sport == "nba":
         from sports.nba.team_features import TEAM_FEATURE_COLS, build_team_game_frame
         return build_team_game_frame(), TEAM_FEATURE_COLS
     if sport == "nfl":
-        from sports.nfl.team_features import RESIDUAL_FEATURE_COLS, build_team_game_frame
-        return build_team_game_frame(range(start, end + 1)), RESIDUAL_FEATURE_COLS
+        from sports.nfl.team_features import TEAM_FEATURE_COLS, build_team_game_frame
+        return build_team_game_frame(range(start, end + 1)), TEAM_FEATURE_COLS
     if sport == "mlb":
         from sports.mlb.team_features import TEAM_FEATURE_COLS, build_team_game_frame
         return build_team_game_frame(range(start, end + 1)), TEAM_FEATURE_COLS

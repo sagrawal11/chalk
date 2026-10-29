@@ -37,7 +37,7 @@ def test_resolve_model_params_folds_over_baseline():
     assert resolve_model_params("soccer", ["SOC-01"]) == BASELINE_PARAMS
     assert resolve_model_params("soccer", ["SOC-01", "SOC-02"])["dixon_coles"] is True
     assert resolve_model_params("soccer", ["SOC-01", "SOC-03"])["cross_season"] is True
-    # market-blind: no param references a betting line
+    # team ratings only: no param references a betting line
     assert not any("market" in k.lower() or "line" in k.lower()
                    for k in resolve_model_params("soccer", ["SOC-01"]))
 

@@ -62,7 +62,6 @@ jobs:
         env:
           KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
           KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
-          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           UPSTASH_REDIS_URL: ${{ secrets.UPSTASH_REDIS_URL }}
           R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
           R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}

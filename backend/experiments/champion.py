@@ -8,7 +8,7 @@ code (ARCHITECTURE §1/§5d).
 
 M1 seeds the NFL Rung-1 champion. M2 grows the registry (eventually
 ``experiments/roadmap.yaml``) and adds the champion/challenger runner + ledger.
-The champion stays market-blind: no MARKET_* column is ever a builder output.
+The champion predicts from team features only; no betting line is ever an input.
 """
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ CHAMPION_DIR = BACKEND_ROOT / "artifacts"
 
 # Roadmap feature-builder -> the frame columns it toggles on. Grows per rung in M2
 # (and moves to experiments/roadmap.yaml); M1 seeds the NFL Rung-1 box-score set.
-# NOTE: never map a builder to a MARKET_* column; the champion is market-blind.
+# NOTE: builders map only to team/context feature columns; no betting line.
 FEATURE_BUILDERS: Dict[str, Dict[str, List[str]]] = {
     "nfl": {
         # Rung 1: basic box stats (the deliberately-simple day-1 baseline).
@@ -55,7 +55,7 @@ FEATURE_BUILDERS: Dict[str, Dict[str, List[str]]] = {
         "MLB-07": ["HOME_REST", "AWAY_REST", "REST_DIFF"],  # rest / rest diff (Rung 2)
         # Rung 3: the STARTING PITCHER (the dominant MLB signal; the MLB analog of
         # NFL's QB). SP_RA is schedule-only (cheap); SP_ERA needs the pitcher-log
-        # backfill (see team_features.fetch_sp_era); both stay market-blind.
+        # backfill (see team_features.fetch_sp_era); both are team-signal only.
         "MLB-20": ["HOME_SP_RA", "AWAY_SP_RA", "SP_RA_DIFF"],     # starter rolling runs-allowed
         "MLB-21": ["HOME_SP_ERA", "AWAY_SP_ERA", "SP_ERA_DIFF"],  # starter rolling ERA
     },
@@ -72,14 +72,14 @@ FEATURE_BUILDERS: Dict[str, Dict[str, List[str]]] = {
         "NHL-07": ["HOME_REST", "AWAY_REST", "REST_DIFF"],  # rest / rest diff (Rung 2)
         # The dominant NHL signal, the starting GOALIE, needs the boxscore endpoint
         # (the schedule only exposes the post-game winner), so it's a needs_builder
-        # future rung, not wired here. Market-blind throughout: no MARKET_* column.
+        # future rung, not wired here. Team-signal only: no betting line.
     },
 }
 
 
 # Param-based sports (soccer): the champion is a set of Poisson MODEL PARAMS, not
-# feature columns, because the market-blind soccer champion is a parametric 3-way
-# Poisson model (not a LightGBM margin regressor). A "builder" here toggles a model
+# feature columns, because the soccer champion is a parametric 3-way Poisson model
+# (not a LightGBM margin regressor). A "builder" here toggles a model
 # knob; builders fold over the baseline (backtest.soccer_backtest.BASELINE_PARAMS).
 SOCCER_BUILDERS: Dict[str, Dict[str, Any]] = {
     "SOC-01": {},                          # baseline Poisson (the seed champion)

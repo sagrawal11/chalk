@@ -2,7 +2,7 @@
 
 Normalizes the free nflverse feeds into the shapes the generic core expects:
 - ``load_schedules``  -> games with canonical teams, scores, and built-in
-  spread_line / total_line (free odds).
+  weather / rest / division context.
 - ``load_team_games`` -> one row per team-game (the score-model substrate,
   analogous to NBA's kaggle_team_games).
 - ``load_weekly_player_stats`` -> weekly player box for prop models.
@@ -31,22 +31,19 @@ def load_schedules(years: Sequence[int]) -> pd.DataFrame:
     s = s.rename(columns={"gameday": "game_date"})
     cols = ["game_id", "season", "week", "game_date", "home", "away",
             "home_score", "away_score",
-            # market + situational context (already in nflverse, previously dropped)
-            "spread_line", "total_line", "temp", "wind", "roof", "div_game",
+            # situational context (already in nflverse, previously dropped)
+            "temp", "wind", "roof", "div_game",
             "home_rest", "away_rest", "home_qb_id", "away_qb_id"]
     return s[[c for c in cols if c in s.columns]]
 
 
 def game_context(years: Sequence[int]) -> pd.DataFrame:
-    """One row per game_id with market + weather + situational context, derived
-    into leakage-safe pregame features (all known before kickoff)."""
+    """One row per game_id with weather + situational context, derived into
+    leakage-safe pregame features (all known before kickoff)."""
     s = load_schedules(years).copy()
     roof = s.get("roof", pd.Series(index=s.index, dtype=object)).astype(str).str.lower()
     is_dome = roof.isin(["dome", "closed"])
     ctx = pd.DataFrame({"game_id": s["game_id"]})
-    # market (closing line): spread_line is home-relative in nflverse (>0 => home favored)
-    ctx["MARKET_SPREAD"] = pd.to_numeric(s.get("spread_line"), errors="coerce")
-    ctx["MARKET_TOTAL"] = pd.to_numeric(s.get("total_line"), errors="coerce")
     # weather: domes have no wind and controlled temp; fill neutral there / when missing
     ctx["IS_DOME"] = is_dome.astype(int)
     ctx["WIND"] = pd.to_numeric(s.get("wind"), errors="coerce").where(~is_dome, 0.0)
