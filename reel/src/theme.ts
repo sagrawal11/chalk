@@ -1,5 +1,5 @@
 /**
- * CHALK — "Editorial Terminal" design tokens (LOCKED).
+ * CHALK: "Editorial Terminal" design tokens (LOCKED).
  *
  * Single source of truth for colour, type, spacing and motion. Every frame
  * imports from here so the reel stays pixel-faithful to the brand.
@@ -19,12 +19,12 @@ const plexMono = loadPlexMono('normal', {weights: ['400', '500', '600'], subsets
 const inter = loadInter('normal', {weights: ['400', '500', '600'], subsets: ['latin']});
 
 export const FONTS = {
-  /** Serif — team names, score numerals, headlines, verdicts. */
+  /** Serif: team names, score numerals, headlines, verdicts. */
   serif: fraunces.fontFamily,
   serifItalic: frauncesItalic.fontFamily,
-  /** Monospace — labels, kickers, date, handle (UPPERCASE, tracked, muted). */
+  /** Monospace: labels, kickers, date, handle (UPPERCASE, tracked, muted). */
   mono: plexMono.fontFamily,
-  /** Sans — body / utility (rarely visible but registered per the brief). */
+  /** Sans: body / utility (rarely visible but registered per the brief). */
   sans: inter.fontFamily,
 } as const;
 
@@ -38,7 +38,7 @@ export const waitForFonts = () =>
   ]);
 
 // ---------------------------------------------------------------------------
-// Colour — light frames (Intro / Game) and the dark Outro frame.
+// Colour: light frames (Intro / Game) and the dark Outro frame.
 // ---------------------------------------------------------------------------
 export const LIGHT = {
   bg: '#F4F1EA',
@@ -57,7 +57,7 @@ export const DARK = {
 } as const;
 
 // ---------------------------------------------------------------------------
-// Layout — canvas + frame padding.
+// Layout: canvas + frame padding.
 // ---------------------------------------------------------------------------
 export const CANVAS = {
   width: 1080,
@@ -84,7 +84,7 @@ export const DURATION = {
 } as const;
 
 // ---------------------------------------------------------------------------
-// Data contract — the JSON slate the Python pipeline writes.
+// Data contract: the JSON slate the Python pipeline writes.
 // ---------------------------------------------------------------------------
 export type GameSlate = {
   homeName: string;

@@ -36,7 +36,7 @@ _cors_origins = [o.strip() for o in os.environ.get(
     "CORS_ORIGINS", "http://localhost:8080,http://localhost:5173").split(",") if o.strip()]
 CORS(app, resources={r"/api/*": {"origins": _cors_origins}})
 
-# Public progression feed (the "changelog") — ARCHITECTURE §5l.
+# Public progression feed (the "changelog"), ARCHITECTURE §5l.
 from web.experiments_api import bp as _experiments_bp  # noqa: E402
 app.register_blueprint(_experiments_bp)
 
@@ -458,9 +458,9 @@ def get_game_players(game_id):
                     "assists": round(float(preds.get("AST", 0)), 1),
                     "steals": round(float(preds.get("STL", 0)), 1),
                     "blocks": round(float(preds.get("BLK", 0)), 1),
-                    "fg": "—",
-                    "threePt": "—",
-                    "ft": "—",
+                    "fg": "-",
+                    "threePt": "-",
+                    "ft": "-",
                 },
                 "team": team_abbrev,
                 "is_home": is_home,

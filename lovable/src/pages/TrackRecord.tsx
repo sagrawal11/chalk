@@ -26,7 +26,7 @@ interface TrackData {
   recent: { sport: string; date: string; subject: string; side: string; result: string; predHome: number | null; predAway: number | null; }[];
 }
 
-const pct = (v: number | null) => (v == null ? "—" : `${(v * 100).toFixed(1)}%`);
+const pct = (v: number | null) => (v == null ? "-" : `${(v * 100).toFixed(1)}%`);
 const SPORT_LABEL: Record<string, string> = { nba: "NBA", nfl: "NFL", mlb: "MLB", nhl: "NHL", soccer: "Soccer" };
 
 const Stat = ({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) => (
@@ -91,7 +91,7 @@ const TrackRecord = () => {
             <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Stat label="Winner accuracy" value={pct(o.win_pct)} highlight />
               <Stat label="Record (W–L)" value={o.record} />
-              <Stat label="Score error (MAE)" value={o.score_mae == null ? "—" : `${o.score_mae} pts`} />
+              <Stat label="Score error (MAE)" value={o.score_mae == null ? "-" : `${o.score_mae} pts`} />
               <Stat label="Graded picks" value={o.n_picks.toLocaleString()} />
             </section>
 
@@ -108,7 +108,7 @@ const TrackRecord = () => {
               ) : (
                 <p className="text-muted-foreground">
                   <span className="font-semibold text-foreground">ROI: accruing.</span> Picks are market-blind, so
-                  profit is only counted once each pick is settled at a real closing price — never fabricated. This
+                  profit is only counted once each pick is settled at a real closing price. Never fabricated. This
                   fills in as live prices are captured.
                 </p>
               )}
@@ -143,7 +143,7 @@ const TrackRecord = () => {
                         <Td className="font-medium">{SPORT_LABEL[s.sport] ?? s.sport}</Td>
                         <Td>{pct(s.win_pct)}</Td>
                         <Td>{s.record}</Td>
-                        <Td>{s.score_mae == null ? "—" : `${s.score_mae}`}</Td>
+                        <Td>{s.score_mae == null ? "-" : `${s.score_mae}`}</Td>
                         <Td>{s.n_picks.toLocaleString()}</Td>
                       </tr>
                     ))}
@@ -166,7 +166,7 @@ const TrackRecord = () => {
                           <Td>{r.date}</Td>
                           <Td>{SPORT_LABEL[r.sport] ?? r.sport}</Td>
                           <Td className="font-medium">{r.subject} <span className="text-muted-foreground">({r.side})</span></Td>
-                          <Td>{r.predHome != null && r.predAway != null ? `${r.predHome}–${r.predAway}` : "—"}</Td>
+                          <Td>{r.predHome != null && r.predAway != null ? `${r.predHome}–${r.predAway}` : "-"}</Td>
                           <Td><span className={resultClass(r.result)}>{r.result}</span></Td>
                         </tr>
                       ))}

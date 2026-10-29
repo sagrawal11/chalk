@@ -55,7 +55,7 @@ export const Reel: React.FC<ReelProps> = ({date, trackRecord, yesterday, slate})
         <Intro date={date} slate={slate} trackRecord={trackRecord} />
       </Series.Sequence>
 
-      {/* GAME × N — each after the first overlaps the previous for the wipe. */}
+      {/* GAME × N, each after the first overlaps the previous for the wipe. */}
       {slate.map((game, i) => (
         <Series.Sequence
           key={i}

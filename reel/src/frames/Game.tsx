@@ -230,7 +230,7 @@ export const Game: React.FC<GameProps> = ({game, index, total}) => {
         {/* Flex spacer keeps the reason anchored above the footer */}
         <div style={{flex: 1}} />
 
-        {/* Reason — Fraunces italic, muted */}
+        {/* Reason: Fraunces italic, muted */}
         <div
           style={{
             fontFamily: FONTS.serifItalic,

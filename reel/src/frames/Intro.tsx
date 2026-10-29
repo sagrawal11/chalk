@@ -56,7 +56,7 @@ export const Intro: React.FC<Pick<ReelProps, 'date' | 'slate' | 'trackRecord'>> 
 
   const winPctTxt = Number.isFinite(trackRecord.winPct)
     ? trackRecord.winPct.toFixed(1)
-    : '—';
+    : '-';
   const nPicksTxt = trackRecord.nPicks.toLocaleString('en-US');
 
   return (
@@ -102,7 +102,7 @@ export const Intro: React.FC<Pick<ReelProps, 'date' | 'slate' | 'trackRecord'>> 
           <div style={line(2)}>0 odds.</div>
         </div>
 
-        {/* Subhead — last sentence bold ink */}
+        {/* Subhead: last sentence bold ink */}
         <div
           style={{
             marginTop: 40,
