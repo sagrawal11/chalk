@@ -8,7 +8,7 @@ Rasterization is intentionally pluggable so CI can choose its toolchain:
   * ``CHALK_RASTERIZER`` env = a command template with {html} and {png} and {w}/{h}
     (e.g. a headless-chrome or gstack-browse invocation), OR
   * Playwright (``pip install playwright``) if importable, OR
-  * fall back to writing the .html only (caller screenshots it) — never crash.
+  * fall back to writing the .html only (caller screenshots it); never crash.
 
 This module does NOT replace the Pillow renderer yet; it's the production path for
 the new design, wired in once the look is signed off.

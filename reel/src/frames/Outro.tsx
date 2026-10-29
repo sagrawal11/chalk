@@ -59,7 +59,7 @@ export const Outro: React.FC<Pick<ReelProps, 'yesterday' | 'trackRecord'>> = ({
 
   const winPctTxt = Number.isFinite(trackRecord.winPct)
     ? trackRecord.winPct.toFixed(1)
-    : '—';
+    : '-';
   const nPicksTxt = trackRecord.nPicks.toLocaleString('en-US');
 
   return (

@@ -1,5 +1,5 @@
 """Serve NFL team-market predictions (predicted score + win/spread/total probs)
-from the trained margin & total normals — the NFL analog of models.team_predictor."""
+from the trained margin & total normals, the NFL analog of models.team_predictor."""
 from __future__ import annotations
 
 import logging
@@ -88,7 +88,7 @@ class NFLTeamPredictor:
             models = self._m
             if blind:
                 logger.warning(
-                    "MARKET_BLIND is set but models/artifacts/nfl_team_blind/ is missing — "
+                    "MARKET_BLIND is set but models/artifacts/nfl_team_blind/ is missing; "
                     "falling back to the MARKET-ANCHORED NFL model (this leaks the line). "
                     "Train it: python model_training/train_nfl_team_model.py --blind")
         else:
@@ -105,7 +105,7 @@ class NFLTeamPredictor:
         mm, mt = models["margin"], models["total"]
         sig_m, sig_t = float(mm["sigma"]), float(mt["sigma"])
         if use_blind:
-            # Absolute margin/total straight from team features — no market anchor.
+            # Absolute margin/total straight from team features, no market anchor.
             mu_m = float(mm["model"].predict(X[mm["feature_cols"]])[0])
             mu_t = float(mt["model"].predict(X[mt["feature_cols"]])[0])
         else:

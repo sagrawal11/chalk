@@ -56,7 +56,7 @@ ROTATION_MIN_L10 = 8.0
 def _downcast_floats(df: pd.DataFrame) -> pd.DataFrame:
     """Halve the peak memory of the concatenated training matrix. In float64 the
     full matrix is ~3.9 GB and pd.concat + split's df.copy() briefly hold two copies
-    (~8 GB) — enough to OOM-kill the 7 GB CI runner mid-load. float32 is lossless
+    (~8 GB), enough to OOM-kill the 7 GB CI runner mid-load. float32 is lossless
     enough here (features/targets are small counting stats; LightGBM bins to float
     internally) and split_features_targets selects on np.number, so float32 columns
     are picked up identically."""
@@ -97,7 +97,7 @@ def _load_or_build_features(
     full = pd.concat(frames, ignore_index=True)
     del frames  # release the ~2 GB list of per-player frames; keep only the matrix
     # concat can re-promote a few columns to float64 when frames disagree on dtype
-    # (or a column is absent in some) — downcast the result so the matrix is uniformly float32.
+    # (or a column is absent in some): downcast the result so the matrix is uniformly float32.
     return _downcast_floats(full)
 
 
@@ -211,7 +211,7 @@ def main() -> None:
     dispersions: Dict[str, Any] = {}
     for target in TARGET_STATS:
         if target not in full.columns:
-            logger.warning("Skipping %s — not in data", target)
+            logger.warning("Skipping %s - not in data", target)
             continue
         try:
             # v2 anchoring: predict the ADJUSTMENT to the stat's recent average so

@@ -1,4 +1,4 @@
-"""Content generation — the product surface.
+"""Content generation: the product surface.
 
 Turns normalized predictions / picks / track record into shareable, Instagram-
 sized cards (+ captions with compliance disclaimers). Renderer is Pillow (works

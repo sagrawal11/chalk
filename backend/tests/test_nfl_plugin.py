@@ -1,4 +1,4 @@
-"""NFL plugin identity + registry (backend/sports/nfl/). Hermetic — no nflverse
+"""NFL plugin identity + registry (backend/sports/nfl/). Hermetic: no nflverse
 fetch, no models; proves the sport-agnostic core accepts a second sport."""
 import pytest
 

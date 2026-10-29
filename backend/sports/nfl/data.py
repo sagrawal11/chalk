@@ -31,7 +31,7 @@ def load_schedules(years: Sequence[int]) -> pd.DataFrame:
     s = s.rename(columns={"gameday": "game_date"})
     cols = ["game_id", "season", "week", "game_date", "home", "away",
             "home_score", "away_score",
-            # market + situational context (already in nflverse — previously dropped)
+            # market + situational context (already in nflverse, previously dropped)
             "spread_line", "total_line", "temp", "wind", "roof", "div_game",
             "home_rest", "away_rest", "home_qb_id", "away_qb_id"]
     return s[[c for c in cols if c in s.columns]]

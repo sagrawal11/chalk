@@ -1,9 +1,9 @@
-"""Champion descriptor — the per-sport model config the experiment harness reads.
+"""Champion descriptor: the per-sport model config the experiment harness reads.
 
 A champion is ``{sport, model_version, rung, active_feature_builders, feature_cols,
 cumulative_metrics}``. Feature-builders are toggled on progressively (the roadmap
 rungs); a champion's ``feature_cols`` are resolved from its active builders via the
-``FEATURE_BUILDERS`` registry — so "add one feature" is a config change, not new
+``FEATURE_BUILDERS`` registry, so "add one feature" is a config change, not new
 code (ARCHITECTURE §1/§5d).
 
 M1 seeds the NFL Rung-1 champion. M2 grows the registry (eventually
@@ -24,10 +24,10 @@ CHAMPION_DIR = BACKEND_ROOT / "artifacts"
 
 # Roadmap feature-builder -> the frame columns it toggles on. Grows per rung in M2
 # (and moves to experiments/roadmap.yaml); M1 seeds the NFL Rung-1 box-score set.
-# NOTE: never map a builder to a MARKET_* column — the champion is market-blind.
+# NOTE: never map a builder to a MARKET_* column; the champion is market-blind.
 FEATURE_BUILDERS: Dict[str, Dict[str, List[str]]] = {
     "nfl": {
-        # Rung 1 — basic box stats (the deliberately-simple day-1 baseline).
+        # Rung 1: basic box stats (the deliberately-simple day-1 baseline).
         "NFL-01": ["HOME_OFF", "AWAY_OFF"],                 # season-to-date points scored
         "NFL-02": ["HOME_DEF", "AWAY_DEF"],                 # season-to-date points allowed
         "NFL-03": ["NET_DIFF"],                             # net point differential
@@ -42,7 +42,7 @@ FEATURE_BUILDERS: Dict[str, Dict[str, List[str]]] = {
         "NFL-38": ["IS_DOME", "WIND", "TEMP"],              # weather (Rung 7)
     },
     "mlb": {
-        # Rung 1 — basic box stats (the deliberately-simple day-1 baseline). All
+        # Rung 1: basic box stats (the deliberately-simple day-1 baseline). All
         # columns already exist in sports/mlb/team_features.build_team_game_frame,
         # so an MLB rung is a config change, not new feature code.
         "MLB-01": ["HOME_OFF", "AWAY_OFF"],                 # season-to-date runs scored
@@ -50,27 +50,27 @@ FEATURE_BUILDERS: Dict[str, Dict[str, List[str]]] = {
         "MLB-03": ["NET_DIFF"],                             # net run differential
         "MLB-04": ["HOME_WINPCT", "AWAY_WINPCT"],           # season-to-date win pct
         "MLB-05": ["HOME_PRIOR_DIFF", "AWAY_PRIOR_DIFF"],   # prior-season carryover
-        # Rung 2 — recent form (last-10 run differential).
+        # Rung 2: recent form (last-10 run differential).
         "MLB-06": ["HOME_FORM", "AWAY_FORM"],               # last-10 form (Rung 2)
         "MLB-07": ["HOME_REST", "AWAY_REST", "REST_DIFF"],  # rest / rest diff (Rung 2)
-        # Rung 3 — the STARTING PITCHER (the dominant MLB signal; the MLB analog of
+        # Rung 3: the STARTING PITCHER (the dominant MLB signal; the MLB analog of
         # NFL's QB). SP_RA is schedule-only (cheap); SP_ERA needs the pitcher-log
-        # backfill (see team_features.fetch_sp_era) — both stay market-blind.
+        # backfill (see team_features.fetch_sp_era); both stay market-blind.
         "MLB-20": ["HOME_SP_RA", "AWAY_SP_RA", "SP_RA_DIFF"],     # starter rolling runs-allowed
         "MLB-21": ["HOME_SP_ERA", "AWAY_SP_ERA", "SP_ERA_DIFF"],  # starter rolling ERA
     },
     "nhl": {
-        # Rung 1 — basic box stats (goals for/against), the day-1 baseline. Every
+        # Rung 1: basic box stats (goals for/against), the day-1 baseline. Every
         # column already exists in sports/nhl/team_features.build_team_game_frame.
         "NHL-01": ["HOME_OFF", "AWAY_OFF"],                 # season-to-date goals scored
         "NHL-02": ["HOME_DEF", "AWAY_DEF"],                 # season-to-date goals allowed
         "NHL-03": ["NET_DIFF"],                             # net goal differential
         "NHL-04": ["HOME_WINPCT", "AWAY_WINPCT"],           # season-to-date win pct
         "NHL-05": ["HOME_PRIOR_DIFF", "AWAY_PRIOR_DIFF"],   # prior-season carryover
-        # Rung 2 — recent form + rest (NHL plays dense back-to-backs, so rest may bite).
+        # Rung 2: recent form + rest (NHL plays dense back-to-backs, so rest may bite).
         "NHL-06": ["HOME_FORM", "AWAY_FORM"],               # last-10 form (Rung 2)
         "NHL-07": ["HOME_REST", "AWAY_REST", "REST_DIFF"],  # rest / rest diff (Rung 2)
-        # The dominant NHL swing — the starting GOALIE — needs the boxscore endpoint
+        # The dominant NHL signal, the starting GOALIE, needs the boxscore endpoint
         # (the schedule only exposes the post-game winner), so it's a needs_builder
         # future rung, not wired here. Market-blind throughout: no MARKET_* column.
     },

@@ -1,4 +1,4 @@
-"""Content rendering (backend/content/render.py). Hermetic — renders to tmp."""
+"""Content rendering (backend/content/render.py). Hermetic, renders to tmp."""
 from PIL import Image
 
 from content.render import (
@@ -79,7 +79,7 @@ def test_soccer_caption_shows_all_three_outcomes():
 
 def test_props_cards_render_for_mlb_and_nhl(tmp_path):
     from content.render import caption_for_props, render_props_card
-    # MLB batter, MLB pitcher (K), NHL skater — each a valid feed PNG + sport-aware caption
+    # MLB batter, MLB pitcher (K), NHL skater: each a valid feed PNG + sport-aware caption
     mlb_bat = render_props_card("Aaron Judge", {"hits": 1.4, "totalBases": 2.6, "homeRuns": 0.4},
                                 tmp_path, "NYY vs BOS", sport="mlb")
     mlb_pit = render_props_card("Gerrit Cole", {"strikeouts": 6.8}, tmp_path, "NYY vs BOS", sport="mlb")

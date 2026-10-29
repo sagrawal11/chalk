@@ -1,8 +1,8 @@
-"""MLB fan-out into the feature-experiment harness (M7) — hermetic (no StatsAPI).
+"""MLB fan-out into the feature-experiment harness (M7). Hermetic (no StatsAPI).
 
 Covers the MLB builder registry (market-blind), full frame-column coverage, the
 pre-registered roadmap queue, the seed, the shared walk-forward on a synthetic MLB
-frame (single-year labels), and the SP_ERA cost gate — building the box-score frame
+frame (single-year labels), and the SP_ERA cost gate. Building the box-score frame
 with ``fetch_sp_era=False`` must never trigger the per-pitcher game-log backfill.
 The real data-dependent run is exercised against live StatsAPI in the M7 demo.
 """
@@ -56,7 +56,7 @@ def test_mlb_roadmap_queue_and_keep_rule():
 
 def test_walk_forward_backtest_mlb_single_year_labels():
     """The shared harness runs on an MLB frame: single-year season labels + a finite
-    winner log-loss (MLB is low-signal, so SU stays modest — that's honest)."""
+    winner log-loss (MLB is low-signal, so SU stays modest, which is honest)."""
     from backtest.team_backtest import summarize, walk_forward_backtest
 
     rng = np.random.RandomState(1)

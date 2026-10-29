@@ -1,4 +1,4 @@
-"""Free odds ingestion: schema, providers, and store (backend/odds/). Hermetic —
+"""Free odds ingestion: schema, providers, and store (backend/odds/). Hermetic:
 tmp CSVs, a synthetic PrizePicks payload, and monkeypatched store paths.
 """
 import pandas as pd

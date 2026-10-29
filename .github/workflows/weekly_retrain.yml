@@ -1,8 +1,8 @@
 name: Weekly Full Retrain
 
-# Weekly, HEAVY path: rebuild features for active players and retrain EVERY model
-# — the NBA global hybrid (--retrain-global) plus all non-hybrid sport models
-# (--retrain-sports: NBA player v3 + NFL/MLB/NHL team & prop models) — then
+# Weekly, HEAVY path: rebuild features for active players and retrain EVERY model:
+# the NBA global hybrid (--retrain-global) plus all non-hybrid sport models
+# (--retrain-sports: NBA player v3 + NFL/MLB/NHL team & prop models), then
 # delta-upload the artifacts + per-sport data caches to R2. Runs Sundays after the
 # daily refresh. The long timeout reflects full per-player residual + global LightGBM
 # training AND the sport trainers (whose data-frame builders self-backfill missing

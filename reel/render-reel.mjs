@@ -9,7 +9,7 @@
  * It validates the slate against the data contract (see SLATE_CONTRACT.md), then
  * invokes the Remotion CLI:  npx remotion render Reel <out> --props=<slate>
  *
- * With --check it validates and exits 0 WITHOUT rendering — the fast CI gate and
+ * With --check it validates and exits 0 WITHOUT rendering, the fast CI gate and
  * the pipeline seam smoke-test (Python writes the slate; see content/reel_slate.py).
  *
  * The Python pipeline calls this after writing the day's slate JSON.
@@ -73,7 +73,7 @@ if (problems.length) {
 }
 
 if (checkOnly) {
-  console.log(`[render-reel] slate OK — ${slate.slate.length} game(s). (--check: not rendering)`);
+  console.log(`[render-reel] slate OK, ${slate.slate.length} game(s). (--check: not rendering)`);
   process.exit(0);
 }
 

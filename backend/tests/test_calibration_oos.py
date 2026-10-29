@@ -58,7 +58,7 @@ def test_holdout_is_last_season_and_level_scale():
 def test_holdout_season_never_trained_on():
     """Leakage probe: make the holdout target a constant unrelated to features.
     An eval-model that (wrongly) trained on the holdout could match that
-    constant; one trained on prior seasons only cannot — its predictions must
+    constant; one trained on prior seasons only cannot: its predictions must
     stay near the prior-season signal, far from the injected constant."""
     df = _synth_frame()
     hold = df["season"] == "2022"

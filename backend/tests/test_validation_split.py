@@ -1,7 +1,7 @@
 """Honest validation methodology (backend/model_training/validation.py).
 
-Guards PLANNING.md 8.1/8.2: the final season is a true holdout — never a CV
-fold — and CV never scores on the holdout season.
+Guards PLANNING.md 8.1/8.2: the final season is a true holdout, never a CV
+fold, and CV never scores on the holdout season.
 """
 import numpy as np
 import pandas as pd
@@ -46,7 +46,7 @@ def test_holdout_is_last_season_and_untouched_by_cv():
 
 def test_stub_season_never_becomes_holdout():
     """A partial/stub current season (few rows) must not be auto-picked as the
-    scoring holdout — that yields a meaningless ~200-row holdout_mae. The guard
+    scoring holdout: that yields a meaningless ~200-row holdout_mae. The guard
     drops it so the holdout is the last FULL season instead."""
     pytest.importorskip("lightgbm")
     from model_training.validation import walk_forward_train

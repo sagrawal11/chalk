@@ -1,10 +1,10 @@
-"""Task 7.4 — position_encoded must be a stable, frame-independent mapping.
+"""Task 7.4: position_encoded must be a stable, frame-independent mapping.
 
 The old code used ``pd.Categorical(df["position"]).codes``, whose integer codes
 depend on which position strings happen to appear in the current frame. Because
 training builds features one player at a time and inference builds a
 single-player frame, the same position (e.g. a guard) could map to different
-integers across players and between train and serve — categorical skew fed
+integers across players and between train and serve, categorical skew fed
 straight into the model.
 
 The fix derives position_encoded from the normalized POSITION_GROUP (G/F/C)
@@ -42,7 +42,7 @@ def test_same_position_encodes_identically_across_frames():
 
     assert len(code_a) == 1 and len(code_b) == 1
     assert code_a[0] == code_b[0], (
-        f"'PG' encoded as {code_a[0]} in one frame but {code_b[0]} in another — "
+        f"'PG' encoded as {code_a[0]} in one frame but {code_b[0]} in another: "
         "per-frame categorical codes cause train-serve skew"
     )
 

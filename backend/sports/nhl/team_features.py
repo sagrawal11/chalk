@@ -2,7 +2,7 @@
 
 Same leakage discipline as the other sports: prior-only season-to-date expanding
 means (shifted a game), last-10 form, rest, prior-season goal differential. The
-dominant NHL swing — the starting GOALIE — is a planned enhancement (the schedule
+dominant NHL swing, the starting GOALIE, is a planned enhancement (the schedule
 endpoint only exposes the post-game winning goalie, so a pre-game goalie signal
 needs the boxscore); the market anchor is NHL's real accuracy lever meanwhile.
 """

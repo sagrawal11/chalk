@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Train the NFL team score model (margin & total) with the shared honest
-walk-forward trainer + a robust MAE-based sigma — identical methodology to NBA,
+walk-forward trainer + a robust MAE-based sigma, identical methodology to NBA,
 proving the pipeline is sport-agnostic (only the feature engine differs)."""
 from __future__ import annotations
 

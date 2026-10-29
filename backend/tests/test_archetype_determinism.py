@@ -1,4 +1,4 @@
-"""Task 7.5 — ARCH_PROB_* columns must be deterministically present.
+"""Task 7.5: ARCH_PROB_* columns must be deterministically present.
 
 The archetype transform and the archetype-engine load were both wrapped in
 silent ``except`` blocks, so the ARCH_PROB_* columns could appear in one code

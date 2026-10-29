@@ -3,11 +3,11 @@
 Build team×season stats + parquet mirrors from processed Kaggle team game logs (teams_boxscores.csv).
 
 Writes:
-  - data/processed/kaggle_team_games.parquet — full game-level team box (canonical for merges)
-  - data/team_stats/all_team_stats.{csv,parquet} — season means of pace/ratings
+  - data/processed/kaggle_team_games.parquet: full game-level team box (canonical for merges)
+  - data/team_stats/all_team_stats.{csv,parquet}: season means of pace/ratings
 
 Aggregates game-level stats to team×season; derives SEASON from game_date (NBA Oct–Jun).
-No external APIs — local CSV in repo only.
+No external APIs; local CSV in repo only.
 """
 from __future__ import annotations
 

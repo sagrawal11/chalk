@@ -1,4 +1,4 @@
-"""Reddit publisher (PRAW) — auto-publishes when live. Reddit + X carry the launch
+"""Reddit publisher (PRAW): auto-publishes when live. Reddit + X carry the launch
 (IG is manual-interim). The real API call runs only when dry_run=False AND creds are
 present; otherwise the base Publisher.publish() dry-runs and this is never reached.
 """
@@ -18,7 +18,7 @@ class RedditPublisher(Publisher):
     def _publish(self, draft) -> PostRef:  # pragma: no cover - live only
         missing = [k for k in _REQUIRED if not os.environ.get(k)]
         if missing:
-            raise RuntimeError(f"reddit not configured (missing {missing}) — stays dark")
+            raise RuntimeError(f"reddit not configured (missing {missing}), stays dark")
         import praw  # imported only on a live post
         reddit = praw.Reddit(
             client_id=os.environ["REDDIT_CLIENT_ID"],

@@ -1,8 +1,8 @@
-"""Instagram publisher — INTERIM manual-post mode (ARCHITECTURE §5i).
+"""Instagram publisher: INTERIM manual-post mode (ARCHITECTURE §5i).
 
 Until Meta app-review clears, IG NEVER auto-posts: it stages the rendered asset to a
 public R2 URL and returns a MANUAL-post marker for the owner to publish by hand.
-(Flip to a real Graph API publish when access lands — the seam is here.)
+(Flip to a real Graph API publish when access lands; the seam is here.)
 """
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ class IGPublisher(Publisher):
     def _stage_to_r2(self, draft) -> str:
         bucket = os.environ.get("R2_BUCKET_NAME")
         if not (bucket and draft.asset_paths):
-            return "(R2 staging pending — set R2_* creds + a rendered asset)"
+            return "(R2 staging pending: set R2_* creds + a rendered asset)"
         try:  # pragma: no cover - needs R2 creds
             from utils.storage import public_url
             return public_url(draft.asset_paths[0])

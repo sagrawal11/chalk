@@ -4,7 +4,7 @@ Pending posts live in publish/queue/drafts.json. Each draft targets ONE platform
 posting an item to Reddit + X + IG creates three drafts sharing the same base id.
 Status flow: pending -> approved -> posted, or -> rejected, or -> escalated (🔴).
 
-Nothing here posts — a draft only reaches a platform via publish/publisher.Publisher
+Nothing here posts; a draft only reaches a platform via publish/publisher.Publisher
 after it is approved AND the guardrails passed (see publish/guardrails.py).
 """
 from __future__ import annotations

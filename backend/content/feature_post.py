@@ -1,10 +1,10 @@
-"""Experiment-log card generator (ARCHITECTURE §5g) — the signature content type.
+"""Experiment-log card generator (ARCHITECTURE §5g): the signature content type.
 
 Turns an ExperimentResult (a ledger row from experiments/) into the locked
 Editorial-Terminal experiment-log card (templates/experiment_log.html): the
 `tested X -> what it did -> what's next` engine, with an honest before/after chart.
 
-Metric selection is Option C — the card features the metric that best tells each
+Metric selection is Option C: the card features the metric that best tells each
 experiment's honest story, via a FIXED uniform rule (`pick_display_metric`) so it is
 never post-hoc cherry-picking. A DROPPED experiment renders without the red
 "achievement" styling; duds are content (Constitution #1).
@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 TEMPLATES = Path(__file__).resolve().parent / "templates"
-CHART_H = 150  # px — matches the template .bars height
+CHART_H = 150  # px, matches the template .bars height
 
 # metric -> (card label, unit, higher_is_better, y-axis half-pad, formatter)
 _METRICS = {
@@ -33,10 +33,10 @@ _METRICS = {
 
 _DESC = {
     "su_acc": "Straight-up winner accuracy, walk-forward.",
-    "winner_logloss": "Winner log-loss — lower means better-calibrated.",
-    "margin_mae": "Average points off the final margin — lower is better.",
-    "total_mae": "Average points off the game total — lower is better.",
-    "three_way_logloss": "Home/draw/away log-loss — lower means better-calibrated.",
+    "winner_logloss": "Winner log-loss: lower means better-calibrated.",
+    "margin_mae": "Average points off the final margin: lower is better.",
+    "total_mae": "Average points off the game total: lower is better.",
+    "three_way_logloss": "Home/draw/away log-loss: lower means better-calibrated.",
     "three_way_acc": "Home/draw/away hit rate, walk-forward.",
 }
 
@@ -65,9 +65,16 @@ def pick_display_metric(result: Dict[str, Any]) -> str:
 
 
 def _seasons(window: Optional[str]) -> Optional[int]:
+    """Count seasons in an eval window like '2002–2024' or, for two-year sports,
+    '2018-19–2024-25'. The en-dash separates start–end; each side's first 4 digits
+    are the season start year (so a hyphen INSIDE a label doesn't fool the split)."""
     try:
-        a, b = str(window).replace("–", "-").split("-")[:2]
-        return int(b) - int(a) + 1
+        parts = str(window).split("–")            # en-dash = the start–end separator
+        if len(parts) != 2:
+            parts = str(window).split("-")         # fallback: plain-hyphen single-year
+        a = int(parts[0].strip()[:4])
+        b = int(parts[-1].strip()[:4])
+        return b - a + 1
     except Exception:
         return None
 
@@ -106,8 +113,8 @@ def build_experiment_log_html(result: Dict[str, Any], *, metric: str = "auto",
     seasons = _seasons(result.get("eval_window"))
     desc = _DESC[metric] + (f" {seasons} seasons." if seasons else "")
     if verdict_note is None:
-        verdict_note = ("Marginal — but it earns its place." if kept
-                        else "No lift on the primary metric — dropped, honestly.")
+        verdict_note = ("Marginal, but it earns its place." if kept
+                        else "No lift on the primary metric: dropped, honestly.")
     metric_label = label + ("" if higher_better else " ↓")   # "lower is better" cue
 
     ne = next_exp or {}
@@ -123,7 +130,7 @@ def build_experiment_log_html(result: Dict[str, Any], *, metric: str = "auto",
         "DELTA_BIG": delta_big, "DELTA_UNIT": unit,
         "METRIC_DESC": desc, "VERDICT": "KEPT" if kept else "DROPPED",
         "VERDICT_NOTE": verdict_note,
-        "NEXT_NAME": ne.get("name", "—"), "NEXT_ID": ne.get("id", ""),
+        "NEXT_NAME": ne.get("name", "–"), "NEXT_ID": ne.get("id", ""),
         "NEXT_DESC": ne.get("hypothesis", ""),
         "HANDLE": handle,
     }

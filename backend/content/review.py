@@ -1,7 +1,7 @@
 """Static control-room review page.
 
 Generates one self-contained ``index.html`` per day that shows every rendered
-card next to its copy-ready caption, plus the current record — so the operator
+card next to its copy-ready caption, plus the current record, so the operator
 reviews the slate and posts to Instagram manually. No server or React build
 needed (matches the "render assets, post manually" decision).
 """
@@ -35,7 +35,7 @@ def _record_html(record: Optional[Dict[str, Any]]) -> str:
     if not record:
         return ""
     wp = record.get("win_pct")
-    wp = f"{wp * 100:.0f}%" if wp is not None else "—"
+    wp = f"{wp * 100:.0f}%" if wp is not None else "-"
     return (f'<div class="record">Record <b>{record.get("record","0-0")}</b> · '
             f'{record.get("units",0):+.1f}u · win {wp} · streak {record.get("streak",0)} '
             f'· {record.get("n_picks",0)} picks</div>')
@@ -52,7 +52,7 @@ def build_review_page(out_dir: Path, game_date: str, record: Optional[Dict[str, 
 
     page = f"""<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{B.BRAND} — Review {game_date}</title>
+<title>{B.BRAND}: Review {game_date}</title>
 <style>
   body {{ background:{_rgb(B.BG)}; color:{_rgb(B.TEXT)}; font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif; margin:0; padding:24px; }}
   h1 {{ color:{_rgb(B.ACCENT)}; font-size:22px; margin:0 0 4px; }}
@@ -66,7 +66,7 @@ def build_review_page(out_dir: Path, game_date: str, record: Optional[Dict[str, 
   pre {{ white-space:pre-wrap; font-size:13px; background:{_rgb(B.BG)}; padding:10px; border-radius:8px; margin:0; flex:1; }}
   button {{ background:{_rgb(B.ACCENT)}; color:{_rgb(B.BG)}; border:0; border-radius:8px; padding:8px 12px; font-weight:700; cursor:pointer; }}
 </style></head><body>
-  <h1>{B.BRAND} — content review</h1>
+  <h1>{B.BRAND}: content review</h1>
   <div class="sub">{game_date} · {len(cards)} cards · review, then post to {B.HANDLE}</div>
   {_record_html(record)}
   <div class="grid">{''.join(blocks)}</div>

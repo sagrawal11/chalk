@@ -46,7 +46,7 @@ def main() -> None:
 
     frame = build_skater_frame(range(args.start, args.end + 1))
     if frame.empty or "_n_prior" not in frame.columns:
-        logger.warning("NHL skater frame empty (no data fetched %d-%d) — skipping training.",
+        logger.warning("NHL skater frame empty (no data fetched %d-%d) - skipping training.",
                        args.start, args.end)
         return
     frame = frame[frame["_n_prior"] >= MIN_PRIOR_GAMES].reset_index(drop=True)

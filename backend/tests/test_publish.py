@@ -1,4 +1,4 @@
-"""M4 publishing + guardrails — hermetic (no network, no real platform APIs).
+"""M4 publishing + guardrails. Hermetic (no network, no real platform APIs).
 
 Everything runs in the DARK posture: dry-run publishing, tmp stores, env-flag
 monkeypatching. Proves the guardrail gate, idempotency, the kill switch, the
@@ -15,11 +15,11 @@ from publish.publisher import PostStore, Publisher
 
 def _draft(**over):
     base = dict(id="2026-08-23-exp-NFL-10", platform="reddit", kind="experiment_log",
-                caption="Experiment log — Opponent-adjusted offense. Result: MARGIN MAE "
-                        "10.73 → 10.70 (-0.03) over 23 seasons — kept. Next: EPA/play — "
+                caption="Experiment log: Opponent-adjusted offense. Result: MARGIN MAE "
+                        "10.73 → 10.70 (-0.03) over 23 seasons, kept. Next: EPA/play, "
                         "Expected Points Added per play, a cleaner efficiency read. A research project.",
                 source={"before": 10.73, "after": 10.70, "delta": -0.03, "seasons": 23,
-                        "next_desc": "Expected Points Added per play — a cleaner efficiency read."})
+                        "next_desc": "Expected Points Added per play, a cleaner efficiency read."})
     base.update(over)
     return Draft(**base)
 
@@ -30,7 +30,7 @@ def test_clean_experiment_passes():
 
 
 def test_tout_language_blocks():
-    d = _draft(caption="Lock of the day 🔒 — hammer this. A research project.")
+    d = _draft(caption="Lock of the day 🔒, hammer this. A research project.")
     rep = run_guardrails(d)
     assert rep.gate == "block"
     assert any(c.name == "tout_denylist" and c.status == "fail" for c in rep.checks)
@@ -54,7 +54,7 @@ def test_sourced_numbers_pass():
 
 
 def test_missing_disclaimer_blocks():
-    d = _draft(caption="Opponent-adjusted offense — kept. MARGIN MAE 10.73 → 10.70.")
+    d = _draft(caption="Opponent-adjusted offense, kept. MARGIN MAE 10.73 → 10.70.")
     rep = run_guardrails(d)
     assert rep.gate == "block"
     assert any(c.name == "disclaimer" and c.status == "fail" for c in rep.checks)

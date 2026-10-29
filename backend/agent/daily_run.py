@@ -6,7 +6,7 @@ Runs the deterministic daily chain UNATTENDED and DARK:
   -> assemble the approval batch.
 Nothing posts (AUTONOMY_MODE=approve_all + dry-run). Each step is ISOLATED: an expected
 gap (no games / nothing to grade) is a graceful skip; an unexpected failure routes to
-🔴 (escalate) and the run continues — never a crash, never a bad post.
+🔴 (escalate) and the run continues: never a crash, never a bad post.
 """
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ SUMMARY_PATH = Path(__file__).resolve().parents[1] / "processed" / "chalk_last_r
 
 
 class _Skip(Exception):
-    """An expected, benign gap (offseason / nothing to grade) — not an error."""
+    """An expected, benign gap (offseason / nothing to grade); not an error."""
 
 
 class StepRunner:
@@ -156,7 +156,7 @@ def main() -> None:
     date = dt.date.fromisoformat(a.date) if a.date else None
     s = run_day(a.sport, date, persist=not a.no_persist,
                 force_experiment=a.force_experiment, break_source=a.break_source)
-    print(f"\n=== CHALK daily run — {s['date']} ({s['sport']}) ===")
+    print(f"\n=== CHALK daily run: {s['date']} ({s['sport']}) ===")
     for st in s["steps"]:
         mark = {"ok": "✓", "skip": "·", "red": "🔴"}.get(st["status"], "?")
         print(f"  {mark} {st['step']:<20} {st['status']}"

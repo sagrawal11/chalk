@@ -1,4 +1,4 @@
-"""Pinned triptych generator (CONTENT_SPEC §3.5) — one 3240x1350 continuous
+"""Pinned triptych generator (CONTENT_SPEC §3.5): one 3240x1350 continuous
 panorama, sliced into 3x 1080x1350 tiles (post right->middle->left). No sport icon.
 
 Numbers come from the public track record (seeded market-blind walk-forward). The

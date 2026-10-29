@@ -1,4 +1,4 @@
-"""Soccer 3-way fan-out into the harness (M7) — hermetic (no football-data fetch).
+"""Soccer 3-way fan-out into the harness (M7). Hermetic (no football-data fetch).
 
 Covers the new machinery the binary sports don't have: the 3-way log-loss metric,
 the Dixon-Coles correction, the param-based champion (model_params, not feature_cols),

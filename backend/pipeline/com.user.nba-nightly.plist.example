@@ -5,7 +5,7 @@
   Default pipeline/nightly.py rebuilds Kaggle-derived parquets when teams_boxscores.csv is present.
   1. cp com.user.nba-nightly.plist.example ~/Library/LaunchAgents/com.user.nba-nightly.plist
   2. Edit WorkingDirectory and ProgramArguments paths to your repo + Python.
-  3. Adjust StartCalendarInterval (hour/minute) — e.g. 6:30 AM local = after West games.
+  3. Adjust StartCalendarInterval (hour/minute), e.g. 6:30 AM local = after West games.
   4. launchctl load ~/Library/LaunchAgents/com.user.nba-nightly.plist
 -->
 <plist version="1.0">

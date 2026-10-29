@@ -1,9 +1,9 @@
-"""Task 7.1 — prove (and then guard) that train_global.py and train_hybrid.py
+"""Task 7.1: prove (and then guard) that train_global.py and train_hybrid.py
 select the SAME feature columns from the same input frame.
 
 Both trainers call ``save_feature_columns(feature_cols)`` and write to the same
 ``feature_columns.json``. If they disagree on which columns are features, then
-whichever trainer ran last silently defines what inference expects — the core
+whichever trainer ran last silently defines what inference expects, the core
 train-serve skew bug. These tests pin the feature selection to a single source
 of truth.
 """
@@ -77,7 +77,7 @@ def test_trainers_select_identical_feature_columns():
 
 
 def test_trainers_select_identical_targets_and_order():
-    """Beyond set equality, the feature ORDER must match too — LightGBM consumes
+    """Beyond set equality, the feature ORDER must match too. LightGBM consumes
     columns positionally, so an order mismatch is also train-serve skew.
     """
     df = _synthetic_feature_frame()

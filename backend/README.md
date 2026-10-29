@@ -1,8 +1,8 @@
 # NBA prediction backend
 
-Python pipeline: local **player CSVs** + **Kaggle team boxscores** → parquets → `feature_engine` → global LightGBM → Flask API.
+Python pipeline: local player CSVs + Kaggle team boxscores → parquets → `feature_engine` → global LightGBM → Flask API.
 
-**There is no `nba_api` dependency** — team data is built from files under `data/Kaggle NBA Team Data/`.
+There is no `nba_api` dependency: team data is built from files under `data/Kaggle NBA Team Data/`.
 
 ## Data layout
 
@@ -32,7 +32,7 @@ Fallback without Kaggle: `python data_collection/build_team_stats_from_player_lo
 python model_training/train_global.py
 ```
 
-`feature_engine.py` loads team stats from **`all_team_stats.parquet`** when present (else CSV), and adds **prior-game** Kaggle columns `KG_PREV_*` / `KG_OPP_PREV_*` from `kaggle_team_games.parquet`.
+`feature_engine.py` loads team stats from `all_team_stats.parquet` when present (else CSV), and adds prior-game Kaggle columns `KG_PREV_*` / `KG_OPP_PREV_*` from `kaggle_team_games.parquet`.
 
 ## API
 
@@ -56,4 +56,4 @@ See `../lovable/`; set `VITE_API_BASE` to your API URL.
 
 ## Full plan / checklist
 
-See **[../PLANNING.md](../PLANNING.md)**.
+See [../PLANNING.md](../PLANNING.md).

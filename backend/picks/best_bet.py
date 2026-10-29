@@ -136,7 +136,7 @@ def prop_picks(
 
 def game_winner_picks(gp: GamePrediction) -> List[Pick]:
     """Market-blind "winner" pick: one moneyline Pick for the side the model favors,
-    carrying its win probability + confidence. No line, no price — ``edge`` is the
+    carrying its win probability + confidence. No line, no price; ``edge`` is the
     distance of the win prob from a 0.5 coin flip (honest "how sure the model is",
     not a market edge). 3-way sports (soccer) pick the more-likely of home/away and
     never a draw, so the pick stays gradeable as a moneyline. Always emits (every
@@ -167,7 +167,7 @@ def select_best_bets(
 ) -> List[Pick]:
     """All picks across a slate, ranked (best/most-confident first).
 
-    Market-blind (brand default): one odds-free winner pick per game — the headline
+    Market-blind (brand default): one odds-free winner pick per game, the headline
     content unit. Otherwise the market-anchored value path (moneyline/spread/total vs
     de-vigged lines + player props), kept for opt-in ROI settlement.
     """

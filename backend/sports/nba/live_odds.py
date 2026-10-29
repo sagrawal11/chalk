@@ -1,4 +1,4 @@
-"""Live NBA closing lines from The Odds API (free tier) — the up-to-date source
+"""Live NBA closing lines from The Odds API (free tier), the up-to-date source
 for anchoring UPCOMING-season predictions.
 
 The Kaggle backfill covers 2007 -> Jan-2023; this fills the gap for today's and
@@ -69,7 +69,7 @@ def fetch_nba_lines(api_key: Optional[str] = None, regions: str = "us", timeout:
     the first book quoting both, PLUS the home/away American ``moneyline_home`` /
     ``moneyline_away`` when a book quotes the ``h2h`` market. The moneyline keys are
     additive (absent if no book quotes h2h) so existing spread/total callers are
-    unaffected. Moneyline is NOT used to change the (market-blind) prediction — it is
+    unaffected. Moneyline is NOT used to change the (market-blind) prediction; it is
     the closing price we settle the winner pick at, so ROI accrues forward honestly.
     {} on missing key / network error / parse failure (caller falls back)."""
     key = _get_key(api_key)
@@ -82,7 +82,7 @@ def fetch_nba_lines(api_key: Optional[str] = None, regions: str = "us", timeout:
             "oddsFormat": "american"}, timeout=timeout)
         r.raise_for_status()
         events = r.json()
-    except Exception as e:  # network / auth / rate-limit — degrade to team model
+    except Exception as e:  # network / auth / rate-limit, degrade to team model
         logger.warning("The Odds API fetch failed: %s", e)
         return {}
 
@@ -112,7 +112,7 @@ def fetch_nba_lines(api_key: Optional[str] = None, regions: str = "us", timeout:
                         elif code == away and ml_away is None:
                             ml_away = int(oc["price"])
             # Stop once the first book has quoted every market we want (moneyline
-            # is opportunistic — don't hold out the spread/total for a missing h2h).
+            # is opportunistic, don't hold out the spread/total for a missing h2h).
             if spread_home is not None and total is not None and ml_home is not None and ml_away is not None:
                 break
         if spread_home is not None and total is not None:

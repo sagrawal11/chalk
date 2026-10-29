@@ -1,5 +1,5 @@
 """NBA sport plugin (flagship). A thin adapter that exposes the existing NBA
-modules (feature_engine, predictor, and — once trained — team_predictor) behind
+modules (feature_engine, predictor, and team_predictor once trained) behind
 the shared ``Sport`` interface.
 
 Heavy imports (feature_engine / predictor / team_predictor / requests) are done
@@ -95,7 +95,7 @@ class NBASport(Sport):
         season: Optional[str] = None,
     ) -> Any:
         """Return a GamePrediction for a matchup. Returns ``None`` until the team
-        model (Phase 1, Task #8) is built/trained — the daily loop treats a
+        model (Phase 1, Task #8) is built/trained; the daily loop treats a
         ``None`` as "no team-market content for this game yet"."""
         try:
             from models.team_predictor import default_team_predictor

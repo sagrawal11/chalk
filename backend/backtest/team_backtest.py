@@ -5,7 +5,7 @@ total}), also grade against-the-spread and over/under hit rates.
 
 Honest by construction: a season is only ever predicted by a model that never
 saw it. This is the "would our picks have won" reliability check. It is
-market-blind by construction — the line is NEVER a model input; ``odds`` is used
+market-blind by construction: the line is NEVER a model input; ``odds`` is used
 only to grade ATS/O-U. This is the shared eval the experiment harness reuses.
 """
 from __future__ import annotations
@@ -35,7 +35,7 @@ def _season_label(sport: str, s: int) -> str:
 
 def _fit(train_df: pd.DataFrame, col: str, params: Dict[str, Any], feature_cols):
     """Fit one LightGBM regressor with a random inner-val early stop (same
-    philosophy as model_training.validation — random split avoids era drift).
+    philosophy as model_training.validation, random split avoids era drift).
     Returns ``(model, sigma)`` where sigma is the inner-val residual std."""
     from lightgbm import LGBMRegressor, early_stopping
 
@@ -148,8 +148,8 @@ def walk_forward_predictions(
 ) -> pd.DataFrame:
     """Per-GAME out-of-sample predictions (market-blind: team features only) for
     seeding the public track record. Same honest walk-forward as
-    ``walk_forward_backtest`` — every game is predicted by a model that never saw its
-    season — but returns one row per game with predicted + actual scores."""
+    ``walk_forward_backtest``: every game is predicted by a model that never saw its
+    season, but returns one row per game with predicted + actual scores."""
     params = {**TEAM_LGBM_PARAMS, "verbose": -1, **(params or {})}
     if feature_cols is None:
         feature_cols = TEAM_FEATURE_COLS

@@ -1,5 +1,5 @@
 """Experiment cadence (CHALK_MASTER_PLAN §7 / ARCHITECTURE §7): which sports run a
-feature experiment on which day — a content-rhythm choice, not a technical limit.
+feature experiment on which day, a content-rhythm choice, not a technical limit.
 NFL/CFB ~twice-weekly, NBA/NHL daily, MLB/soccer few-per-week. Predictions/results are
 game-day-driven (decided by the slate, not here).
 """

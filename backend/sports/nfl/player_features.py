@@ -56,13 +56,13 @@ def build_player_frame(years) -> pd.DataFrame:
 
 
 def latest_player_features(frame: pd.DataFrame) -> Dict[str, Dict]:
-    """Each player's feature vector + per-prop anchor for their NEXT game — the
+    """Each player's feature vector + per-prop anchor for their NEXT game: the
     true next-game rolling, computed over their most recent ACTUAL games (NOT the
     last row's shift(1) columns, which are the rolls ENTERING that last game and
     so are stale by one game). Mirrors the training rolls (L3 = last-3 mean; STD =
     season-to-date expanding mean) but evaluated at "now"; scoped to the player's
     MOST RECENT season, since the training rolls reset per (player, season).
-    Keyed by player slug (for name-based inference) — shape unchanged."""
+    Keyed by player slug (for name-based inference), shape unchanged."""
     out: Dict[str, Dict] = {}
     name_col = "player_display_name" if "player_display_name" in frame.columns else "player_name"
     for _, pdf in frame.sort_values(["season", "week"]).groupby("player_id"):

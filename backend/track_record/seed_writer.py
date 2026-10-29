@@ -51,7 +51,7 @@ def build_soccer_seed_rows(matches: pd.DataFrame, *, min_train_seasons: int = 1
 
     ``matches``: tidy EPL frame (season/date/home/away/fthg/ftag), e.g. the raw output
     of ``sports.soccer.team_features.build_epl_matches`` (its extra feature columns are
-    ignored — ratings are recomputed per fold). For each season S with >= ``min_train_seasons``
+    ignored; ratings are recomputed per fold). For each season S with >= ``min_train_seasons``
     prior seasons, team ratings are built from matches BEFORE S only (``latest_team_ratings``
     naturally uses the most recent prior season), every match in S is predicted via
     ``predict_3way``, and the MORE-LIKELY of home/away is the market-blind winner (never a

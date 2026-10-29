@@ -43,7 +43,7 @@ def build_pitcher_frame(years) -> pd.DataFrame:
 
 
 def latest_pitcher_features(frame: pd.DataFrame) -> Dict[int, Dict]:
-    """Each pitcher's features for their NEXT start — rolling over their most
+    """Each pitcher's features for their NEXT start, rolling over their most
     recent ACTUAL starts (not the shift(1) training column, which would be stale
     by one start). Keyed by pitcher id for inference."""
     out: Dict[int, Dict] = {}

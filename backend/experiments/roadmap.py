@@ -1,6 +1,6 @@
 """Load + query the pre-registered experiment roadmap (experiments/roadmap.yaml).
 
-The roadmap is the pre-committed plan and is treated as READ-ONLY at runtime — the
+The roadmap is the pre-committed plan and is treated as READ-ONLY at runtime; the
 runner never rewrites it (keeping the pre-registration honest and the file's comments
 intact). What actually ran, and whether it was kept/dropped, lives in the append-only
 ledger; `next_unrun` uses the ledger's run-ids to advance the queue.

@@ -7,7 +7,7 @@ prop is trained only on batter-games with enough prior history (usage gate).
 
 Home runs are extremely low-variance per game (most games = 0), so a rolling HR
 *rate* is the useful signal; skill over the recent-average baseline is expected
-to be small — reported honestly by the trainer.
+to be small, reported honestly by the trainer.
 """
 from __future__ import annotations
 
@@ -55,7 +55,7 @@ def build_batter_frame(years) -> pd.DataFrame:
 
 
 def latest_batter_features(frame: pd.DataFrame) -> Dict[int, Dict]:
-    """Each batter's features for their NEXT game — rolling over their most recent
+    """Each batter's features for their NEXT game, rolling over their most recent
     ACTUAL games (not the shift(1) training column, which would be stale by one
     game). Keyed by batter id for inference; anchors carry a recent avg per prop."""
     out: Dict[int, Dict] = {}
@@ -78,7 +78,7 @@ def latest_batter_features(frame: pd.DataFrame) -> Dict[int, Dict]:
 
 def _latest_str(p: pd.DataFrame, col: str) -> str:
     """Most recent non-null value of a passthrough label column (team/name), or ""
-    when absent — older cached frames predate these columns."""
+    when absent: older cached frames predate these columns."""
     if col not in p.columns or p.empty:
         return ""
     v = p[col].iloc[-1]

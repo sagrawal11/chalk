@@ -3,7 +3,7 @@
 Soccer breaks the binary margin-sign harness: a draw is a real outcome (~25% of
 matches), and the market-blind champion is the parametric Poisson team-strength
 model (``sports.soccer.team_features``), not a LightGBM margin regressor. So soccer
-gets its own honest eval here — for each match, predict 1X2 from that team's
+gets its own honest eval here: for each match, predict 1X2 from that team's
 PRIOR-only ratings (leakage-safe within season; optional cross-season prior), then
 grade three-way log-loss (primary), three-way accuracy, total-goals MAE, and draw
 calibration. Still market-blind: the betting line is never an input.
@@ -33,7 +33,7 @@ def _outcome(fthg: float, ftag: float) -> str:
 
 
 def three_way_logloss(outcomes, p_home, p_draw, p_away) -> float:
-    """Mean −log(prob assigned to the ACTUAL outcome) over H/D/A — the primary
+    """Mean −log(prob assigned to the ACTUAL outcome) over H/D/A, the primary
     soccer metric (lower is better), the 3-way analog of winner_logloss."""
     cols = {"H": np.clip(np.asarray(p_home, float), 1e-15, 1.0),
             "D": np.clip(np.asarray(p_draw, float), 1e-15, 1.0),
@@ -79,7 +79,7 @@ def predict_matches(matches: pd.DataFrame, params: Optional[dict] = None) -> pd.
 
 def walk_forward_3way(matches: pd.DataFrame, params: Optional[dict] = None) -> pd.DataFrame:
     """Per-season 3-way metrics. Each match is predicted from its team's prior-only
-    ratings (honest by construction) — there is no cross-season fit, so the eval
+    ratings (honest by construction): there is no cross-season fit, so the eval
     simply grades every gated match and aggregates by season."""
     df = predict_matches(matches, params)
     if df.empty:

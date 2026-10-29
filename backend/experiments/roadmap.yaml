@@ -1,15 +1,15 @@
-# CHALK feature-experiment roadmap — machine-readable, PRE-REGISTERED.
+# CHALK feature-experiment roadmap, machine-readable, PRE-REGISTERED.
 #
 # Order = the prioritized queue (held loosely). This file is the pre-committed plan:
 # every experiment's keep_rule is fixed BEFORE the result is seen (the honesty guard
-# against multiple-comparisons p-hacking). The runner NEVER rewrites this file — what
+# against multiple-comparisons p-hacking). The runner NEVER rewrites this file: what
 # actually ran (and was kept/dropped) is recorded in the append-only ledger
 # (artifacts/experiments_ledger.jsonl). Builder IDs resolve to feature columns via
 # experiments/champion.py::FEATURE_BUILDERS.
 #
 # status: queued        -> buildable now (columns exist in the frame), awaiting a run
 #         needs_builder -> requires new feature-engineering code first (not buildable
-#                          from the cached schedule frame yet; see FEATURE_ROADMAP.md)
+#                          from the cached schedule frame yet; see docs/FEATURE_ROADMAP.md)
 
 defaults:
   keep_rule:
@@ -60,20 +60,20 @@ sports:
         rung: 7
         name: Divisional-game flag
         builders: [NFL-37]
-        hypothesis: Familiar division rivals play tighter, lower-variance games — margins compress toward zero.
+        hypothesis: Familiar division rivals play tighter, lower-variance games, margins compress toward zero.
         eval_metric: winner_logloss
         act: 1
         status: queued
       - id: NFL-38
         rung: 7
-        name: Weather — wind & temperature
+        name: Weather, wind & temperature
         builders: [NFL-38]
         hypothesis: High wind and extreme cold suppress passing/kicking, lowering totals.
         eval_metric: total_mae
         act: 1
         status: queued
       # ---- Rungs that need a new feature-builder first (not buildable from the
-      #      cached schedule frame; wired in a later phase — see FEATURE_ROADMAP.md) ----
+      #      cached schedule frame; wired in a later phase: see docs/FEATURE_ROADMAP.md) ----
       - {id: NFL-07, rung: 2, name: Recency-weighted OFF/DEF (EWMA), builders: [NFL-07], act: 1, status: needs_builder}
       - {id: NFL-19, rung: 5, name: Offensive EPA/play (needs PBP), builders: [NFL-19], act: 1, status: needs_builder}
       - {id: NFL-45, rung: 8, name: Market-anchor residual & CLV probe, builders: [NFL-45], act: probe, status: needs_builder}
@@ -92,7 +92,7 @@ sports:
         status: queued
       - id: MLB-20
         rung: 3
-        name: Starting pitcher — rolling runs allowed (SP_RA)
+        name: "Starting pitcher: rolling runs allowed (SP_RA)"
         builders: [MLB-20]
         hypothesis: The team that scores runs isn't who takes the mound; who's pitching tonight should move the line more than any team-level stat. This is the MLB analog of NFL's QB.
         eval_metric: winner_logloss
@@ -100,9 +100,9 @@ sports:
         status: queued
       - id: MLB-21
         rung: 3
-        name: Starting pitcher — rolling ERA (SP_ERA)
+        name: "Starting pitcher: rolling ERA (SP_ERA)"
         builders: [MLB-21]
-        hypothesis: Earned-run average isolates the starter's own runs from the bullpen — a sharper pitcher signal than the coarse SP_RA team-runs-allowed proxy.
+        hypothesis: Earned-run average isolates the starter's own runs from the bullpen, a sharper pitcher signal than the coarse SP_RA team-runs-allowed proxy.
         eval_metric: winner_logloss
         act: 1
         status: queued
@@ -141,8 +141,8 @@ sports:
       # ---- Needs a new feature-builder first (not in the cached schedule frame) ----
       # The starting GOALIE is the dominant NHL swing, but the schedule endpoint only
       # exposes the post-game winning goalie; a pre-game goalie signal needs the
-      # boxscore endpoint (a new builder) — see FEATURE_ROADMAP.md.
-      - {id: NHL-20, rung: 3, name: Starting goalie — rolling save%/GAA, builders: [NHL-20], act: 1, status: needs_builder}
+      # boxscore endpoint (a new builder): see docs/FEATURE_ROADMAP.md.
+      - {id: NHL-20, rung: 3, name: "Starting goalie: rolling save%/GAA", builders: [NHL-20], act: 1, status: needs_builder}
 
   soccer:
     baseline_version: soccer-v1   # Rung-1 baseline Poisson 3-way champion (M7)
@@ -176,7 +176,7 @@ sports:
         rung: 3
         name: Stronger home-field prior
         builders: [SOC-04]
-        hypothesis: A single empirical home multiplier may understate home advantage; a larger prior could fit the home-win rate better — or overshoot (an honest test).
+        hypothesis: A single empirical home multiplier may understate home advantage; a larger prior could fit the home-win rate better, or overshoot (an honest test).
         eval_metric: three_way_logloss
         act: 1
         status: queued

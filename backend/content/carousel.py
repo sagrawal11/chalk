@@ -55,7 +55,7 @@ _SAMPLE = {
 
 def main() -> None:
     import argparse
-    ap = argparse.ArgumentParser(description="Render the carousel cover (HTML) — representative draft.")
+    ap = argparse.ArgumentParser(description="Render the carousel cover (HTML), representative draft.")
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
     out = Path(a.out)

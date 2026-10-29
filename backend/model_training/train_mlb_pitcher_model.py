@@ -45,7 +45,7 @@ def main() -> None:
 
     frame = build_pitcher_frame(range(args.start, args.end + 1))
     if frame.empty or "_n_prior" not in frame.columns:
-        logger.warning("MLB pitcher frame empty (no data fetched %d-%d) — skipping training.",
+        logger.warning("MLB pitcher frame empty (no data fetched %d-%d) - skipping training.",
                        args.start, args.end)
         return
     frame = frame[frame["_n_prior"] >= MIN_PRIOR_STARTS].reset_index(drop=True)

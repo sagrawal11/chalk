@@ -56,7 +56,7 @@ def test_targets_and_prior_only_ratings(tmp_path):
     assert g1["home"] == "LAL"
     assert g1["HOME_OFF"] == pytest.approx(110.0)  # fill, no prior history
 
-    # Game 3 (LAL home): LAL pre-game OFF must be mean(100,110)=105 — prior-only,
+    # Game 3 (LAL home): LAL pre-game OFF must be mean(100,110)=105, prior-only,
     # NOT the current 130 and NOT the through-g3 cumulative 113.33 (leakage).
     g3 = frame[frame["game_date"] == pd.Timestamp("2023-11-05")].iloc[0]
     assert g3["home"] == "LAL"

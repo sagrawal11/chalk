@@ -1,4 +1,4 @@
-"""X (Twitter) publisher — API v2 + media; multi-part threads via reply-chain. The
+"""X (Twitter) publisher: API v2 + media; multi-part threads via reply-chain. The
 real API call runs only when dry_run=False AND creds are present.
 """
 from __future__ import annotations
@@ -17,7 +17,7 @@ class XPublisher(Publisher):
     def _publish(self, draft) -> PostRef:  # pragma: no cover - live only
         missing = [k for k in _REQUIRED if not os.environ.get(k)]
         if missing:
-            raise RuntimeError(f"x not configured (missing {missing}) — stays dark")
+            raise RuntimeError(f"x not configured (missing {missing}), stays dark")
         import tweepy  # imported only on a live post
         client = tweepy.Client(
             consumer_key=os.environ["X_API_KEY"], consumer_secret=os.environ["X_API_SECRET"],

@@ -1,7 +1,7 @@
 """Serve MLB team-market predictions (predicted run score + win/total probs)
-from the trained margin & total normals — the MLB analog of nfl_team_predictor.
+from the trained margin & total normals, the MLB analog of nfl_team_predictor.
 
-v1 is the team-strength model (~54% SU — MLB is low-signal without pitcher data).
+v1 is the team-strength model (~54% SU; MLB is low-signal without pitcher data).
 The probable-pitcher signal and a live market-line anchor (The Odds API returns
 MLB moneyline+total) are the planned accuracy enhancements."""
 from __future__ import annotations
@@ -78,7 +78,7 @@ class MLBTeamPredictor:
             p_home_win = min(max(float(line["p_home_win"]), 0.02), 0.98)
             mu_t = float(line["total"])
             # implied run margin from the moneyline, CAPPED to a realistic MLB
-            # range — a 90% favorite still averages only ~2-3 runs, so the wide
+            # range: a 90% favorite still averages only ~2-3 runs, so the wide
             # Normal inverse would otherwise produce absurd (even negative) scores.
             mu_m = max(-3.5, min(3.5, NormalDist(0.0, 1.0).inv_cdf(p_home_win) * sig_m))
         else:

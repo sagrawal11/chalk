@@ -9,7 +9,7 @@ The interface is intentionally lean: identity/data methods are abstract (cheap,
 pure), while capabilities that need trained models or network access have
 default implementations that raise ``NotImplementedError`` and are overridden by
 plugins where the underlying implementation exists. New capabilities are added
-here as the generic core grows — not speculatively.
+here as the generic core grows, not speculatively.
 """
 from __future__ import annotations
 

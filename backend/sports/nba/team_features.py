@@ -9,7 +9,7 @@ from ``_build_kaggle_team_schedule_meta``, and all team codes route through
 Train/inference parity: ``build_team_game_frame`` (training) and
 ``matchup_features`` (inference) both derive each side's pre-game rating as "the
 latest timeline entry strictly before the game date", then feed the SAME
-``_assemble`` step — so the model sees identical features at train and serve.
+``_assemble`` step, so the model sees identical features at train and serve.
 """
 from __future__ import annotations
 
@@ -24,7 +24,7 @@ from feature_engine import _build_kaggle_team_schedule_meta, _load_team_ratings_
 from sports.nba.teams import canonical_team
 
 # Injury/availability signal (TM_OUT_* = baseline minutes/points of rotation
-# players OUT) — the biggest driver the ratings-only model was blind to.
+# players OUT) - the biggest driver the ratings-only model was blind to.
 AVAIL_KEYS = ["OUT_MIN", "OUT_PTS", "OUT_COUNT", "TOP_OUT"]
 _BASE_FEATURE_COLS: List[str] = [
     "HOME_OFF", "HOME_DEF", "HOME_NET", "HOME_PACE", "HOME_REST", "HOME_B2B",
@@ -36,7 +36,7 @@ _AVAIL_FEATURE_COLS: List[str] = (
     + ["OUT_PTS_DIFF", "OUT_MIN_DIFF"]
 )
 _ELO_FEATURE_COLS: List[str] = ["HOME_ELO", "AWAY_ELO", "ELO_DIFF"]
-# The model's feature contract (order matters — persisted with the artifact).
+# The model's feature contract (order matters, persisted with the artifact).
 TEAM_FEATURE_COLS: List[str] = _BASE_FEATURE_COLS + _AVAIL_FEATURE_COLS + _ELO_FEATURE_COLS
 
 _ELO_BASE, _ELO_K, _ELO_HOME = 1500.0, 20.0, 100.0
@@ -70,7 +70,7 @@ def _assemble(
         row[f"AWAY_{k}"] = a.get(k, 0.0)
     row["OUT_PTS_DIFF"] = a.get("OUT_PTS", 0.0) - h.get("OUT_PTS", 0.0)
     row["OUT_MIN_DIFF"] = a.get("OUT_MIN", 0.0) - h.get("OUT_MIN", 0.0)
-    # Elo rating (MOV-adjusted) — a strong margin prior; diff carries home edge separately.
+    # Elo rating (MOV-adjusted): a strong margin prior; diff carries home edge separately.
     row["HOME_ELO"] = h.get("ELO", _ELO_BASE)
     row["AWAY_ELO"] = a.get("ELO", _ELO_BASE)
     row["ELO_DIFF"] = h.get("ELO", _ELO_BASE) - a.get("ELO", _ELO_BASE)
@@ -286,7 +286,7 @@ def matchup_features(
     elo: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """A single-row feature frame for an (unplayed) matchup, in TEAM_FEATURE_COLS
-    order — built with the exact same primitives as training."""
+    order, built with the exact same primitives as training."""
     tl = timeline if timeline is not None else _timeline(parquet_path)
     md = meta if meta is not None else _schedule_meta(parquet_path)
     av = availability if availability is not None else _availability()

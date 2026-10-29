@@ -4,7 +4,7 @@
 For each team sport, walk forward season by season (a game is only ever predicted by a
 model that never saw it), turn each game into a market-blind winner + predicted-score
 pick, grade it against the known final, and append to the results ledger. Produces the
-hero metrics on day one — straight-up winner accuracy + predicted-score MAE — with ROI
+hero metrics on day one: straight-up winner accuracy + predicted-score MAE, with ROI
 left n/a (no historical closing moneyline exists; it accrues forward from live prices).
 
 Soccer predicts 3-way via a Poisson (Dixon-Coles-lite) model, not the margin/total
@@ -44,7 +44,7 @@ _SOCCER_SEASONS = (2021, 2022, 2023, 2024)
 
 def _frame_and_cols(sport: str, start: int, end: int):
     """Build the market-blind team frame + its feature columns. NFL MUST use
-    RESIDUAL_FEATURE_COLS — its TEAM_FEATURE_COLS includes the market line."""
+    RESIDUAL_FEATURE_COLS: its TEAM_FEATURE_COLS includes the market line."""
     if sport == "nba":
         from sports.nba.team_features import TEAM_FEATURE_COLS, build_team_game_frame
         return build_team_game_frame(), TEAM_FEATURE_COLS
@@ -69,11 +69,11 @@ def seed_soccer(min_train_seasons: int = 1, dry_run: bool = False,
         from sports.soccer.team_features import build_epl_matches
         matches = build_epl_matches(_SOCCER_SEASONS)
     if matches is None or matches.empty:
-        logger.warning("[soccer] no match data — skipped")
+        logger.warning("[soccer] no match data, skipped")
         return None
     rows = build_soccer_seed_rows(matches, min_train_seasons=min_train_seasons)
     if rows.empty:
-        logger.warning("[soccer] not enough seasons for walk-forward — skipped")
+        logger.warning("[soccer] not enough seasons for walk-forward, skipped")
         return None
     h, mae = headline(rows), score_mae(rows)
     wp = f"{h['win_pct']:.1%}" if h["win_pct"] is not None else "n/a"
@@ -95,12 +95,12 @@ def seed_sport(sport: str, start=None, end=None, min_train_seasons: int = 3,
     start, end = start or ds, end or de
     frame, cols = _frame_and_cols(sport, start, end)
     if frame is None or frame.empty:
-        logger.warning("[%s] no data — skipped", sport)
+        logger.warning("[%s] no data, skipped", sport)
         return None
     preds = walk_forward_predictions(frame, sport=sport, feature_cols=cols,
                                      min_train_seasons=min_train_seasons)
     if preds.empty:
-        logger.warning("[%s] not enough seasons for walk-forward — skipped", sport)
+        logger.warning("[%s] not enough seasons for walk-forward, skipped", sport)
         return None
     rows = build_seed_rows(preds)
     h, mae = headline(rows), score_mae(rows)

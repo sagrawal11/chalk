@@ -1,8 +1,8 @@
-"""Task 7.7 — home/away rolling features must not cross-contaminate.
+"""Task 7.7: home/away rolling features must not cross-contaminate.
 
 HA_HOME_* should be a player's recent HOME-only form and HA_AWAY_* their recent
 AWAY-only form. The old implementation rolled each venue subset, then
-merge_asof-joined both back onto every row keyed on date only — so a home game
+merge_asof-joined both back onto every row keyed on date only, so a home game
 also received the most recent prior AWAY-rolled values (and vice-versa). The
 venue split lost its meaning.
 

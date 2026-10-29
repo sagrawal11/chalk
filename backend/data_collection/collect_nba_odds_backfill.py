@@ -7,7 +7,7 @@ KAGGLE_USERNAME / KAGGLE_KEY (already in .env for CI). Emits the csv_backfill
 schema (game_date, home, away, spread_home, total) with canonical team codes to
 `data/odds/nba_kaggle_backfill.csv`, where TeamPredrictor._line_for reads it.
 
-NOTE ON CURRENCY: this dataset ends Jan-2023 — it's for TRAINING/backtesting the
+NOTE ON CURRENCY: this dataset ends Jan-2023; it's for TRAINING/backtesting the
 anchor. UP-TO-DATE lines for the upcoming season come from the LIVE provider
 (`sports/nba/live_odds.py`, The Odds API), which is what serves fresh games.
 Re-run this if a newer Kaggle odds dataset becomes available.

@@ -54,7 +54,7 @@ def market_blind() -> bool:
     return _flag("MARKET_BLIND", default=True)
 
 
-# --- Publishing / autonomy (M4) — every default is the safe, DARK posture. ---
+# --- Publishing / autonomy (M4): every default is the safe, DARK posture. ---
 _AUTONOMY_MODES = ("approve_all", "batch", "auto")
 
 

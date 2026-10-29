@@ -17,7 +17,7 @@ import pandas as pd
 _STATS = "https://statsapi.mlb.com/api/v1/people/{pid}/stats"
 _CACHE_DIR = Path(__file__).resolve().parents[2] / "data" / "mlb"
 # ER + IP kept per start so the team model can derive a rolling starter ERA
-# (earned_runs*9/IP over prior starts) — a sharper pitcher signal than the
+# (earned_runs*9/IP over prior starts), a sharper pitcher signal than the
 # coarse team-runs-allowed SP_RA proxy.
 _COLS = ["pitcher_id", "season", "date", "K", "IP", "ER", "BF", "opp", "is_home"]
 
@@ -34,7 +34,7 @@ def _ip_to_float(ip) -> float:
 
 def _sp_ids(year: int, min_starts: int = 5) -> List[int]:
     """Starting pitchers who appear >= min_starts times in the season's schedule
-    (regulars — skips one-off spot starters/openers to bound the fetch)."""
+    (regulars, skips one-off spot starters/openers to bound the fetch)."""
     from sports.mlb.data import load_schedules
     s = load_schedules([year])
     if s.empty:

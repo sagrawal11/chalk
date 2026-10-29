@@ -1,6 +1,6 @@
 /**
  * Shared brand primitives used by every frame. The Wordmark's red period is a
- * LOCKED brand element — do not restyle it.
+ * LOCKED brand element: do not restyle it.
  */
 import React from 'react';
 import {FONTS} from './theme';
@@ -8,7 +8,7 @@ import {FONTS} from './theme';
 type Palette = {ink: string; accent: string; muted: string; hairline: string};
 
 /**
- * "CHALK." wordmark — Fraunces 700, ~54px, letter-spacing -1px, with the
+ * "CHALK." wordmark: Fraunces 700, ~54px, letter-spacing -1px, with the
  * period rendered in the accent colour. `color` is the wordmark ink; `accent`
  * is the locked period colour.
  */
@@ -34,7 +34,7 @@ export const Wordmark: React.FC<{
   );
 };
 
-/** Monospace kicker/label/date/handle — UPPERCASE, tracked, usually muted. */
+/** Monospace kicker/label/date/handle: UPPERCASE, tracked, usually muted. */
 export const Mono: React.FC<{
   children: React.ReactNode;
   color: string;

@@ -1,6 +1,6 @@
 """Serve NHL team-market predictions (predicted goal score + win/total probs).
 Team goal model + a live market anchor (The Odds API moneyline->win prob, market
-total) — the same pattern as MLB (fixed puck line, so the moneyline is the margin
+total), the same pattern as MLB (fixed puck line, so the moneyline is the margin
 signal). Auto-enabled when ODDS_API_KEY is set."""
 from __future__ import annotations
 

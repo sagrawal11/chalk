@@ -1,9 +1,9 @@
-"""Task 7.6 — make train-serve skew observable at inference.
+"""Task 7.6: make train-serve skew observable at inference.
 
 predict_player_stats reindexes the inference row to the trained feature_columns
 and fills anything missing/NaN with 0.0, logging only at DEBUG. For high-signal
 managed features (ARCH_PROB_*, OPP_PRIOR_AVG_*, KG_PREV_*, DVP_*) a silent 0.0
-is far from the training distribution — skew that hides instead of surfacing.
+is far from the training distribution, skew that hides instead of surfacing.
 
 These tests pin a diagnostic (_feature_skew_report) and a guard
 (_check_feature_skew) that count BOTH missing and present-but-NaN columns and
@@ -22,7 +22,7 @@ COLS = ["PTS_L5", "AST_L10", "TEAM_PACE", "position_encoded"] + SENSITIVE  # 9 c
 
 
 def _predictor(cols):
-    # __new__ avoids loading models / FeatureEngine — the guard only needs
+    # __new__ avoids loading models / FeatureEngine; the guard only needs
     # self.feature_columns and the class-level threshold/prefixes.
     p = NBAPredictor.__new__(NBAPredictor)
     p.feature_columns = list(cols)

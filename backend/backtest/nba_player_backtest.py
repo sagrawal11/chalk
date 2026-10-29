@@ -2,12 +2,12 @@
 """Honest reliability check for the NBA player-prop (v2 anchored) models.
 
 Mirror of ``nfl_player_backtest``: on the untouched holdout season, does the
-anchored LightGBM model beat the naive baseline a fan uses for free — predicting
+anchored LightGBM model beat the naive baseline a fan uses for free, predicting
 the player's trailing-10-game average (the anchor)?
 
 The model is trained to predict ``stat - stat_L10`` (an adjustment to recent
-form), so its stored ``holdout_mae`` — measured by an eval-model that never saw
-the holdout season — is a level-MAE. The "last-10" baseline predicts adjustment
+form), so its stored ``holdout_mae``, measured by an eval-model that never saw
+the holdout season, is a level-MAE. The "last-10" baseline predicts adjustment
 zero, so its MAE is ``mean(|stat - stat_L10|)`` on the SAME rotation-filtered
 holdout rows. Skill = 1 - model/baseline; positive means the ML layer's
 adjustment beats leaving the recent average alone. Apples-to-apples because both
@@ -67,10 +67,10 @@ def main() -> None:
     holdout = metrics[TARGET_STATS[0]].get("holdout_season")
     need = ["SEASON", "MIN_L10"] + list(TARGET_STATS) + [f"{t}_L10" for t in TARGET_STATS]
 
-    logger.info("NBA player backtest — holdout season %s (scanning player parquets)...", holdout)
+    logger.info("NBA player backtest - holdout season %s (scanning player parquets)...", holdout)
     full = _load_holdout(args.player_data, holdout, need)
     if full.empty:
-        logger.error("No holdout rows loaded — check season string / parquet columns.")
+        logger.error("No holdout rows loaded - check season string / parquet columns.")
         return
     rot = full[pd.to_numeric(full["MIN_L10"], errors="coerce").fillna(0.0) >= ROTATION_MIN_L10]
     logger.info("holdout rotation rows: %d\n", len(rot))

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The daily content loop — the one command a schedule runs.
+"""The daily content loop: the one command a schedule runs.
 
 For a sport + date: predict the slate (team model), fetch free odds, select
 best bets, LOCK the predictions immutably, render shareable cards, and grade the
@@ -214,7 +214,7 @@ def _sport_slate_props(sport: str, games, season: str) -> List[Dict[str, Any]]:
     sport. NFL: skill-position yardage. MLB: probable-starter strikeouts + regular
     hitters (hits/TB/HR). NHL: marquee skaters (points/shots). Each enumerator filters
     to the day's teams via the player's roster team. (NBA uses the injected prop_model
-    / star_players path above.) Never raises — slate props are best-effort content."""
+    / star_players path above.) Never raises; slate props are best-effort content."""
     try:
         if sport == "nfl":
             from models.nfl_player_predictor import default_nfl_player_predictor
@@ -251,7 +251,7 @@ def _attach_closing_moneyline(picks: List[Any], team_lines: List[Any]) -> int:
     runs). Here we only look up the captured moneyline ``OddsLine`` matching a pick's
     (game_key, side) and set that pick's ``odds_american`` (+ display ``ev``) to the
     genuine closing price, so grading yields honest flat-stakes units. A pick with no
-    captured moneyline keeps ``odds_american=None`` (ROI-ineligible) — we NEVER
+    captured moneyline keeps ``odds_american=None`` (ROI-ineligible); we NEVER
     fabricate a price. Returns the number of picks priced (for logging/tests)."""
     from utils.odds_math import american_to_decimal, expected_value
 
@@ -323,7 +323,7 @@ def run_day(
         try:
             lock_predictions(sport, game_date, game_preds, picks, model_version=model_version)
         except FileExistsError:
-            logger.info("%s %s already locked — leaving the immutable snapshot intact", sport, game_date)
+            logger.info("%s %s already locked, leaving the immutable snapshot intact", sport, game_date)
 
     prop_cards = _build_prop_cards(prop_model, picks, star_players) if prop_model else []
     if not prop_cards:

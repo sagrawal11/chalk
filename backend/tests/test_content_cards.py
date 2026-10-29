@@ -1,4 +1,4 @@
-"""Hermetic tests for the M3 content generators (HTML build only — no rasterization).
+"""Hermetic tests for the M3 content generators (HTML build only, no rasterization).
 
 Guards that every template fills cleanly (no leftover %%TOKENS%%) and that the key
 copy / honesty elements are present.
@@ -16,9 +16,9 @@ _RESULT = {  # a ledger-row-shaped ExperimentResult (NFL-10 keep)
     "challenger_metrics": {"su_acc": 0.6247, "winner_logloss": 0.6442, "margin_mae": 10.704, "total_mae": 10.933},
 }
 
-_MLB_RESULT = {  # the real MLB-20 ledger row (SP_RA drop) — content is sport-generic
+_MLB_RESULT = {  # the real MLB-20 ledger row (SP_RA drop): content is sport-generic
     "id": "MLB-20", "sport": "mlb", "rung": 3,
-    "name": "Starting pitcher — rolling runs allowed (SP_RA)",
+    "name": "Starting pitcher, rolling runs allowed (SP_RA)",
     "eval_window": "2018–2024", "decision": "drop",
     "hypothesis": "Who takes the mound tonight should move the line more than any team-level stat.",
     "champion_metrics": {"su_acc": 0.5667, "winner_logloss": 0.6816, "margin_mae": 3.449, "total_mae": 3.564},
@@ -32,7 +32,7 @@ _MLB_SCORE = {
     "away_score": 5, "home_score": 4, "winner_side": "away", "confidence": 0.55,
 }
 
-_NHL_RESULT = {  # the real NHL-06 ledger row (FORM kept -> nhl-v2) — the first NHL climb
+_NHL_RESULT = {  # the real NHL-06 ledger row (FORM kept -> nhl-v2): the first NHL climb
     "id": "NHL-06", "sport": "nhl", "rung": 2, "name": "Last-10-game form (FORM)",
     "eval_window": "2018-19–2024-25", "decision": "keep",
     "hypothesis": "A recent hot/cold streak captures momentum the season goal average smooths over.",
@@ -60,6 +60,15 @@ def _no_unfilled(html: str) -> None:
     assert "%%" not in html, "template has an unfilled %%TOKEN%%"
 
 
+def test_seasons_count_handles_two_year_windows():
+    # regression: '2018-19–2024-25' (NHL/NBA) must count 7 seasons, not -1998.
+    from content.feature_post import _seasons
+    assert _seasons("2002–2024") == 23        # NFL single-year
+    assert _seasons("2018–2024") == 7          # MLB single-year
+    assert _seasons("2021–2023") == 3          # soccer single-year
+    assert _seasons("2018-19–2024-25") == 7    # NHL two-year labels
+
+
 def test_pick_display_metric_prefers_the_metric_that_moved():
     # SU is flat (0.02pp) but margin moved (0.026) -> feature margin MAE (Option C).
     assert pick_display_metric(_RESULT) == "margin_mae"
@@ -85,7 +94,7 @@ def test_experiment_log_renders_for_mlb():
     # experiment-log card, honest DROP styling, disclaimer intact.
     html = build_experiment_log_html(
         _MLB_RESULT, metric="auto",
-        next_exp={"id": "MLB-21", "name": "Starting pitcher — rolling ERA (SP_ERA)",
+        next_exp={"id": "MLB-21", "name": "Starting pitcher, rolling ERA (SP_ERA)",
                   "hypothesis": "ERA isolates the starter's own runs from the bullpen."})
     _no_unfilled(html)
     assert "Starting pitcher" in html and "DROPPED" in html
@@ -129,7 +138,7 @@ def test_experiment_log_renders_for_soccer_3way():
     html = build_experiment_log_html(
         _SOCCER_RESULT, metric="auto",
         next_exp={"id": "SOC-04", "name": "Stronger home-field prior",
-                  "hypothesis": "A larger home multiplier could fit better — or overshoot."})
+                  "hypothesis": "A larger home multiplier could fit better, or overshoot."})
     _no_unfilled(html)
     assert "Cross-season prior" in html and "KEPT" in html
     assert "3-WAY ACCURACY" in html and "A research project." in html

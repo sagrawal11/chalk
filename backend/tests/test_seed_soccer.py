@@ -50,7 +50,7 @@ def test_build_soccer_seed_rows_grades_and_is_roi_ineligible():
     assert rows["odds_american"].isna().all()         # market-blind: no price
     assert rows["units"].isna().all()                 # -> ROI-ineligible
     assert (rows["source"] == "seed_backtest").all()
-    # win / loss(upset) / loss(draw) — a draw grades as a LOSS for the picked side.
+    # win / loss(upset) / loss(draw): a draw grades as a LOSS for the picked side.
     assert list(rows["result"]) == ["win", "loss", "loss"]
     # Predicted scores derived from the Poisson lambdas are present.
     assert {"pred_home_pts", "pred_away_pts", "home_pts_err", "away_pts_err"} <= set(rows.columns)

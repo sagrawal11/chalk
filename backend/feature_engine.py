@@ -77,7 +77,7 @@ def _load_team_stats(path: Path) -> Optional[pd.DataFrame]:
     return ts
 
 
-# Do not shift these — IDs or non-meaningful numerics for prior-game context
+# Do not shift these: IDs or non-meaningful numerics for prior-game context
 _KG_SHIFT_EXCLUDE = frozenset({"game_id", "season", "team_id", "sub_season_id", "min"})
 
 
@@ -88,7 +88,7 @@ def _load_kaggle_prior_game_features(parquet_path: Path) -> Optional[pd.DataFram
     """
     path = Path(parquet_path)
     if not path.exists():
-        logger.warning("Kaggle team games parquet missing at %s — KG_PREV_* features off", path)
+        logger.warning("Kaggle team games parquet missing at %s, KG_PREV_* features off", path)
         return None
     kg = pd.read_parquet(path)
     if "team" not in kg.columns or "game_date" not in kg.columns:
@@ -123,12 +123,12 @@ def _load_team_ratings_timeline(parquet_path: Path) -> Optional[pd.DataFrame]:
     Each value is the cumulative mean THROUGH that game, computed within
     (team, season). Paired with ``merge_asof(direction="backward",
     allow_exact_matches=False)`` this yields a rating built only from games that
-    happened strictly before the row's game — no same-game or future leakage,
+    happened strictly before the row's game (no same-game or future leakage),
     unlike the old full-season aggregate keyed on (team, SEASON).
     """
     path = Path(parquet_path)
     if not path.exists():
-        logger.warning("Kaggle team games parquet missing at %s — team ratings off", path)
+        logger.warning("Kaggle team games parquet missing at %s, team ratings off", path)
         return None
     try:
         kg = pd.read_parquet(path)
@@ -249,7 +249,7 @@ class FeatureEngine:
         player's prior HOME games) and ``HA_AWAY_*`` only on away-game rows; the
         opposite venue's columns stay NaN. This avoids the cross-contamination
         of the old merge_asof-on-date approach, where every row (home or away)
-        received the most recent prior values from BOTH venues — so a home game
+        received the most recent prior values from BOTH venues, so a home game
         carried away-form and vice-versa, and same-day rows were collapsed.
         """
         out = df.copy().reset_index(drop=True)
@@ -294,7 +294,7 @@ class FeatureEngine:
             df["POSITION_GROUP"] = df["position"].apply(_position_group)
         elif "POSITION_GROUP" not in df.columns:
             df["POSITION_GROUP"] = "G"
-        # Stable encoding derived from the normalized group via a fixed mapping —
+        # Stable encoding derived from the normalized group via a fixed mapping;
         # never per-frame Categorical codes (which drift with frame content).
         df["position_encoded"] = (
             df["POSITION_GROUP"].map(POSITION_GROUP_ENCODING).fillna(0).astype(int)
@@ -718,7 +718,7 @@ class FeatureEngine:
         ]
         
         # Exact Managed Stat Names.
-        # NOTE: raw same-game TS_PCT / USG_PCT are intentionally absent here —
+        # NOTE: raw same-game TS_PCT / USG_PCT are intentionally absent here;
         # they are leaky (computed from the current game) and are dropped by the
         # explicit exclusion below. Only their rolling (_L*) versions are kept.
         managed_exact = [
@@ -820,7 +820,7 @@ def save_feature_columns(columns: List[str]) -> None:
 
 
 def default_engine() -> FeatureEngine:
-    # If an archetype model is present it MUST load — a corrupt/unreadable model
+    # If an archetype model is present it MUST load; a corrupt/unreadable model
     # silently becoming None would drop ARCH_PROB_* columns and cause train-serve
     # skew. Absence of the file is allowed (pre-archetype bootstrap phase).
     arch = None

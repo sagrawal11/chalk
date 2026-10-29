@@ -1,4 +1,4 @@
-"""The ``OddsProvider`` interface — the vendor-agnostic seam. The betting layer
+"""The ``OddsProvider`` interface: the vendor-agnostic seam. The betting layer
 depends only on this ABC and the normalized ``OddsLine`` schema, never on a
 concrete free source, so swapping/adding sources is config, not code.
 """

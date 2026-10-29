@@ -1,16 +1,16 @@
-# CHALK — Editorial Terminal exploration (28 options)
+# CHALK: Editorial Terminal exploration (28 options)
 
-Same game in every card (Lakers 112–108) so you're judging **design only**. Open
+Same game in every card (Lakers 112–108) so the judging is design only. Open
 `contact.png` for the whole set at a glance, then the numbered PNGs for full size.
-Shortlist by number (e.g. "I like 02, 08, 18, 22") — your pick also picks the logo
+Shortlist by number (e.g. "I like 02, 08, 18, 22"). The pick also sets the logo
 serif, since each renders the `CHALK.` wordmark in that variant's typeface.
 
 Five layout families:
-- **rows** (01–12) — name-left / score-right ledger (the style you liked)
-- **centered** (13–17) — symmetrical, big centered scores
-- **bigtype** (18–21) — the winner as a huge one-word headline
-- **masthead** (22–25) — newspaper front-page masthead
-- **terminal** (26–28) — monospace data readout
+- rows (01–12): name-left / score-right ledger (the style you liked)
+- centered (13–17): symmetrical, big centered scores
+- bigtype (18–21): the winner as a huge one-word headline
+- masthead (22–25): newspaper front-page masthead
+- terminal (26–28): monospace data readout
 
 | # | Layout | Serif / face | Palette | Numerals |
 |---|--------|--------------|---------|----------|

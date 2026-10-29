@@ -1,8 +1,8 @@
 """On-disk odds stores.
 
-- **live snapshot**: ``data/odds/live/{sport}/{date}.parquet`` — latest capture
+- **live snapshot**: ``data/odds/live/{sport}/{date}.parquet``: latest capture
   for a slate; what the API / best-bet selection read today.
-- **append-only history**: ``data/odds/history/odds_history.parquet`` — every
+- **append-only history**: ``data/odds/history/odds_history.parquet``: every
   capture appended (idempotent on ``odds_id`` + ``captured_at``), building the
   forward-collection corpus for grading and (eventually) prop backtests.
 """

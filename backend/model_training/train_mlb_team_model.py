@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Train the MLB team run-score model (margin & total) via the shared honest
-walk-forward trainer — same methodology as NBA/NFL (only the feature engine
+walk-forward trainer, same methodology as NBA/NFL (only the feature engine
 differs). v1 is team-strength only; probable-pitcher + market anchor are the
 planned accuracy enhancements."""
 from __future__ import annotations

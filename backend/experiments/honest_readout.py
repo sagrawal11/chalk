@@ -1,8 +1,8 @@
-"""Honest readout — the overfitting canary (ARCHITECTURE §5d).
+"""Honest readout: the overfitting canary (ARCHITECTURE §5d).
 
 Evaluates the CURRENT champion on the UNTOUCHED final season (never used for keep/drop
 selection), and reports the gap between the selected (train+CV walk-forward) number and
-the untouched-test number — a widening gap is the monitored (and postable) overfitting
+the untouched-test number. A widening gap is the monitored (and postable) overfitting
 signal. Also reports the cumulative multiple-comparisons exposure (experiments run vs
 kept). Reuses walk_forward_backtest: the holdout season's row is produced by a model
 trained on all prior (train+CV) seasons.
@@ -31,10 +31,10 @@ def honest_readout(sport: str, *, start: int, end: int) -> dict:
     holdout = _pick_holdout(frame)
 
     # Walk-forward over the FULL frame; the holdout season is predicted by a model
-    # trained on every prior (train+CV) season — the honest untouched-test number.
+    # trained on every prior (train+CV) season: the honest untouched-test number.
     bt = walk_forward_backtest(frame, sport=sport, feature_cols=champ.feature_cols,
                                params=DETERMINISTIC_PARAMS)
-    # Match the holdout row by the sport's own season label — two-year sports
+    # Match the holdout row by the sport's own season label; two-year sports
     # (NHL/NBA) label 2025 as "2025-26", so str(holdout) would never match.
     row = bt[bt["season"] == _season_label(sport, holdout)]
     untouched = row.iloc[0].to_dict() if not row.empty else {}
@@ -66,8 +66,8 @@ def main() -> None:
     r = honest_readout(args.sport, start=args.start, end=args.end)
     u, s, g, mc = (r["untouched_test"], r["selected_traincv"],
                    r["gap_untouched_minus_selected"], r["multiple_comparisons"])
-    print(f"\n=== HONEST READOUT — {r['champion']} (Rung {r['rung']}) ===")
-    print(f"untouched test season: {r['holdout_season']}  (N={u.get('n')}) — never used for selection")
+    print(f"\n=== HONEST READOUT: {r['champion']} (Rung {r['rung']}) ===")
+    print(f"untouched test season: {r['holdout_season']}  (N={u.get('n')}) - never used for selection")
     print(f"  {'metric':<16}{'selected(CV)':>14}{'untouched':>12}{'gap':>10}")
     print(f"  {'SU accuracy':<16}{s.get('su_acc'):>14}{u.get('su_acc'):>12}{g.get('su_acc'):>+10}")
     print(f"  {'winner logloss':<16}{s.get('winner_logloss'):>14}{u.get('winner_logloss'):>12}{g.get('winner_logloss'):>+10}")

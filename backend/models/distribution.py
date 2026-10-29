@@ -1,6 +1,6 @@
 """Predictive distributions for player counting stats.
 
-A MAE-optimized point prediction cannot answer "what is P(PTS > 24.5)?" — which
+A MAE-optimized point prediction cannot answer "what is P(PTS > 24.5)?", which
 is exactly what a prop needs. This turns each per-stat mean prediction into a
 distribution:
 

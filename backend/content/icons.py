@@ -1,4 +1,4 @@
-"""In-house line-art sport icons (CONTENT_SPEC §2) — ink outline + a single red
+"""In-house line-art sport icons (CONTENT_SPEC §2): ink outline + a single red
 accent, no trademarked league/team marks. Reused across cards + the carousel."""
 
 # viewBox-normalized SVGs; callers set width/height via the wrapping element.
@@ -28,7 +28,7 @@ BY_SPORT = {
     "nfl": FOOTBALL, "cfb": FOOTBALL,
     "nba": BASKETBALL,
     "mlb": BASEBALL,
-    # nhl (puck), soccer (ball) — drawn as those sports launch (CONTENT_SPEC §2).
+    # nhl (puck), soccer (ball): drawn as those sports launch (CONTENT_SPEC §2).
 }
 
 

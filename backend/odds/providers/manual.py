@@ -1,4 +1,4 @@
-"""Manual CSV drop — a hand-entered normalized odds file whose columns are
+"""Manual CSV drop: a hand-entered normalized odds file whose columns are
 OddsLine fields (sport, game_date, market_family, subject, side, and optionally
 odds_american, line, stat, book, home, away). Keeps the system usable for any
 market when scrapers break.

@@ -1,4 +1,4 @@
-"""Canonical player slug — the stable key for per-player artifacts (residual
+"""Canonical player slug: the stable key for per-player artifacts (residual
 models, caches).
 
 One definition shared by the trainers and the predictor so keys never diverge.

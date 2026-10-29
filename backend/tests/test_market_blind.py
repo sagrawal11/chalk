@@ -1,5 +1,5 @@
 """Market-blind mode (config.settings.MARKET_BLIND): predictions ignore the betting
-line and picks are generated odds-free. Hermetic — no network and no trained models
+line and picks are generated odds-free. Hermetic: no network and no trained models
 required (the one artifact-dependent check skips if the model is absent)."""
 import pytest
 

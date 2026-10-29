@@ -1,4 +1,4 @@
-"""Champion schema + feature resolution (experiments/champion.py) — hermetic.
+"""Champion schema + feature resolution (experiments/champion.py). Hermetic.
 
 Also checks the shared harness's new winner_logloss on a tiny synthetic frame,
 so the M1 eval path is covered in CI without any NFL data / network.

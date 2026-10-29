@@ -3,7 +3,7 @@
 Each canonical team maps to (lat, lon, tz_offset_hours, altitude_ft) for its home
 arena's city. Used to derive leakage-safe schedule features: a game's venue and
 altitude are known before tip, and travel is measured from the player's PREVIOUS
-game's venue — all prior-or-known information.
+game's venue: all prior-or-known information.
 """
 from __future__ import annotations
 

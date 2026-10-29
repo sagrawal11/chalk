@@ -1,4 +1,4 @@
-"""Soccer plugin (backend/sports/soccer/) — completes the big-5. Hermetic: a
+"""Soccer plugin (backend/sports/soccer/), completes the big-5. Hermetic: a
 stubbed market provider exercises the 3-way (home/draw/away) prediction path
 with no network."""
 import pytest

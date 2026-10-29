@@ -30,7 +30,7 @@ PARAMS = dict(num_leaves=31, min_child_samples=100, colsample_bytree=0.7,
               subsample=0.8, reg_lambda=1.0)
 STATS = ["PTS", "AST", "FG3M"]
 
-# Curated signal set (prefixes/exacts) — the hypothesis is that pruning the 321
+# Curated signal set (prefixes/exacts): the hypothesis is that pruning the 321
 # noisy/collinear features to these ~50 stops the tree-1 inner-val overfit.
 CURATED_PREFIXES = ("MIN_L", "PTS_L", "PTS_PER100_L", "USG_PCT_L", "TS_PCT_L",
                     "DVP_", "OPP_PRIOR_AVG_", "HA_HOME_", "HA_AWAY_", "TRV_")

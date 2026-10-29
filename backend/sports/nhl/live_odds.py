@@ -1,4 +1,4 @@
-"""Live NHL lines from The Odds API (free tier) — the market anchor. Like MLB,
+"""Live NHL lines from The Odds API (free tier), the market anchor. Like MLB,
 NHL's puck line is a fixed +/-1.5, so we anchor the WINNER on the de-vigged
 moneyline and the TOTAL on the market total. Shares ODDS_API_KEY with the other
 providers; fails soft (no key / offseason / error -> {} -> team-model fallback).

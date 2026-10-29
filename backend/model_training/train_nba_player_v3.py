@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Train the clean NBA player-prop models (v3) — replaces the degenerate
+"""Train the clean NBA player-prop models (v3), replacing the degenerate
 global_lgbm path with a focused, curated feature set (recent-form windows +
 per-minute rate + teammate availability + light context).
 

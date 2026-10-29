@@ -1,4 +1,4 @@
-"""Soccer 3-way (1X2) champion/challenger path — the Poisson analog of the binary
+"""Soccer 3-way (1X2) champion/challenger path: the Poisson analog of the binary
 harness. Reuses the ChampionConfig schema, the append-only ledger, and the
 pre-registered roadmap; swaps in the 3-way Poisson eval (backtest.soccer_backtest)
 because soccer's outcome (H/D/A) and champion model (parametric Poisson, not a
@@ -33,12 +33,12 @@ _SEED = dict(
     active_feature_builders=["SOC-01"],
     notes="Day-1 soccer champion (M7): baseline independent-Poisson team-strength "
           "3-way model (EPL, market-blind). Soccer is the most efficient market of "
-          "all — the widest blind-vs-market gap, and draws make it genuinely 3-way.",
+          "all: the widest blind-vs-market gap, and draws make it genuinely 3-way.",
 )
 
 
 def _eval_params(params: dict, seasons=SEASONS) -> dict:
-    """Walk-forward 3-way over TRAIN+CV seasons only — the most recent season is held
+    """Walk-forward 3-way over TRAIN+CV seasons only; the most recent season is held
     UNTOUCHED (never in the selection window), exactly like the binary harness."""
     raw = load_epl_raw(seasons)
     present = sorted(int(s) for s in raw["season"].dropna().astype(int).unique())
@@ -145,7 +145,7 @@ def honest_readout() -> dict:
 def _print_eval(champ: ChampionConfig, res: dict) -> None:
     m = res["metrics"]
     print(f"\n=== SOCCER champion {champ.model_version} (rung {champ.rung}) "
-          f"— market-blind 3-way walk-forward (EPL) ===")
+          f"- market-blind 3-way walk-forward (EPL) ===")
     print(f"builders: {', '.join(champ.active_feature_builders)}")
     print(f"params: {champ.model_params}")
     print(f"eval window: {res['eval_window']}   holdout (untouched): {res['holdout_season']}")
@@ -181,7 +181,7 @@ def run_cli(args) -> None:
     r = run_experiment(exp_id=args.id, write=args.write)
     cm, hm = r["champion_metrics"], r["challenger_metrics"]
     verdict = "KEEP  -> " + r.get("promoted_to", "") if r["decision"] == "keep" else "DROP (champion unchanged)"
-    print(f"\n=== EXPERIMENT {r['id']} — {r['name']} (Rung {r['rung']}) ===")
+    print(f"\n=== EXPERIMENT {r['id']}: {r['name']} (Rung {r['rung']}) ===")
     print(f"TESTED : {r['hypothesis']}")
     print(f"champion {r['champion_version']} vs challenger {r['challenger_version']} (+{r['builder_added']})")
     print(f"eval window {r['eval_window']} · N={r['n_games']}")
@@ -201,8 +201,8 @@ def readout_cli(args) -> None:
     r = honest_readout()
     u, s, g = r["untouched_test"], r["selected_traincv"], r["gap_untouched_minus_selected"]
     mc = r["multiple_comparisons"]
-    print(f"\n=== HONEST READOUT — {r['champion']} (Rung {r['rung']}) [soccer, 3-way] ===")
-    print(f"untouched test season: {r['holdout_season']}  (N={u.get('n')}) — never used for selection")
+    print(f"\n=== HONEST READOUT: {r['champion']} (Rung {r['rung']}) [soccer, 3-way] ===")
+    print(f"untouched test season: {r['holdout_season']}  (N={u.get('n')}) - never used for selection")
     print(f"  {'metric':<18}{'selected(CV)':>14}{'untouched':>12}{'gap':>10}")
     print(f"  {'3-way logloss':<18}{s.get('three_way_logloss'):>14}{u.get('three_way_logloss'):>12}{g.get('three_way_logloss'):>+10}")
     print(f"  {'3-way acc':<18}{s.get('three_way_acc'):>14}{u.get('three_way_acc'):>12}{g.get('three_way_acc'):>+10}")

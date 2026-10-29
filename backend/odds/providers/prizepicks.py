@@ -1,11 +1,11 @@
-"""PrizePicks projections (player props) — a free, keyless public endpoint.
+"""PrizePicks projections (player props): a free, keyless public endpoint.
 
 PrizePicks is a pick'em projection, not a two-way sportsbook price, so lines
-carry ``odds_american=None`` — the projection itself is treated as the fair
+carry ``odds_american=None``; the projection itself is treated as the fair
 line, and best-bet edge for props is model P(over) vs 0.5 (Task #10).
 
 ``parse`` is pure and unit-tested against a fixture; ``fetch_player_props`` does
-the (guarded, best-effort) network call. Scraper fragility is expected — a
+the (guarded, best-effort) network call. Scraper fragility is expected; a
 failure returns [] and the MultiProvider/nightly step degrades gracefully.
 """
 from __future__ import annotations
@@ -76,6 +76,6 @@ class PrizePicksProvider(OddsProvider):
             resp = requests.get(ENDPOINT, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
             resp.raise_for_status()
             return parse(resp.json(), sport=sport, game_date=game_date)
-        except Exception as e:  # scraper fragility is expected — degrade gracefully
+        except Exception as e:  # scraper fragility is expected, degrade gracefully
             logger.warning("PrizePicks fetch failed (%s); returning no props", e)
             return []
