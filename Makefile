@@ -1,7 +1,7 @@
-# CHALK: local dev (Hybrid: Docker services + native Vite).
-# Run `make setup` once, then `make dev`. Run `make test` for the suite.
+# CHALK: local dev (Docker services + pinned Python 3.10 backend).
+# Run `make setup` once, then `make up`. Run `make test` for the suite.
 
-.PHONY: help setup build up down restart logs ps frontend dev seed-r2 cache redis-cli backend-shell test
+.PHONY: help setup build up down restart logs ps seed-r2 redis-cli backend-shell test
 
 help:
 	@echo "Targets:"
@@ -11,10 +11,7 @@ help:
 	@echo "  restart     Restart the backend container"
 	@echo "  logs        Tail all service logs"
 	@echo "  ps          Show service status"
-	@echo "  frontend    Install deps + run Vite natively on :8080"
-	@echo "  dev         up + frontend"
 	@echo "  seed-r2     One-time: push local data/artifacts into MinIO"
-	@echo "  cache       Warm Redis baselines (the original failing command)"
 	@echo "  redis-cli   Open redis-cli in the redis container"
 	@echo "  test        Run the backend test suite in the pinned Python 3.10 image"
 
@@ -39,16 +36,8 @@ logs:
 ps:
 	docker compose ps
 
-frontend:
-	cd lovable && npm install && npm run dev
-
-dev: up frontend
-
 seed-r2:
 	docker compose exec backend python -c "from utils.storage import upload_full_training_bundle; import os; upload_full_training_bundle(os.environ['R2_BUCKET_NAME'])"
-
-cache:
-	docker compose exec backend python pipeline/cache_baselines.py
 
 redis-cli:
 	docker compose exec redis redis-cli
@@ -58,7 +47,6 @@ backend-shell:
 
 # Canonical test path: build the pinned Python 3.10 image (backend/Dockerfile),
 # mount the code, run pytest. No external services needed (hermetic suite).
-# NOT the checked-in venv and NOT anaconda base (see cache-baselines env skew).
 test:
 	docker build -t chalk-backend backend
 	docker run --rm -v "$(CURDIR)/backend:/app/backend" chalk-backend python -m pytest tests/ -q
