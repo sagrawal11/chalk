@@ -5,12 +5,12 @@ name: CHALK Daily (green pipeline)
 # -> enqueue -> assemble the approval batch.
 #
 # DARK until launch: the schedule is DISABLED, AUTONOMY_MODE=approve_all, CHALK_DRY_RUN=1,
-# and no publisher creds are set — so it NEVER posts; it only lands drafts in the queue.
+# and no publisher creds are set, so it NEVER posts; it only lands drafts in the queue.
 # At go-live (M6) the owner uncomments the cron, adds the platform secrets, and flips
 # CHALK_DRY_RUN=0. Every credential comes from GitHub Actions encrypted secrets (§5k).
 on:
   # schedule:
-  #   - cron: '0 8 * * *'    # 08:00 UTC daily (after games) — enable at launch
+  #   - cron: '0 8 * * *'    # 08:00 UTC daily (after games): enable at launch
   workflow_dispatch:
     inputs:
       sport:
@@ -51,11 +51,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r config/requirements.txt
           pip install --no-deps nfl_data_py==0.3.3
-      - name: Run the CHALK daily pipeline (dark — drafts only, no posts)
+      - name: Run the CHALK daily pipeline (dark, drafts only, no posts)
         run: |
           cd backend
           python -m agent.daily_run --sport "${{ github.event.inputs.sport || 'nfl' }}" --force-experiment
-      - name: Scheduled agent — assemble the approval batch (cautious; posts nothing)
+      - name: Scheduled agent, assemble the approval batch (cautious; posts nothing)
         run: |
           cd backend
           python -m agent.agent_run

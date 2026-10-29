@@ -2,7 +2,7 @@
   "name": "chalk-reel",
   "version": "1.0.0",
   "private": true,
-  "description": "CHALK daily sports-prediction REEL — 1080x1920 30fps MP4, rendered programmatically with Remotion in the locked 'Editorial Terminal' design.",
+  "description": "CHALK daily sports-prediction REEL, 1080x1920 30fps MP4, rendered programmatically with Remotion in the locked 'Editorial Terminal' design.",
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {

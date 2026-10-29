@@ -1,7 +1,7 @@
-# CHALK — Daily Prediction Reel (Remotion)
+# CHALK: Daily Prediction Reel (Remotion)
 
 Programmatic React video that renders CHALK's daily sports-prediction REEL as a
-**1080×1920, 30fps MP4** in the locked **"Editorial Terminal"** design, fully
+1080×1920, 30fps MP4 in the locked "Editorial Terminal" design, fully
 automatable from a single JSON slate.
 
 Self-contained under `reel/`. Does not touch the Python backend or `lovable/`.
@@ -10,19 +10,19 @@ Self-contained under `reel/`. Does not touch the Python backend or `lovable/`.
 
 ## What it renders
 
-A single composition, `Reel`, sequenced as **Intro → Game×N → Outro**:
+A single composition, `Reel`, sequenced as Intro → Game×N → Outro:
 
-1. **Intro** (~75f, light) — wordmark + date, "TODAY'S CALLS" kicker, a big
+1. Intro (~75f, light): wordmark + date, "TODAY'S CALLS" kicker, a big
    three-line headline (`N games. / N predictions. / 0 odds.`), a subhead, and a
    track-record block.
-2. **Game** (~75f each, light) — pager dots, `{HOME CITY} · {AWAY CITY}` lead, a
-   two-row game block with **scores that count up from 0**, a verdict, a
-   **confidence bar that fills**, an italic reason, and a **wipe** between games.
-3. **Outro** (~105f, **dark**) — "YESTERDAY" kicker, `We went {correct} for
+2. Game (~75f each, light): pager dots, `{HOME CITY} · {AWAY CITY}` lead, a
+   two-row game block with scores that count up from 0, a verdict, a
+   confidence bar that fills, an italic reason, and a wipe between games.
+3. Outro (~105f, dark): "YESTERDAY" kicker, `We went {correct} for
    {total}.` with the number counting up, a season line, and a `@playthechalk`
    CTA.
 
-Total duration scales to the slate via `calculateMetadata` — a 3-game slate and a
+Total duration scales to the slate via `calculateMetadata`: a 3-game slate and a
 12-game slate both render correctly with no config change.
 
 ---
@@ -34,7 +34,7 @@ cd reel
 npm install
 ```
 
-> **Fonts need network on the first render.** Fraunces / IBM Plex Mono / Inter
+> Fonts need network on the first render. Fraunces / IBM Plex Mono / Inter
 > are pulled via `@remotion/google-fonts` at build/render time and cached
 > thereafter. An offline first render will fail at font fetch.
 
@@ -83,7 +83,7 @@ npx remotion still Reel out/outro.png  --props=./sample-slate.json --frame=620
 
 ## Data contract (the JSON slate)
 
-`getInputProps` / `defaultProps` shape — see `sample-slate.json` for a full
+`getInputProps` / `defaultProps` shape, see `sample-slate.json` for a full
 8-game NBA example:
 
 ```jsonc
@@ -106,7 +106,7 @@ npx remotion still Reel out/outro.png  --props=./sample-slate.json --frame=620
 ```
 
 Notes:
-- `winPct` is a **percentage** (e.g. `61.5`), not a fraction.
+- `winPct` is a percentage (e.g. `61.5`), not a fraction.
 - `date` is a pre-formatted display string; the reel prints it verbatim (mono,
   uppercase). Keep it short (e.g. `SAT · FEB 8, 2026`).
 - `homeShort` / `awayShort` feed the verdict ("Our model calls the **{winnerShort}**.").
@@ -118,22 +118,22 @@ Notes:
 The backend already computes everything needed. Wiring (backend stays untouched;
 this is the glue the daily job runs):
 
-1. **Winner picks (market-blind)** — the day's odds-free winner + predicted final
+1. Winner picks (market-blind): the day's odds-free winner + predicted final
    score per game come from `backend/pipeline/daily_content.py` (the
    `game_preds` / market-blind winner picks). Map each game to a slate entry:
    `homeName/awayName`, `homeCity/awayCity`, predicted `homeScore/awayScore`,
    `winnerSide`, model `confidence` (0–100), and a one-line `reasoning`.
 
-2. **Track record** — call `track_record.aggregate.headline(ledger)`
-   (`backend/track_record/aggregate.py`). It returns `win_pct` (a **fraction**,
+2. Track record: call `track_record.aggregate.headline(ledger)`
+   (`backend/track_record/aggregate.py`). It returns `win_pct` (a fraction,
    e.g. `0.615`) and `n_picks`. Convert to the slate:
    `trackRecord.winPct = round(win_pct * 100, 1)`, `trackRecord.nPicks = n_picks`.
 
-3. **Yesterday** — grade the prior day's locked slate
+3. Yesterday: grade the prior day's locked slate
    (`grade_previous_day`) and count correct winner calls vs. total games →
    `yesterday = { correct, total }`.
 
-4. **Write the slate + render:**
+4. Write the slate + render:
 
    ```python
    import json, subprocess
@@ -186,12 +186,12 @@ reel/
 
 See `src/theme.ts`. Summary:
 
-- **Light** — bg `#F4F1EA`, ink `#16130F`, muted `#6B6459`, accent `#C1272D`,
+- Light: bg `#F4F1EA`, ink `#16130F`, muted `#6B6459`, accent `#C1272D`,
   hairline `rgba(22,19,15,.09)`.
-- **Dark (outro)** — bg `#15130E`, text `#F1ECE0`, muted `#9A9184`, accent
+- Dark (outro): bg `#15130E`, text `#F1ECE0`, muted `#9A9184`, accent
   `#E7473C`, hairline `rgba(255,255,255,.12)`.
-- **Type** — Fraunces (serif; team names, scores, headlines, verdicts), IBM Plex
+- Type: Fraunces (serif; team names, scores, headlines, verdicts), IBM Plex
   Mono (labels/kickers/date/handle, UPPERCASE + tracked + muted), Inter (utility).
-- **Wordmark** — `CHALK` in Fraunces 700 (~54px, letter-spacing -1px) with a
-  **red period** in the accent colour (locked brand element).
-- **Frame padding** — ~110px top/bottom, 80px sides.
+- Wordmark: `CHALK` in Fraunces 700 (~54px, letter-spacing -1px) with a
+  red period in the accent colour (locked brand element).
+- Frame padding: ~110px top/bottom, 80px sides.

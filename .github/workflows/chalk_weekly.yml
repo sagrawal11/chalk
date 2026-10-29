@@ -1,12 +1,12 @@
 name: CHALK Weekly Retrain
 
 # Heavy weekly refit of each champion's shipped model at its validated config
-# (ARCHITECTURE §5c/§5j, OPS_RUNBOOK §3). Deterministic 🟢 work — never posts.
+# (ARCHITECTURE §5c/§5j, OPS_RUNBOOK §3). Deterministic 🟢 work: never posts.
 # DARK schedule until launch: run manually via workflow_dispatch; the owner enables the
 # cron at go-live. Daily predictions use the most recent weekly champion artifacts.
 on:
   # schedule:
-  #   - cron: '0 9 * * 0'    # Sundays 09:00 UTC, after the daily refresh — enable at launch
+  #   - cron: '0 9 * * 0'    # Sundays 09:00 UTC, after the daily refresh: enable at launch
   workflow_dispatch:
 
 jobs:
