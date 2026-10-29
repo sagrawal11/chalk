@@ -1,4 +1,4 @@
-"""utils.storage._gather_upload_tasks — the pure (no-network) manifest builder for
+"""utils.storage._gather_upload_tasks: the pure (no-network) manifest builder for
 the full R2 training bundle. Verifies it ships player game logs (minus the bloated
 per-player feature CSVs), the ENTIRE artifacts tree EXCEPT local ``*backup*`` dirs
 (so every per-sport model dir travels to CI), and the per-sport data caches."""

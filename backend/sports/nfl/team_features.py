@@ -18,7 +18,7 @@ import pandas as pd
 from sports.nfl.data import game_context, load_team_games
 
 _ORDER = ["OFF", "DEF", "WINPCT", "FORM", "REST", "PRIOR_DIFF"]
-# Game-level context features (market line, weather, division) — all pregame-known.
+# Game-level context features (market line, weather, division), all pregame-known.
 MARKET_COLS = ["MARKET_SPREAD", "MARKET_TOTAL"]
 WEATHER_COLS = ["IS_DOME", "WIND", "TEMP"]
 CTX_COLS = ["DIV_GAME"]
@@ -34,7 +34,7 @@ _FILL = {"OFF": 22.0, "DEF": 22.0, "WINPCT": 0.5, "FORM": 0.0, "REST": 7.0, "PRI
 _GAME_FILL = {"MARKET_SPREAD": 0.0, "MARKET_TOTAL": 44.0, "IS_DOME": 0, "WIND": 5.0, "TEMP": 60.0, "DIV_GAME": 0}
 # Opponent-adjusted OFF/DEF (Rung 3, NFL-10/11). Kept as SEPARATE columns so
 # TEAM_FEATURE_COLS / RESIDUAL_FEATURE_COLS (the existing trainer's set) are
-# unchanged — the experiment harness toggles these via explicit feature_cols.
+# unchanged; the experiment harness toggles these via explicit feature_cols.
 _OPP_ADJ = ["OFF_ADJ", "DEF_ADJ"]
 OPP_ADJ_COLS = [f"HOME_{k}" for k in _OPP_ADJ] + [f"AWAY_{k}" for k in _OPP_ADJ]
 
@@ -140,6 +140,6 @@ def matchup_features(home: str, away: str, latest: Dict[str, Dict[str, float]],
 
 
 def build_timeline(years) -> pd.DataFrame:
-    """Team timeline (per team-game features) — for computing latest_team_features."""
+    """Team timeline (per team-game features), for computing latest_team_features."""
     tg = load_team_games(list(years)).dropna(subset=["pts", "opp_pts"])
     return _team_timeline(tg)

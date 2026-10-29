@@ -2,7 +2,7 @@
 
 Builds the sport's team-game frame, then runs the EXISTING walk-forward backtest
 (``backtest/team_backtest.walk_forward_backtest``) on the champion's ``feature_cols``
-over the TRAIN+CV seasons only — the final (most recent full) season is held
+over the TRAIN+CV seasons only; the final (most recent full) season is held
 UNTOUCHED (never in the selection window; it's the honest test set M2's
 ``honest_readout`` will use). Reports SU accuracy, winner log-loss, margin/total
 MAE, N, and the eval window.
@@ -43,14 +43,14 @@ _SEEDS = {
         model_version="nfl-v1", rung=1,
         active_feature_builders=["NFL-01", "NFL-02", "NFL-03", "NFL-04", "NFL-05"],
         notes="Day-1 NFL champion (M1): deliberately-simple Rung-1 box-score "
-              "baseline, market-blind. Unimpressive by design — the climb starts here.",
+              "baseline, market-blind. Unimpressive by design; the climb starts here.",
     ),
     "mlb": dict(
         model_version="mlb-v1", rung=1,
         active_feature_builders=["MLB-01", "MLB-02", "MLB-03", "MLB-04", "MLB-05"],
         notes="Day-1 MLB champion (M7): deliberately-simple Rung-1 box-score "
               "baseline (runs for/against, win%, run-diff, prior-year carryover), "
-              "market-blind. MLB is low-signal from team stats alone — the starting "
+              "market-blind. MLB is low-signal from team stats alone; the starting "
               "pitcher is the climb.",
     ),
     "nhl": dict(
@@ -174,7 +174,7 @@ def main() -> None:
     res = evaluate(champ, start=args.start, end=args.end)
     m = res["metrics"]
     print(f"\n=== {champ.sport.upper()} champion {champ.model_version} (rung {champ.rung}) "
-          f"— market-blind walk-forward ===")
+          f"- market-blind walk-forward ===")
     print(f"builders: {', '.join(champ.active_feature_builders)}")
     print(f"features ({len(champ.feature_cols)}): {', '.join(champ.feature_cols)}")
     print(f"eval window: {res['eval_window']}   holdout (untouched): {res['holdout_season']}   "

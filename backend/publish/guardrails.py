@@ -11,7 +11,7 @@ Eight checks gate every Yellow draft BEFORE it can post or enter the batch:
   8. idempotency              (already-posted -> block)
 
 Gate: any hard fail (1/3/4/8) => "block"; a tragedy hit (7) => "escalate"; any soft
-flag (2/5/6) => "escalate" (hold for the human — Constitution #4 "when in doubt, hold").
+flag (2/5/6) => "escalate" (hold for the human, Constitution #4 "when in doubt, hold").
 Pure + deterministic (the LLM checks degrade to a neutral hold without a key), so the
 whole gate is testable in the dark.
 """

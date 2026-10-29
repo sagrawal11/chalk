@@ -3,7 +3,7 @@
 Fetch NBA injury reports from the ESPN Injuries API into Parquet.
 
 Source: https://site.api.espn.com/apis/site/v2/sports/basketball/nba/injuries
-This is an unofficial ESPN endpoint — same risk profile as the scoreboard endpoint
+This is an unofficial ESPN endpoint, same risk profile as the scoreboard endpoint
 we already use for live schedules.
 """
 from __future__ import annotations

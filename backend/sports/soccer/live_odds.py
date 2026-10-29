@@ -1,4 +1,4 @@
-"""Live soccer lines from The Odds API (free tier) across EPL / UCL / MLS — the
+"""Live soccer lines from The Odds API (free tier) across EPL / UCL / MLS, the
 3-way market anchor. Soccer markets are highly efficient, so the de-vigged 1X2
 (home/draw/away) is the accurate prediction. Shares ODDS_API_KEY; fails soft.
 """

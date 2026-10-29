@@ -1,8 +1,8 @@
 """NFL sport plugin implementing the shared ``Sport`` interface.
 
 Identity + schedule are wired to nflverse now; predict_game / predict_player
-raise NotImplementedError until NFL models are trained (the generic pipeline —
-team feature engine, honest validation, calibration, hybrid residuals — is
+raise NotImplementedError until NFL models are trained (the generic pipeline:
+team feature engine, honest validation, calibration, hybrid residuals, is
 reused per sport, so training NFL is "build the feature engine + run the same
 trainers", not new infrastructure).
 """

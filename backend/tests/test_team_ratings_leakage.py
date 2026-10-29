@@ -1,9 +1,9 @@
-"""Task 7.3 — team ratings (TEAM_PACE / TEAM_OFF_RATING / TEAM_DEF_RATING) must
+"""Task 7.3: team ratings (TEAM_PACE / TEAM_OFF_RATING / TEAM_DEF_RATING) must
 reflect only games that happened BEFORE the current game.
 
 The old ``_merge_team_context`` merged ``all_team_stats`` on (team, SEASON),
 i.e. a single FULL-SEASON aggregate. Every mid-season row therefore saw the
-team's end-of-season rating — data from future games leaking into the features.
+team's end-of-season rating, i.e. data from future games leaking into the features.
 
 The fix computes a season-to-date rating from game-level data and attaches it
 with ``merge_asof(direction="backward", allow_exact_matches=False)`` so a row
@@ -43,7 +43,7 @@ def _season_aggregate() -> pd.DataFrame:
 
 
 def _asof_timeline() -> pd.DataFrame:
-    """Cumulative-through-game means — the schema the new builder produces.
+    """Cumulative-through-game means: the schema the new builder produces.
     merge_asof(exclusive) over this yields the prior-games-only rating.
     """
     rows = []

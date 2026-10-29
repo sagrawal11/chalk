@@ -81,7 +81,7 @@ class ArchetypeEngine:
 
     @property
     def prior_(self) -> Optional[np.ndarray]:
-        """GMM mixture weights — the marginal archetype distribution used as the
+        """GMM mixture weights: the marginal archetype distribution used as the
         deterministic fill when per-row probabilities can't be computed."""
         return self.gmm.weights_ if self.gmm is not None else None
 
@@ -103,7 +103,7 @@ class ArchetypeEngine:
         The column set is deterministic for a fitted/loaded engine. If per-row
         probabilities can't be computed for any reason, every row is filled with
         the GMM training prior (mixture weights) instead of dropping the columns
-        — guaranteeing identical features at training and inference time.
+        guaranteeing identical features at training and inference time.
         """
         out = df.copy()
         n = self.n_archetypes

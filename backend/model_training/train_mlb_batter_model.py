@@ -4,7 +4,7 @@
 Same v2 methodology as the other sports' player props: anchored (predict
 <stat> - <stat>_L5, add back) and usage-gated (>= MIN_PRIOR_GAMES of history),
 via the shared honest walk-forward trainer. One model per prop. Reports skill vs
-the recent-average baseline for each — HR is very low-variance and may be ~0
+the recent-average baseline for each. HR is very low-variance and may be ~0
 skill; that is reported honestly.
 """
 from __future__ import annotations
@@ -47,7 +47,7 @@ def main() -> None:
 
     frame = build_batter_frame(range(args.start, args.end + 1))
     if frame.empty or "_n_prior" not in frame.columns:
-        logger.warning("MLB batter frame empty (no data fetched %d-%d) — skipping training.",
+        logger.warning("MLB batter frame empty (no data fetched %d-%d) - skipping training.",
                        args.start, args.end)
         return
     frame = frame[frame["_n_prior"] >= MIN_PRIOR_GAMES].reset_index(drop=True)

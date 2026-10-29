@@ -7,7 +7,7 @@ matches as display content.
 
 Quota discipline: player props are a PER-EVENT endpoint (~1 credit per event for one
 market/region; the free tier is 500/mo), so callers cap the number of events. The bulk
-1X2 anchor (``live_odds``) is untouched. These cards are display-only — grading a
+1X2 anchor (``live_odds``) is untouched. These cards are display-only; grading a
 scorer needs a player-level results feed the free match-score source doesn't provide.
 """
 from __future__ import annotations

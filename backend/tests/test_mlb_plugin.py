@@ -1,4 +1,4 @@
-"""MLB plugin identity + registry (backend/sports/mlb/). Hermetic — no StatsAPI
+"""MLB plugin identity + registry (backend/sports/mlb/). Hermetic: no StatsAPI
 fetch, no models; proves the sport-agnostic core accepts a 3rd sport."""
 import pytest
 

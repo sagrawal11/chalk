@@ -1,7 +1,7 @@
 # Core Data Science
 pandas==2.3.2
 # numpy pinned <2: nfl_data_py (installed --no-deps in the workflows, see below) needs
-# numpy<2, and the rest of the stack runs fine on 1.26.x — this is what CI already
+# numpy<2, and the rest of the stack runs fine on 1.26.x; this is what CI already
 # resolved to before nfl_data_py was added.
 numpy>=1.26.4,<2
 pyarrow>=14.0.0

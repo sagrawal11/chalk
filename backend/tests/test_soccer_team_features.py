@@ -50,7 +50,7 @@ def test_ratings_are_prior_only():
 
 
 def test_no_future_leak_monotone_count():
-    """Prior-game counts increase 0,1,2,... — never counting the current game."""
+    """Prior-game counts increase 0,1,2,... Never counting the current game."""
     f = add_team_features(_matches())
     strong_home = f[f["home"] == "Strong"].sort_values("date")
     assert list(strong_home["home_n_prior"]) == [0, 1, 2, 3]

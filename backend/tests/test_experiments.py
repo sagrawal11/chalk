@@ -1,4 +1,4 @@
-"""Feature-experiment harness — hermetic tests (no NFL data / network).
+"""Feature-experiment harness. Hermetic tests (no NFL data / network).
 
 Covers the roadmap loader, the pre-registered keep-rule decision logic, the ledger,
 and version bumping. The full data-dependent run_experiment loop is exercised

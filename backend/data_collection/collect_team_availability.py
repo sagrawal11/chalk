@@ -2,7 +2,7 @@
 """Reconstruct per-(team, game_date) teammate availability from all player logs.
 
 For each team-game we compute how much of the team's *expected rotation* was OUT
-— the single highest-signal driver of a player's usage bump when a star sits.
+the single highest-signal driver of a player's usage bump when a star sits.
 
 Leakage-safe: the "expected rotation" and each rotation player's baseline
 minutes/points come from the team's PRIOR games only (a rolling window); whether

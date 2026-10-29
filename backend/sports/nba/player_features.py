@@ -4,8 +4,8 @@ Replaces the degenerate global_lgbm path (336-column kitchen-sink that
 collapsed to 1-9 trees => projection == L10 average). Diagnosis: game-level
 player stats are dominated by irreducible variance; the only real signal beyond
 recent form is MINUTES, driven by teammate availability. So features here are a
-FOCUSED set — recent-form windows + per-minute rate + teammate-availability +
-light context — proven to train non-degenerately and beat the L10 baseline
+FOCUSED set: recent-form windows + per-minute rate + teammate-availability +
+light context, proven to train non-degenerately and beat the L10 baseline
 (backtest/player_signal_probe.py: PTS +0.9% recent-form, +1.5% with availability).
 
 Leakage-safe: every rolling feature is shift(1) (prior games only); teammate
@@ -41,7 +41,7 @@ CTX_COLS = ["IS_HOME", "DAYS_REST", "IS_B2B"]
 
 
 def features_for(target: str) -> List[str]:
-    """Curated, per-stat feature set (~15 cols) — focused enough to avoid the
+    """Curated, per-stat feature set (~15 cols), focused enough to avoid the
     kitchen-sink degeneracy, rich enough to carry the minutes/availability signal."""
     return (
         [f"MIN_L{w}" for w in MIN_WINDOWS]
@@ -127,14 +127,14 @@ def _tail_mean(s: pd.Series, w: int) -> float:
 
 
 def latest_player_features(frame: pd.DataFrame) -> Dict[str, Dict]:
-    """Each player's feature vector + per-stat anchor for their NEXT game — the
+    """Each player's feature vector + per-stat anchor for their NEXT game: the
     true next-game rolling, computed over their most recent N ACTUAL games (NOT
     the last row's shift(1) columns, which are the rolls ENTERING that last game
     and so are stale by one game). Mirrors the training rolls (same windows +
     min_periods) but evaluated at "now", matching the MLB pitcher pattern.
     Non-rolling context (IS_HOME/DAYS_REST/IS_B2B) carries the last game's value
     (next-game schedule context is unknown here); availability is set by the
-    caller. Keyed by slug (for name-based inference) — shape unchanged."""
+    caller. Keyed by slug (for name-based inference), shape unchanged."""
     out: Dict[str, Dict] = {}
     all_feats = sorted({c for t in TARGET_STATS for c in features_for(t)})
     for slug, pdf in frame.sort_values("GAME_DATE").groupby("slug"):

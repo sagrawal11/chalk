@@ -16,7 +16,7 @@ from predictions.schema import GamePrediction
 from sports.soccer.teams import canonical_team
 
 logger = logging.getLogger(__name__)
-# League base rates (home edge) — the FINAL fallback when neither a live line nor
+# League base rates (home edge): the FINAL fallback when neither a live line nor
 # the Poisson team model has data for a matchup.
 _BASE = {"p_home": 0.45, "p_draw": 0.27, "p_away": 0.28, "total": 2.7}
 

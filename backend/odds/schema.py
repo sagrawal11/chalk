@@ -1,4 +1,4 @@
-"""Normalized odds line — the source-independent contract for the whole betting
+"""Normalized odds line: the source-independent contract for the whole betting
 layer (context + grading). One row per (game/player, market, side, book,
 snapshot).
 """

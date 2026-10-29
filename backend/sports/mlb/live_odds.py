@@ -1,4 +1,4 @@
-"""Live MLB lines from The Odds API (free tier) — the market anchor for
+"""Live MLB lines from The Odds API (free tier), the market anchor for
 upcoming/in-progress games. MLB has no meaningful point spread (run line is a
 fixed +/-1.5), so we anchor the WINNER on the de-vigged moneyline and the TOTAL
 on the market total. Needs ODDS_API_KEY (shared with the NBA provider). Fails

@@ -1,14 +1,14 @@
-"""The feature-experiment runner (ARCHITECTURE §5d) — the M2 centerpiece.
+"""The feature-experiment runner (ARCHITECTURE §5d): the M2 centerpiece.
 
 Pops the next pre-registered experiment (or a given --id), assembles a challenger
 (champion's builders + this experiment's builder), runs the EXISTING walk-forward
 backtest (backtest/team_backtest) for champion (cached) + challenger on TRAIN+CV only,
 computes Δ metrics, applies the PRE-REGISTERED keep-rule, records the result to the
-ledger REGARDLESS of outcome (duds are content), and — if kept — promotes: bump
+ledger REGARDLESS of outcome (duds are content), and if kept promotes: bump
 model_version, rewrite champion.json, optionally refit the shipped model. Returns a
 structured ExperimentResult (the input to the M3 feature-post generator).
 
-Reuses walk_forward_backtest — it does NOT re-implement evaluation.
+Reuses walk_forward_backtest; it does NOT re-implement evaluation.
 
 Usage:
     python -m experiments.run_experiment --sport nfl --write          # next queued
@@ -116,7 +116,7 @@ def run_experiment(sport: str, *, exp_id=None, start: int, end: int,
 def _print(r: dict) -> None:
     cm, hm = r["champion_metrics"], r["challenger_metrics"]
     verdict = "KEEP  -> " + r.get("promoted_to", "") if r["decision"] == "keep" else "DROP (champion unchanged)"
-    print(f"\n=== EXPERIMENT {r['id']} — {r['name']} (Rung {r['rung']}, act {r['act']}) ===")
+    print(f"\n=== EXPERIMENT {r['id']}: {r['name']} (Rung {r['rung']}, act {r['act']}) ===")
     print(f"TESTED : {r['hypothesis']}")
     print(f"champion {r['champion_version']}  vs  challenger {r['challenger_version']}  (+{r['builder_added']})")
     print(f"eval window {r['eval_window']} · N={r['n_games']}")

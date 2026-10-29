@@ -9,7 +9,7 @@ Sources reuse what each sport already has for its market anchor, so no new feeds
 Spreads/totals are captured *projection-only* (no price): ``best_bet`` treats a
 priceless line as a fair 50/50, the right approximation for near-pick'em
 spreads/totals (a standard book prices both sides ~ -110). NBA moneyline lines DO
-carry the real American price when a book quotes h2h — that price is not used to
+carry the real American price when a book quotes h2h; that price is not used to
 change the (market-blind) prediction, only to SETTLE the model's winner pick at a
 genuine closing number so ROI accrues forward honestly (see ``daily_content.run_day``).
 MLB/NHL moneyline and soccer 1X2 are not wired here (unsupported sports return no
@@ -102,7 +102,7 @@ def _nfl_game_markets(game_date: str) -> List[OddsLine]:
 class LiveMarketProvider(OddsProvider):
     """Spread + total lines for the sports whose anchor source exposes them (NBA/NFL),
     plus NBA closing moneyline (with a real price) for forward ROI settlement.
-    Sport-agnostic entry: unsupported sports return []. Never raises — a down feed
+    Sport-agnostic entry: unsupported sports return []. Never raises; a down feed
     just yields no picks that day."""
 
     name = "live_market"

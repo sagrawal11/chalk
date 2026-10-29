@@ -65,7 +65,7 @@ class MLBPitcherPredictor:
         return round(max(0.0, anchor + adj), 1)
 
     def slate_projections(self, games, season: Optional[str] = None, limit: int = 6) -> list:
-        """Strikeout prop cards for the day's probable starters — the natural MLB
+        """Strikeout prop cards for the day's probable starters, the natural MLB
         marquee prop. Reads the date's probable pitchers from the schedule
         (home_sp/away_sp), projects each, and returns the top ``limit`` by
         projected Ks as render-ready dicts (player_name, projections, matchup,

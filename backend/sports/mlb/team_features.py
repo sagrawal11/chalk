@@ -4,12 +4,12 @@ Same leakage discipline as NBA/NFL: every feature is prior-only (season-to-date
 expanding means shifted one game, last-10 form, rest days, prior-season run
 differential). Built from MLB StatsAPI team game logs (``sports.mlb.data``).
 
-v1 is a team-strength model (runs for/against). The dominant MLB signal — the
-probable STARTING PITCHER — and a market-total anchor are the planned next
+v1 is a team-strength model (runs for/against). The dominant MLB signal, the
+probable STARTING PITCHER, and a market-total anchor are the planned next
 enhancements (the MLB analogs of NFL's QB + line).
 
 ``fetch_sp_era`` gates the one network-heavy feature: the rolling starter ERA
-needs a per-pitcher game-log backfill (``pitcher_data.build_pitcher_starts`` —
+needs a per-pitcher game-log backfill (``pitcher_data.build_pitcher_starts``,
 ~100+ HTTP calls/season, cached thereafter). Every other feature (incl. the
 coarse SP_RA proxy) comes from the already-loaded schedule, so the box-score
 ladder can build the frame with ``fetch_sp_era=False`` and skip that backfill
@@ -27,7 +27,7 @@ import pandas as pd
 from sports.mlb.data import load_team_games
 
 # SP_RA = the STARTING pitcher's rolling runs-allowed over his prior starts (the
-# dominant MLB signal — who's on the mound tonight). Leakage-safe (prior starts).
+# dominant MLB signal: who's on the mound tonight). Leakage-safe (prior starts).
 # SP_ERA = the same pitcher's rolling EARNED-run average (ER*9/IP over prior
 # starts). SP_RA is a coarse team-runs-allowed proxy (SP+bullpen); SP_ERA isolates
 # the starter's own earned-run rate for a sharper pitcher signal. Both are kept.
@@ -46,8 +46,8 @@ _MIN_ERA_STARTS = 2   # need some prior starts before an ERA is meaningful
 def _sp_era_by_game(years) -> pd.DataFrame:
     """Rolling starter ERA keyed by (pitcher_id, start date), leakage-safe.
 
-    ERA over a window is aggregated as a RATIO OF SUMS — ``sum(ER)*9/sum(IP)``
-    over the pitcher's PRIOR starts (shifted) — not a mean of per-start ratios,
+    ERA over a window is aggregated as a RATIO OF SUMS: ``sum(ER)*9/sum(IP)``
+    over the pitcher's PRIOR starts (shifted), not a mean of per-start ratios,
     so short/blow-up outings are weighted by innings the way real ERA is. The
     value on a given start row reflects only starts strictly before it, so
     merging it onto that game's team-row (by home_sp/away_sp + game_date) never

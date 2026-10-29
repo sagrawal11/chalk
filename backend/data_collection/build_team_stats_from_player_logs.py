@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Build team-season OFF/DEF/NET rating and pace proxies entirely from local player game logs.
-Does not call stats.nba.com — use this when the NBA API is flaky.
+Does not call stats.nba.com; use this when the NBA API is flaky.
 
 Method (standard approximations):
   - Aggregate box stats by (Game_ID, PLAYER_TEAM) → team game totals.

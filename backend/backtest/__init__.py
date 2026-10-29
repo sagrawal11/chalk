@@ -1,4 +1,4 @@
-"""Honest historical backtesting — the reliability check.
+"""Honest historical backtesting: the reliability check.
 
 Walk-forward: for each season S, train on seasons < S and predict S entirely
 out-of-sample (no in-sample optimism), then grade the picks. Team markets are

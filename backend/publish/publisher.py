@@ -1,10 +1,10 @@
-"""Publishing layer (ARCHITECTURE §5i) — the ``Publisher`` seam (mirrors OddsProvider).
+"""Publishing layer (ARCHITECTURE §5i): the ``Publisher`` seam (mirrors OddsProvider).
 
 DARK by default and safe by construction:
   * ``publishing_killed()`` (the global kill switch) halts ALL posting.
   * ``dry_run_default()`` (True until launch) makes every publisher LOG intent and
     return a synthetic PostRef WITHOUT calling any real platform API.
-  * a ``PostStore`` keyed by (draft_id, platform) enforces idempotency — an item is
+  * a ``PostStore`` keyed by (draft_id, platform) enforces idempotency; an item is
     never double-posted, even across re-runs.
 
 Real platform calls live in the per-platform adapters' ``_publish`` (reddit/x/ig),
@@ -77,7 +77,7 @@ class Publisher:
         Returns the PostRef (synthetic in dry-run), or None if the kill switch is on."""
         store = store or PostStore()
         if publishing_killed():
-            logger.warning("kill switch ON — refusing to post %s (%s)", draft.id, self.platform)
+            logger.warning("kill switch ON, refusing to post %s (%s)", draft.id, self.platform)
             return None
         prior = store.get(draft.id, self.platform)
         if prior is not None:

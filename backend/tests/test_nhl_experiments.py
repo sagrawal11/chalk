@@ -1,4 +1,4 @@
-"""NHL fan-out into the feature-experiment harness (M7) — hermetic (no NHL API).
+"""NHL fan-out into the feature-experiment harness (M7). Hermetic (no NHL API).
 
 Covers the NHL builder registry (market-blind), full frame-column coverage, the
 pre-registered roadmap queue, the seed, the shared walk-forward on a synthetic NHL
@@ -98,7 +98,7 @@ def _fake_team_games(seasons=(2020, 2021), n=40) -> pd.DataFrame:
 
 def test_honest_readout_finds_two_year_holdout_row(monkeypatch):
     """Regression: honest_readout must locate the untouched holdout row by the sport's
-    own season label — two-year sports (NHL/NBA) label 2020 as '2020-21', so a bare
+    own season label. Two-year sports (NHL/NBA) label 2020 as '2020-21', so a bare
     str(holdout) lookup returns empty and crashes. Fully hermetic (synthetic frame)."""
     import experiments.honest_readout as hr
     from experiments.champion import ChampionConfig

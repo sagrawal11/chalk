@@ -29,7 +29,7 @@ MAX_CANDIDATES = 400   # hard cap on hitters fetched per season (defensive; regu
 
 def _hitters(year: int) -> List[dict]:
     """Position players (primaryPosition != 'P') on the season roster, each tagged
-    with its canonical team (from ``currentTeam``) and display name — captured here
+    with its canonical team (from ``currentTeam``) and display name, captured here
     so the slate enumerator can filter batters to the day's teams and label cards.
     Deduped by id, capped for a bounded fetch."""
     import requests

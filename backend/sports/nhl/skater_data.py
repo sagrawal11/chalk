@@ -39,9 +39,9 @@ def _toi_to_min(toi) -> float:
 
 def _skaters(year: int) -> List[dict]:
     """Skaters (forward + defenseman; goalies excluded) across all 32 rosters for
-    the season, each tagged with its (canonical) roster team + display name — so the
+    the season, each tagged with its (canonical) roster team + display name, so the
     slate enumerator can filter to the day's teams and label cards. Deduped by id (a
-    traded player can appear on >1 roster; last roster seen wins — fine for the
+    traded player can appear on >1 roster; last roster seen wins, fine for the
     current season, where each id is on exactly one roster)."""
     import requests
 

@@ -220,7 +220,7 @@ def main() -> None:
     metrics_all: Dict[str, object] = {}
     for target in TARGET_STATS:
         if target not in full.columns:
-            logger.warning("Skipping %s — not in data", target)
+            logger.warning("Skipping %s - not in data", target)
             continue
         try:
             y = full[target]

@@ -95,8 +95,8 @@ def _gather_upload_tasks(player_data_dir: Path, artifacts_dir: Path,
 
     Includes:
       - player_data/ game logs, skipping the bloated redundant ``*_features.csv``
-      - the ENTIRE artifacts/ tree — ``global/`` + every per-sport model dir
-        (mlb_team, nhl_skater, nba_player_v3, ...) + ``feature_columns.json`` —
+      - the ENTIRE artifacts/ tree: ``global/`` + every per-sport model dir
+        (mlb_team, nhl_skater, nba_player_v3, ...) + ``feature_columns.json``,
         EXCLUDING ``*backup*`` dirs (local safety copies; never needed in prod / R2)
       - per-sport data caches (data/mlb|nhl|soccer/*.parquet): the immutable historical
         seasons, so the sport trainers have data to train on in CI (the current season

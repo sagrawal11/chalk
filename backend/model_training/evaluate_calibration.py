@@ -1,17 +1,17 @@
 """Calibration metrics + a team-model calibration report (Phase 1C gate).
 
 For a public track record, calibration IS the product: if we say 62%, it should
-hit ~62%. This module scores probability quality — Brier, log-loss, PIT
-uniformity, reliability bins, and central-interval coverage — and produces a
+hit ~62%. This module scores probability quality: Brier, log-loss, PIT
+uniformity, reliability bins, and central-interval coverage. It produces a
 ``calibration_report.json`` for the team model on its untouched holdout season.
 
 Out-of-sample by construction (honesty fix): the report does NOT score the
 shipped model. The shipped model is refit on ALL seasons (incl. the holdout) at
 ``best_iteration`` (see ``validation.walk_forward_train``), so scoring it on the
 holdout is mildly in-sample and yields optimistic Brier / PIT / reliability. We
-instead train a CLEAN **eval-model on seasons < holdout only** — with the exact
+instead train a CLEAN **eval-model on seasons < holdout only**, with the exact
 same LGBM params and inner-split early-stopping ``walk_forward_train`` uses for
-its honest holdout estimate — and score THAT on the untouched holdout season.
+its honest holdout estimate, and score THAT on the untouched holdout season.
 The resulting numbers are (as expected) slightly worse than the old in-sample
 ones; that gap is the optimism we were previously hiding.
 
@@ -42,7 +42,7 @@ from config.paths import ARTIFACTS_DIR, KAGGLE_TEAM_GAMES_PARQUET
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# 1/E|Z| for a standard normal — converts a robust MAE into an equivalent sigma
+# 1/E|Z| for a standard normal: converts a robust MAE into an equivalent sigma
 # (matches the sigma the team trainers persist). Keeping this local so the eval
 # model's sigma is derived the same way as the shipped one.
 _MAE_TO_SIGMA = 1.2533
@@ -159,7 +159,7 @@ def _oos_holdout_predictions(
     y_true_level = y_level.loc[holdout_idx].to_numpy()
 
     # Sigma from this eval-model's own out-of-sample residuals (anchor cancels in
-    # the residual, so residual-MAE == level-MAE) — mirrors the trainer's sigma.
+    # the residual, so residual-MAE == level-MAE), mirrors the trainer's sigma.
     ho_mae = float(np.mean(np.abs(mu_level - y_true_level)))
     sigma = float(_MAE_TO_SIGMA * ho_mae) if ho_mae else float(np.std(y_true_level - mu_level) or 1.0)
     logger.info("eval-model %s: holdout=%s n=%d oos_mae=%.3f sigma=%.3f best_iter=%s",
@@ -218,7 +218,7 @@ def evaluate_team_model(
     """Out-of-sample calibration report for a team score model.
 
     Trains a clean eval-model on seasons < holdout (same params / inner-split as
-    the honest trainer) and scores its holdout predictions — so Brier / PIT /
+    the honest trainer) and scores its holdout predictions, so Brier / PIT /
     reliability are genuinely out-of-sample, unlike the old shipped-model path.
     """
     if sport == "nba":

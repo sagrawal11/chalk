@@ -1,4 +1,4 @@
-"""Public progression feed (ARCHITECTURE §5l) — the "changelog".
+"""Public progression feed (ARCHITECTURE §5l): the "changelog".
 
 Serves the experiment ledger + per-sport champion history so the frontend can render
 the model's climb over time (every experiment, wins and duds). Read-only over the

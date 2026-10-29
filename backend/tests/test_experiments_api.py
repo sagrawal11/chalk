@@ -1,4 +1,4 @@
-"""Progression feed /api/experiments — hermetic (isolated blueprint, committed data)."""
+"""Progression feed /api/experiments. Hermetic (isolated blueprint, committed data)."""
 from flask import Flask
 
 from web.experiments_api import bp

@@ -1,6 +1,6 @@
 """Pure odds / probability math for the prediction-media pipeline.
 
-No I/O and no third-party dependencies — just the stdlib ``math`` — so this is
+No I/O and no third-party dependencies (just the stdlib ``math``), so this is
 trivially unit-testable and safe to import anywhere (odds ingestion, best-bet
 selection, track-record grading, content captions).
 
@@ -74,7 +74,7 @@ def devig(probs: Sequence[float], method: str = "multiplicative") -> List[float]
     """Remove vig from the raw implied probabilities of a single market's
     outcomes. Returns fair probabilities that sum to 1.0.
 
-    ``method="multiplicative"`` (default): proportional normalization — the
+    ``method="multiplicative"`` (default): proportional normalization, the
         robust, closed-form industry baseline.
     ``method="shin"``: Shin (1993) model attributing the overround to informed
         money, solved numerically. Falls back to multiplicative if the solve

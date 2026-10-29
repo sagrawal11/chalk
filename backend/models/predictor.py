@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 class NBAPredictor:
     """Global-model predictor compatible with the Flask app expectations."""
 
-    # High-signal managed features whose silent 0.0 fill is most damaging — a
+    # High-signal managed features whose silent 0.0 fill is most damaging: a
     # missing/NaN value here is far from the training distribution.
     SKEW_SENSITIVE_PREFIXES = (
         "ARCH_PROB_", "OPP_PRIOR_AVG_", "KG_PREV_", "KG_OPP_PREV_", "DVP_",
@@ -76,7 +76,7 @@ class NBAPredictor:
 
     def _feature_skew_report(self, row: pd.Series) -> Dict[str, Any]:
         """Which trained feature_columns would be silently filled with 0.0 for
-        this inference row — counting BOTH columns absent from the row and
+        this inference row, counting BOTH columns absent from the row and
         columns present but NaN/non-numeric (both become 0.0 downstream)."""
         cols = list(self.feature_columns or [])
         if not cols:

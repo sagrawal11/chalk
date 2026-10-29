@@ -1,7 +1,7 @@
 """Immutable, timestamped, hashed daily prediction lock.
 
 Writing a lock BEFORE tip-off (and refusing to overwrite it) is what makes the
-public record honest — no hindsight edits. The content hash makes tampering
+public record honest, with no hindsight edits. The content hash makes tampering
 detectable.
 """
 from __future__ import annotations

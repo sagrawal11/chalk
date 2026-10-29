@@ -1,4 +1,4 @@
-"""Track record — the credibility flywheel.
+"""Track record: the credibility flywheel.
 
 LOCK the day's predictions immutably before tip (provenance), GRADE them against
 actual outcomes after, and AGGREGATE into the public record (SU/ATS/O-U hit

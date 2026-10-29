@@ -1,4 +1,4 @@
-"""M4 publishing + guardrails — hermetic (no network, no real platform APIs).
+"""M4 publishing + guardrails. Hermetic (no network, no real platform APIs).
 
 Everything runs in the DARK posture: dry-run publishing, tmp stores, env-flag
 monkeypatching. Proves the guardrail gate, idempotency, the kill switch, the

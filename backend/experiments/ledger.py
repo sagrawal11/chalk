@@ -1,7 +1,7 @@
-"""Append-only experiment ledger — the public progression record.
+"""Append-only experiment ledger: the public progression record.
 
 One JSON object per line at artifacts/experiments_ledger.jsonl (tracked + diffable,
-so the model's climb is visible in git history — on-brand for build-in-public). Every
+so the model's climb is visible in git history, on-brand for build-in-public). Every
 experiment is recorded REGARDLESS of outcome (duds are content).
 
 ARCHITECTURE §5d names data/experiments_ledger.parquet for the /api/experiments feed;

@@ -1,4 +1,4 @@
-"""Live NBA odds provider (sports/nba/live_odds.py) — hermetic: team-name
+"""Live NBA odds provider (sports/nba/live_odds.py). Hermetic: team-name
 mapping + fail-soft behavior with no API key (never raises, returns empty)."""
 from sports.nba.live_odds import _to_code, fetch_nba_lines, market_provider
 

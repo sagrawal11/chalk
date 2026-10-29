@@ -94,7 +94,7 @@ def _python(*args: str) -> list[str]:
 def step_team_stats(dry_run: bool) -> None:
     if not KAGGLE_TEAMS_BOXSCORES_CSV.exists():
         raise SkipStep(
-            f"no Kaggle boxscores at {KAGGLE_TEAMS_BOXSCORES_CSV} — add the dataset under data/Kaggle NBA Team Data/"
+            f"no Kaggle boxscores at {KAGGLE_TEAMS_BOXSCORES_CSV}; add the dataset under data/Kaggle NBA Team Data/"
         )
     cmd = _python(
         str(BACKEND / "data_collection" / "build_team_stats_from_kaggle.py"),
@@ -119,7 +119,7 @@ def step_update_kaggle(dry_run: bool) -> None:
 
 def step_update_advanced_sqlite(dry_run: bool) -> None:
     # NOTE: still uses Kaggle's single-file `-f` endpoint (which can 404 like the team
-    # dataset did). Full-dataset download is not viable here — the wyattowalsh basketball
+    # dataset did). Full-dataset download is not viable here; the wyattowalsh basketball
     # dataset is multi-GB. This step is non-critical and gated by "skip if local newer",
     # so an `-f` failure degrades gracefully (the existing nba.sqlite stays in place).
     cmd = [
@@ -212,7 +212,7 @@ def _sport_trainers(max_players: int | None) -> list[tuple[str, str, list[str]]]
     return [
         ("train_nba_player_v3", "train_nba_player_v3.py", mp),
         ("train_nfl_team", "train_nfl_team_model.py", []),
-        # Market-blind NFL model (absolute target, no line) — the brand default path.
+        # Market-blind NFL model (absolute target, no line): the brand default path.
         ("train_nfl_team_blind", "train_nfl_team_model.py", ["--blind"]),
         ("train_nfl_player", "train_nfl_player_model.py", []),
         ("train_mlb_team", "train_mlb_team_model.py", []),
@@ -281,7 +281,7 @@ def run_step(name, fn, *, critical: bool, retries: int = 0, backoff: float = 5.0
         except Exception as e:
             if attempt <= retries and not dry_run:
                 wait = backoff * attempt
-                logger.warning("[RETRY] %s failed (attempt %d/%d): %s — retrying in %.0fs",
+                logger.warning("[RETRY] %s failed (attempt %d/%d): %s, retrying in %.0fs",
                                name, attempt, retries + 1, e, wait)
                 time.sleep(wait)
                 continue
@@ -340,7 +340,7 @@ def acquire_lock() -> Path:
         except RuntimeError:
             raise
         except Exception:
-            logger.warning("Corrupt lock file at %s — removing.", LOCK_FILE)
+            logger.warning("Corrupt lock file at %s, removing.", LOCK_FILE)
         LOCK_FILE.unlink(missing_ok=True)
     LOCK_FILE.write_text(json.dumps({"pid": os.getpid(), "started_at": _now_iso()}))
     return LOCK_FILE
@@ -393,7 +393,7 @@ def main() -> int:
     logger.info("Nightly pipeline start (backend=%s)", BACKEND)
 
     if not args.dry_run and args.skip_if_recent_hours and _recent_success(args.skip_if_recent_hours):
-        logger.info("A successful run finished within %.1fh — skipping (per --skip-if-recent-hours).",
+        logger.info("A successful run finished within %.1fh; skipping (per --skip-if-recent-hours).",
                     args.skip_if_recent_hours)
         return 0
 

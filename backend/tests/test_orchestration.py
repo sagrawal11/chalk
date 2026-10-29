@@ -1,4 +1,4 @@
-"""M5 orchestration — hermetic (no data/network). Proves per-step isolation (a broken
+"""M5 orchestration. Hermetic (no data/network). Proves per-step isolation (a broken
 step routes to 🔴 and the run continues), the dark posture (zero posts), and the
 draft -> guardrail -> enqueue chain."""
 import datetime as dt

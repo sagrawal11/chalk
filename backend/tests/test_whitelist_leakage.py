@@ -1,4 +1,4 @@
-"""Task 7.2 — the managed-column whitelist must drop raw same-game rate stats.
+"""Task 7.2: the managed-column whitelist must drop raw same-game rate stats.
 
 ``_add_advanced_ratios`` computes TS_PCT, USG_PCT and *_PER100 from the CURRENT
 game's makes/attempts/minutes, so the raw (non-rolling) versions are leakage:
@@ -20,7 +20,7 @@ from feature_engine import TARGET_STATS, default_engine
 
 # Raw same-game rate stats that must NOT survive into the feature set.
 LEAKY_RAW = {"TS_PCT", "USG_PCT", "PTS_PER100", "AST_PER100", "REB_PER100"}
-# Rolling (prior-game) versions that MUST survive — regression guard against
+# Rolling (prior-game) versions that MUST survive: regression guard against
 # an over-broad fix that strips legitimate features.
 MANAGED_ROLLING = {"TS_PCT_L5", "USG_PCT_L10", "PTS_PER100_L3", "AST_PER100_L5"}
 

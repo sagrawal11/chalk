@@ -15,7 +15,7 @@ its place. Anchor cancels in the difference, so the model's stored holdout_mae i
 already a level-MAE and directly comparable to these baselines.
 
 IMPORTANT (honesty): the *shipped* model is refit on ALL seasons incl. the
-holdout (validation.py:183 — maximizes inference data), so re-predicting the
+holdout (validation.py:183, maximizes inference data), so re-predicting the
 holdout with it would be in-sample and optimistic. We therefore report the
 trainer's stored ``holdout_mae``, which was measured by a separate eval-model
 that never saw the holdout season.
@@ -56,7 +56,7 @@ def main() -> None:
 
     frame = build_player_frame(range(args.start, args.end + 1))
     holdout = str(frame["season"].astype(str).max())
-    logger.info("NFL player backtest — holdout season %s (%d player-weeks total)\n", holdout, len(frame))
+    logger.info("NFL player backtest - holdout season %s (%d player-weeks total)\n", holdout, len(frame))
 
     hdr = f"{'prop':<16}{'n_hold':>8}{'model':>9}{'last-3':>9}{'seas-avg':>10}{'skill vs L3':>13}"
     logger.info(hdr)
@@ -74,7 +74,7 @@ def main() -> None:
         base_avg = _mae(hold[t], hold[f"{t}_STD"])        # predict season-to-date avg
 
         # model MAE: the trainer's honest OOS estimate (eval-model never saw the
-        # holdout season). NOT a re-predict with the shipped model — that refits
+        # holdout season). NOT a re-predict with the shipped model, which refits
         # on all seasons and would be in-sample here.
         blob = joblib.load(args.model_dir / f"player_{t}.joblib")
         model_mae = float(blob["metrics"]["holdout_mae"])

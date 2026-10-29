@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-NBA Betting Assistant — Flask API for predictions.
+NBA Betting Assistant: Flask API for predictions.
 
 No stats.nba.com / nba_api at runtime: schedules and rosters come from local `player_data`
 and optional UI-provided matchups. Injuries are fetched live from ESPN.
@@ -222,7 +222,7 @@ def index():
     return jsonify(
         {
             "service": "nba-betting-api",
-            "docs": "Local-data mode — use /api/predict or /api/game/<id>/players?home=&away=",
+            "docs": "Local-data mode. Use /api/predict or /api/game/<id>/players?home=&away=",
         }
     )
 
@@ -634,7 +634,7 @@ _METHODOLOGY = (
     "ratings, rest and matchup features alone, lock the pick before tip-off, and grade "
     "it against the real result. Straight-up winner accuracy is the hero metric and "
     "counts every graded pick. Betting ROI is shown only once picks are settled at real "
-    "closing prices — never fabricated — so it reads 'accruing' until live prices are captured."
+    "closing prices, never fabricated, so it reads 'accruing' until live prices are captured."
 )
 
 

@@ -27,7 +27,7 @@ def test_offense_is_prior_only():
     tl = _team_timeline(_tg())
     kc = tl[tl["team"] == "KC"].sort_values("game_date")
     assert kc.iloc[0]["OFF"] == pytest.approx(22.0)     # first game -> league fill (no prior)
-    assert kc.iloc[2]["OFF"] == pytest.approx(23.5)     # mean(20, 27) — excludes current 31
+    assert kc.iloc[2]["OFF"] == pytest.approx(23.5)     # mean(20, 27), excludes current 31
     assert kc.iloc[2]["OFF"] != pytest.approx((20 + 27 + 31) / 3)  # not through-current (no leak)
 
 

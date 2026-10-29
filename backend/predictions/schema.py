@@ -2,7 +2,7 @@
 
 These are the contract the whole downstream pipeline speaks. They are
 deliberately dependency-light (stdlib ``statistics.NormalDist`` for the normal
-CDF — no numpy/scipy) and JSON-serializable so the daily track-record LOCK can
+CDF, no numpy/scipy) and JSON-serializable so the daily track-record LOCK can
 snapshot them immutably.
 
 Team markets are derived from a normal model of game **margin** (home - away)

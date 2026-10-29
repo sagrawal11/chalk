@@ -1,4 +1,4 @@
-"""NHL plugin identity + registry (backend/sports/nhl/). Hermetic — no NHL API
+"""NHL plugin identity + registry (backend/sports/nhl/). Hermetic: no NHL API
 fetch, no models; proves the sport-agnostic core accepts a 4th sport."""
 import pytest
 

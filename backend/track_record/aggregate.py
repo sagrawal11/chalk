@@ -1,5 +1,5 @@
 """Aggregate the graded ledger into the public record: win%, units, ROI, and the
-current streak — sliceable by sport / market / time window. Feeds both the
+current streak, sliceable by sport / market / time window. Feeds both the
 track-record content card and the control-room dashboard.
 """
 from __future__ import annotations

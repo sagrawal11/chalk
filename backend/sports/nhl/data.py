@@ -5,7 +5,7 @@ Normalizes schedules/results into the generic shapes:
 - ``load_team_games`` -> one row per team-game (score-model substrate).
 
 Built from the per-team season endpoint (``club-schedule-season/{TEAM}/{SEASON}``),
-deduped by game id — every game has >=1 current-franchise opponent, so iterating
+deduped by game id: every game has >=1 current-franchise opponent, so iterating
 the 32 current codes captures the whole league (relocated ARI/ATL games are
 captured via their opponents and fold to UTA/WPG). Completed past seasons cache
 to ``data/nhl/schedule_{year}.parquet``; the current season is always refetched.

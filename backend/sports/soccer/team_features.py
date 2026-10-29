@@ -60,7 +60,7 @@ def _prior_count(s: pd.Series) -> pd.Series:
 def _blend_prior_season(long: pd.DataFrame, la: Dict) -> None:
     """In-place: shrink each (team, venue) attack/defense toward its PRIOR-SEASON
     average with a PRIOR_K pseudo-count, weighted by how few prior games exist this
-    season. Leakage-safe — only the strictly-earlier season feeds the blend, and a
+    season. Leakage-safe: only the strictly-earlier season feeds the blend, and a
     team with no prior season keeps the neutral 1.0 cold-start."""
     seas = long.groupby(["season", "team", "venue"], sort=False).agg(
         s_gf=("gf", "mean"), s_ga=("ga", "mean")).reset_index()
@@ -93,7 +93,7 @@ def add_team_features(matches: pd.DataFrame, *, roll: int = ROLL,
     ``roll`` sizes the rolling form window. ``cross_season`` (default off) blends
     each team's PRIOR-SEASON average rating into the current season with a
     ``PRIOR_K`` pseudo-count, so early-season matches lean on last year's strength
-    instead of the neutral 1.0 cold-start (still leakage-safe — the prior season is
+    instead of the neutral 1.0 cold-start (still leakage-safe, the prior season is
     strictly earlier). Both are pre-registered experiment knobs; the defaults
     reproduce the shipped predictor exactly.
     """
@@ -182,7 +182,7 @@ def three_way_from_lambdas(lambda_home: float, lambda_away: float,
     (mass beyond the grid cap is negligible but we normalize to be exact).
 
     ``dixon_coles_rho`` (0 = off, default) applies the Dixon-Coles (1997) low-score
-    dependence correction to the four cells {0-0, 0-1, 1-0, 1-1} before summing —
+    dependence correction to the four cells {0-0, 0-1, 1-0, 1-1} before summing;
     a negative rho inflates 0-0/1-1 (draws) and is the standard fix for the
     independent-Poisson model under-predicting draws. rho is pre-registered per
     experiment (not fit on the test set)."""
@@ -239,7 +239,7 @@ def predict_3way(home: str, away: str, ratings: Dict[str, Dict[str, float]], *,
 
 
 def latest_team_ratings(matches: pd.DataFrame, *, window: int = ROLL) -> Dict[str, Dict[str, float]]:
-    """Each team's ratings for their NEXT match — rolling over their most recent
+    """Each team's ratings for their NEXT match, rolling over their most recent
     ACTUAL games (NOT the shifted training column, which is stale by one game).
 
     Uses the LATEST season present so ratings reflect the current squad, and the
@@ -315,7 +315,7 @@ def _fetch_season(start_year: int) -> pd.DataFrame:
 
 def load_epl_raw(seasons: Sequence[int] = (2021, 2022, 2023, 2024)) -> pd.DataFrame:
     """Raw EPL match results (season/date/home/away/fthg/ftag) for the given season
-    START years, cached per season. No features attached — the experiment harness
+    START years, cached per season. No features attached; the experiment harness
     applies ``add_team_features`` with each challenger's params."""
     from datetime import datetime
     cur = datetime.now().year

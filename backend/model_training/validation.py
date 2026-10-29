@@ -56,7 +56,7 @@ def _inner_split(
     targets (PTS/FGM): the validation loss worsened after the first tree, so
     early stopping quit at ~1 tree and the model collapsed to a near-constant.
     A random split removes that drift for the purpose of choosing the number of
-    trees. The honest out-of-sample estimate is unaffected — it is still the
+    trees. The honest out-of-sample estimate is unaffected: it is still the
     untouched final season, which this split never touches.
     """
     labels = np.asarray(list(train_idx))
@@ -95,7 +95,7 @@ def walk_forward_train(
     metrics carry both ``cv_mae`` and a truly-held-out ``holdout_mae``.
 
     The shipped model is refit on ALL rows at the early-stopping-validated
-    iteration count (holdout rows are used for training only — never for the
+    iteration count (holdout rows are used for training only, never for the
     estimate) to maximize the data available at inference.
     """
     from lightgbm import LGBMRegressor, early_stopping
@@ -112,7 +112,7 @@ def walk_forward_train(
         raise ValueError("Not enough rows to train")
 
     # Guard against a partial/stub season (e.g., an in-progress current season with
-    # only a handful of games) being auto-picked as the scoring holdout — that gives
+    # only a handful of games) being auto-picked as the scoring holdout, which gives
     # a meaningless holdout_mae (measured on ~200 rows) and can degenerate per-stat
     # metrics. Drop any season far smaller than the median season; such rows are
     # neither a valid holdout nor complete enough to train on when validating the

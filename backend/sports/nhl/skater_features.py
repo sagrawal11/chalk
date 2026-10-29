@@ -43,7 +43,7 @@ def build_skater_frame(years) -> pd.DataFrame:
 
 
 def latest_skater_features(frame: pd.DataFrame) -> Dict[int, Dict]:
-    """Each skater's features for their NEXT game — rolling over their most
+    """Each skater's features for their NEXT game, rolling over their most
     recent ACTUAL games (not the shift(1) training column, which would be stale
     by one game). Keyed by player id for inference; carries a per-target anchor.
     """
@@ -66,7 +66,7 @@ def latest_skater_features(frame: pd.DataFrame) -> Dict[int, Dict]:
 
 def _latest_str(p: pd.DataFrame, col: str) -> str:
     """Most recent non-null value of a passthrough label column (team/name), or ""
-    when absent — older cached frames predate these columns."""
+    when absent: older cached frames predate these columns."""
     if col not in p.columns or p.empty:
         return ""
     v = p[col].iloc[-1]

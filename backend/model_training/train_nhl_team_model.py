@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Train the NHL team goal-score model (margin & total) via the shared honest
-walk-forward trainer — same methodology as the other sports. v1 is team-strength
+walk-forward trainer, same methodology as the other sports. v1 is team-strength
 only; a pre-game starting-goalie signal + the live market anchor are the accuracy
 levers (the anchor is already wired in the predictor)."""
 from __future__ import annotations

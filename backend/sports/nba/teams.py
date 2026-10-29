@@ -26,7 +26,7 @@ CANONICAL_TEAMS: FrozenSet[str] = frozenset({
 })
 
 # ESPN abbreviation -> canonical (was duplicated in app.py:223 and
-# collect_injuries.py:34; import from here to dedupe — PLANNING.md 10.6).
+# collect_injuries.py:34; import from here to dedupe (PLANNING.md 10.6).
 ESPN_TO_NBA_MAP: Dict[str, str] = {
     "GS": "GSW", "NO": "NOP", "NY": "NYK",
     "SA": "SAS", "UTAH": "UTA", "WSH": "WAS",
