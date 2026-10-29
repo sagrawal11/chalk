@@ -21,13 +21,12 @@ def lock_path(sport: str, game_date: str) -> Path:
     return LOCKED_DIR / sport / f"{game_date}.json"
 
 
-def _body(sport, game_date, game_predictions, picks, prop_predictions, model_version) -> Dict[str, Any]:
+def _body(sport, game_date, game_predictions, prop_predictions, model_version) -> Dict[str, Any]:
     return {
         "sport": sport,
         "game_date": game_date,
         "model_version": model_version,
         "game_predictions": [gp.to_dict() for gp in game_predictions],
-        "picks": [p.to_dict() for p in picks],
         "prop_predictions": [pp.to_dict() for pp in (prop_predictions or [])],
     }
 
@@ -40,7 +39,6 @@ def lock_predictions(
     sport: str,
     game_date: str,
     game_predictions: List[Any],
-    picks: List[Any],
     prop_predictions: Optional[List[Any]] = None,
     model_version: str = "",
     *,
@@ -53,7 +51,7 @@ def lock_predictions(
             f"predictions for {sport} {game_date} are already locked at {p}; "
             "locks are immutable (use force=True only to correct a same-day error)"
         )
-    body = _body(sport, game_date, game_predictions, picks, prop_predictions, model_version)
+    body = _body(sport, game_date, game_predictions, prop_predictions, model_version)
     doc = {**body, "locked_at": locked_at or datetime.now(timezone.utc).isoformat(),
            "content_hash": _hash(body)}
     p.parent.mkdir(parents=True, exist_ok=True)
