@@ -1,44 +1,31 @@
-"""Serve soccer (EPL/UCL/MLS) predictions. 3-way outcome: anchor on the de-vigged
-market moneyline (home/draw/away) + market total when a live line exists. When no
-line is available, fall back to a standalone Poisson (Dixon-Coles-lite) TEAM model
-built from football-data.co.uk EPL results (attack/defense strength -> Poisson
-scoreline probs); the league base rates remain the FINAL fallback when the Poisson
-model has no data for a team. Soccer markets are highly efficient, so the market
-anchor IS the accurate prediction where it exists.
+"""Serve soccer (EPL/UCL/MLS) 3-way predictions from a standalone Poisson
+(Dixon-Coles-lite) TEAM model built from football-data.co.uk EPL results
+(attack/defense strength -> Poisson scoreline probs). League base rates remain the
+final fallback when the Poisson model has no data for a team.
 """
 from __future__ import annotations
 
 import logging
 from typing import Dict, Optional
 
-from config.settings import market_blind
 from predictions.schema import GamePrediction
 from sports.soccer.teams import canonical_team
 
 logger = logging.getLogger(__name__)
-# League base rates (home edge): the FINAL fallback when neither a live line nor
-# the Poisson team model has data for a matchup.
+# League base rates (home edge): the final fallback when the Poisson team model has
+# no data for a matchup.
 _BASE = {"p_home": 0.45, "p_draw": 0.27, "p_away": 0.28, "total": 2.7}
 
 
 class SoccerPredictor:
     def __init__(self):
-        self.market_provider = None
-        try:
-            from sports.nba.live_odds import _get_key
-            if _get_key():
-                from sports.soccer.live_odds import market_provider
-                self.market_provider = market_provider()
-                logger.info("Soccer live odds enabled (The Odds API)")
-        except Exception as e:
-            logger.warning("Soccer live odds unavailable: %s", e)
-        # Poisson team-model ratings are built lazily on first line-less matchup so
+        # Poisson team-model ratings are built lazily on the first matchup so
         # instantiation stays cheap and network fetches happen only when needed.
         self._poisson_ratings: Optional[Dict[str, Dict[str, float]]] = None
         self._poisson_tried = False
 
     def available(self) -> bool:
-        return True  # anchor-primary: always predicts (base rates without a line)
+        return True  # always predicts (base rates when the Poisson model has no data)
 
     def _poisson_line(self, home_c: str, away_c: str) -> Optional[Dict]:
         """3-way + total from the Poisson team model, or None if it has no data
@@ -67,13 +54,7 @@ class SoccerPredictor:
 
     def predict_game(self, home: str, away: str, game_date: str, season: Optional[str] = None) -> GamePrediction:
         home_c, away_c = canonical_team(home, strict=False), canonical_team(away, strict=False)
-        # Market-blind (brand default): skip the line and use the standalone Poisson
-        # (Dixon-Coles-lite) team model; base rates remain the final fallback.
-        line = None if market_blind() else (
-            self.market_provider(home_c, away_c, str(game_date)[:10]) if self.market_provider else None
-        )
-        if line is None:
-            line = self._poisson_line(home_c, away_c)  # Poisson team model (line-less path)
+        line = self._poisson_line(home_c, away_c)  # Poisson team model; base rates fallback
         L = line or _BASE
         p_home, p_draw, p_away = float(L["p_home"]), float(L["p_draw"]), float(L["p_away"])
         total = float(L.get("total", 2.7))

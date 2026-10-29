@@ -38,7 +38,8 @@ def test_targets_and_capabilities():
 def test_three_way_prediction_with_stub():
     from models.soccer_predictor import SoccerPredictor
     p = SoccerPredictor()
-    p.market_provider = lambda h, a, d=None: {"p_home": 0.60, "p_draw": 0.25, "p_away": 0.15, "total": 2.5}
+    # Stub the Poisson team model to a known 3-way (no network, no betting line).
+    p._poisson_line = lambda h, a: {"p_home": 0.60, "p_draw": 0.25, "p_away": 0.15, "total": 2.5}
     gp = p.predict_game("Arsenal", "Chelsea", "2025-08-20")
     assert gp.sport == "soccer"
     assert gp.p_home_win == 0.60 and gp.p_draw == 0.25 and gp.p_away_win == 0.15
@@ -46,6 +47,6 @@ def test_three_way_prediction_with_stub():
     assert gp.pred_home_pts >= 0 and gp.pred_away_pts >= 0     # sane, non-negative scoreline
     assert gp.pred_home_pts > gp.pred_away_pts                 # favorite scores more
 
-    p.market_provider = None                                   # no line -> base rates
+    p._poisson_line = lambda h, a: None                        # no data -> base rates
     gp2 = p.predict_game("Team X", "Team Y", "2025-08-20")
     assert gp2.p_draw is not None and gp2.p_home_win > gp2.p_away_win  # home-edge base rates

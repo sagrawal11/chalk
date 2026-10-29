@@ -1,5 +1,5 @@
 """Soccer sport plugin (EPL / UCL / MLS) implementing the shared ``Sport``
-interface. 3-way outcome (home/draw/away) anchored on the efficient market."""
+interface. 3-way outcome (home/draw/away) from a Poisson team model."""
 from __future__ import annotations
 
 import logging
@@ -52,12 +52,6 @@ class SoccerSport(Sport):
         )
 
     def schedule(self, game_date: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Upcoming matches across EPL/UCL/MLS that currently have posted lines."""
-        try:
-            from sports.soccer.live_odds import fetch_soccer_lines
-            lines = fetch_soccer_lines()
-        except Exception:
-            return []
-        date = game_date or datetime.now().strftime("%Y-%m-%d")
-        return [{"game_id": f"{h}-{a}", "date": date, "home": h, "away": a,
-                 "competition": v.get("competition")} for (h, a), v in lines.items()]
+        """No free soccer fixtures source is wired yet (the prior source was the betting
+        odds API, now removed). Returns an empty slate until a free schedule feed is added."""
+        return []

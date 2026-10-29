@@ -1,15 +1,8 @@
 """Global runtime switches for the prediction engine.
 
-``MARKET_BLIND`` is the product-defining flag. When True (the default), predictions
-must NOT use any betting line as an input: every sport's predictor takes its pure
-model / Poisson path and picks are generated from the model alone. The
-market-anchored path is kept fully intact for the (opt-in) ROI-settlement work and
-is reached only by setting ``MARKET_BLIND=0``.
-
 Flags are read at call-time (not import-time) so tests and CI can flip them with
-``monkeypatch.setenv`` without reimporting modules. Resolution mirrors
-``sports.nba.live_odds._get_key``: process env first, then the repo/backend
-``.env`` so a bare CLI run and the Docker stack agree.
+``monkeypatch.setenv`` without reimporting modules. Resolution: process env first,
+then the repo/backend ``.env`` so a bare CLI run and the Docker stack agree.
 """
 from __future__ import annotations
 
@@ -47,11 +40,6 @@ def _flag(name: str, default: bool) -> bool:
     if low in _FALSE:
         return False
     return default
-
-
-def market_blind() -> bool:
-    """True => predictions ignore the betting line entirely (the brand default)."""
-    return _flag("MARKET_BLIND", default=True)
 
 
 # --- Publishing / autonomy (M4): every default is the safe, DARK posture. ---
