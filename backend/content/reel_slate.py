@@ -10,7 +10,7 @@ render-reel.mjs). This module is the Python side of that seam:
 
 M0 lands the *seam* (contract + writer + invoker). Assembling ``games`` from real
 market-blind predictions + the graded track record is wired into
-``pipeline/daily_content`` in M3 (ARCHITECTURE.md §5g, BUILD_PLAN M3).
+``pipeline/daily_content`` in M3 (docs/ARCHITECTURE.md §5g, BUILD_PLAN M3).
 """
 from __future__ import annotations
 

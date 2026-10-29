@@ -11,7 +11,7 @@ node render-reel.mjs --check <slate.json>        # validate only (CI gate / seam
 
 `backend/content/reel_slate.py` is the Python seam that writes this file. The real
 per-day assembly from market-blind predictions + the graded track record is wired
-into `pipeline/daily_content` in **M3** (ARCHITECTURE.md §5g, BUILD_PLAN M3). M0 lands
+into `pipeline/daily_content` in **M3** (docs/ARCHITECTURE.md §5g, BUILD_PLAN M3). M0 lands
 the seam (contract + writer + invoker) and pins it in CI.
 
 ## Shape

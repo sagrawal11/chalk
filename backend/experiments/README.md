@@ -1,6 +1,6 @@
 # `experiments/` — the feature-experiment harness (NEW)
 
-**Milestone:** M2 (`BUILD_PLAN.md`). **Design:** `ARCHITECTURE.md` §5d.
+**Milestone:** M2 (`docs/BUILD_PLAN.md`). **Design:** `docs/ARCHITECTURE.md` §5d.
 
 The champion/challenger loop over the **existing** `backtest/team_backtest.py`
 walk-forward eval, plus a public experiment **ledger** and an **honest readout**
@@ -9,7 +9,7 @@ on the untouched test set. The daily unit of content:
 
 Lands here in M2:
 
-- `roadmap.yaml` — machine-readable port of `FEATURE_ROADMAP.md` (the prioritized
+- `roadmap.yaml` — machine-readable port of `docs/FEATURE_ROADMAP.md` (the prioritized
   queue: `{id, sport, rung, name, builder(s), hypothesis, eval_metric, act, keep_rule, status}`).
 - `run_experiment.py` — assemble a challenger (champion's builders **+ this rung's
   builder**) → run the walk-forward backtest for champion vs challenger on

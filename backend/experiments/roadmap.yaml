@@ -9,7 +9,7 @@
 #
 # status: queued        -> buildable now (columns exist in the frame), awaiting a run
 #         needs_builder -> requires new feature-engineering code first (not buildable
-#                          from the cached schedule frame yet; see FEATURE_ROADMAP.md)
+#                          from the cached schedule frame yet; see docs/FEATURE_ROADMAP.md)
 
 defaults:
   keep_rule:
@@ -73,7 +73,7 @@ sports:
         act: 1
         status: queued
       # ---- Rungs that need a new feature-builder first (not buildable from the
-      #      cached schedule frame; wired in a later phase — see FEATURE_ROADMAP.md) ----
+      #      cached schedule frame; wired in a later phase — see docs/FEATURE_ROADMAP.md) ----
       - {id: NFL-07, rung: 2, name: Recency-weighted OFF/DEF (EWMA), builders: [NFL-07], act: 1, status: needs_builder}
       - {id: NFL-19, rung: 5, name: Offensive EPA/play (needs PBP), builders: [NFL-19], act: 1, status: needs_builder}
       - {id: NFL-45, rung: 8, name: Market-anchor residual & CLV probe, builders: [NFL-45], act: probe, status: needs_builder}
@@ -141,7 +141,7 @@ sports:
       # ---- Needs a new feature-builder first (not in the cached schedule frame) ----
       # The starting GOALIE is the dominant NHL swing, but the schedule endpoint only
       # exposes the post-game winning goalie; a pre-game goalie signal needs the
-      # boxscore endpoint (a new builder) — see FEATURE_ROADMAP.md.
+      # boxscore endpoint (a new builder) — see docs/FEATURE_ROADMAP.md.
       - {id: NHL-20, rung: 3, name: Starting goalie — rolling save%/GAA, builders: [NHL-20], act: 1, status: needs_builder}
 
   soccer:

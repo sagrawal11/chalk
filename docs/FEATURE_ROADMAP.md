@@ -1,10 +1,8 @@
-# CHALK — Feature Roadmap (the pre-committed research plan)
+# CHALK: Feature Roadmap (the pre-committed research plan)
 
-> **Status:** Draft v0.1 for owner review. Companion to `CHALK_MASTER_PLAN.md` (§6 the ladder, §14 the deliverable). This is the **pre-committed, data-grounded research plan** — the ordered backlog of features we add one at a time, publishing what each did.
+> **Held loosely (per master plan §5):** the order is a prioritized queue, not an immutable script. When a feature does nothing or hurts, the next pick can honestly respond ("that didn't work, so next we try…").
 >
-> **Held loosely (per master plan §5):** the order is a prioritized queue, not an immutable script. When a feature does nothing or hurts, the *next* pick can honestly respond ("that didn't work, so next we try…").
->
-> **Every rung maps to a real, available free-data field.** No aspirational features — each was grounded by reading the existing sport plugins + `DATA_SOURCES.md`, or (for CFB) the verified CollegeFootballData.com schema.
+> **Every rung maps to a real, available free-data field.** No aspirational features, each was grounded by reading the existing sport plugins + `DATA_SOURCES.md`, or (for CFB) the verified CollegeFootballData.com schema.
 
 ---
 
@@ -13,7 +11,7 @@
 Each sport has a **data-availability audit** (the free dataset + the exact fields it exposes) followed by a **feature ladder** (~30–45 rungs in climb order). Every rung uses this format:
 
 ```
-#### <SPORT>-NN · <feature name>   (Rung N — <rung name>)
+#### <SPORT>-NN · <feature name>   (Rung N, <rung name>)
 - Data field / source: <exact field(s), from the plugin / dataset>
 - Hypothesis: <what signal / what market knowledge it may capture>
 - Impact measured: <walk-forward metric + window>
@@ -22,22 +20,22 @@ Each sport has a **data-availability audit** (the free dataset + the exact field
 
 ### The 8-rung ladder (shared across sports)
 
-1. **Basic box stats** — the deliberately-simple day-1 baseline
-2. **Rolling windows** — last-N form, recency-weighted
-3. **Opponent adjustment** — strength of schedule, opponent-allowed
+1. **Basic box stats**: the deliberately-simple day-1 baseline
+2. **Rolling windows**: last-N form, recency-weighted
+3. **Opponent adjustment**: strength of schedule, opponent-allowed
 4. **Rest / schedule / travel**
-5. **Derived efficiency stats** — per-possession / pace-adjusted / sport-specific advanced
+5. **Derived efficiency stats**: per-possession / pace-adjusted / sport-specific advanced
 6. **Matchup & interaction features**
-7. **Situational** — home/road, motivation, rest/tanking spots
-8. **Market-adjacent probes** — injuries, confirmed lineups, line-movement (Act 2: measuring the residual gap)
+7. **Situational**: home/road, motivation, rest/tanking spots
+8. **Market-adjacent probes**: injuries, confirmed lineups, line-movement (Act 2: measuring the residual gap)
 
 ### Methodology & discipline (applies to every feature)
 
 - **Leakage-safe construction:** prior-only rolling features (`shift(1)`), backward-exclusive as-of merges, walk-forward training/eval. No feature ever sees the game it predicts.
-- **Impact measured on historical walk-forward backtest** (big N) — Δ accuracy / Δ log-loss / Δ Brier / score MAE vs the immediately-prior model, over the seasons the data covers. This is what we *claim* about a feature. The live season is the public scoreboard (drama), never the impact measurement.
+- **Impact measured on historical walk-forward backtest** (big N): Δ accuracy / Δ log-loss / Δ Brier / score MAE vs the immediately-prior model, over the seasons the data covers. This is what we claim about a feature. The live season is the public scoreboard (drama), never the impact measurement.
 - **Multiple-comparisons guard:** this pre-registered roadmap + a **final untouched test set** (never used for feature selection) + honest effect sizes with the eval window stated.
-- **Team-market targets only** (winner / margin / total / — for soccer — 1X2 & goals). Historical *player-prop* betting lines are essentially free-absent everywhere, so props can be modeled but a prop-*market* edge can't be backtested. Team-market backtesting is fully feasible for all six.
-- **The betting line is never a model input.** It appears only in Rung-8 "probe" features, used to *grade* the blind model and measure the residual gap (the thesis). Probes marked **Act: probe / 2** mostly won't beat the market — that's the point.
+- **Team-market targets only** (winner / margin / total / (for soccer) 1X2 & goals). Historical player-prop betting lines are essentially free-absent everywhere, so props can be modeled but a prop-market edge can't be backtested. Team-market backtesting is fully feasible for all six.
+- **The betting line is never a model input.** It appears only in Rung-8 "probe" features, used to grade the blind model and measure the residual gap (the thesis). Probes marked **Act: probe / 2** mostly won't beat the market.
 - **Two-act arc:** early rungs genuinely help (Act 1, "watch it climb"); market-adjacent probes hit the wall (Act 2, "here's exactly what the market knows that we don't").
 
 ### At a glance
@@ -57,7 +55,7 @@ Each sport has a **data-availability audit** (the free dataset + the exact field
 
 ## NFL 🏈
 
-### Data availability — NFL
+### Data availability: NFL
 - **Source / client:** `nflverse` via `nfl_data_py` (Python). The plugin (`backend/sports/nfl/data.py`) wraps `import_schedules`; the deeper feeds (`import_pbp_data`, `import_ngs_data`, `import_snap_counts`, `import_injuries`, `import_weekly_data`) are installed in `betting_venv` and available but not yet wired into features.
 - **History:** Schedules + play-by-play back to **1999** (EPA/WP/CPOE/air-yards on every play). NGS ~2016+, snap counts ~2012+, injury reports ~2009+, FTN charting 2022+. Team-market backtest horizon = **1999–present** (~25 seasons, ~7k games).
 - **Core fields / tables available:**
@@ -66,1075 +64,1075 @@ Each sport has a **data-availability audit** (the free dataset + the exact field
   - *Play-by-play* (`import_pbp_data`, ~380 cols): `epa`, `qb_epa`, `cpoe`, `pass_oe`, `xpass`, `success`, `series_success`, `air_yards`, `yac_epa`, `xyac_epa`, `wp/wpa`, `vegas_wp`, `play_type`, `down`, `ydstogo`, `shotgun`, `no_huddle`, `qb_dropback`, `sack`, `interception`, `fumble_lost`, `penalty`/`penalty_yards`, `third_down_converted/failed`, `fourth_down_converted/failed`, `drive`, `series`, `drive_time_of_possession`, `fixed_drive_result`.
   - *Next Gen Stats* (`import_ngs_data('passing')`): `completion_percentage_above_expectation`, `avg_time_to_throw`, `aggressiveness`, `avg_air_yards_to_sticks`.
   - *Availability*: `import_snap_counts` (`offense_pct`), `import_injuries` (`report_status`, `report_primary_injury`).
-- **Odds / market (for grading):** Built into schedules — `spread_line` (home-relative closing), `total_line`, `home_moneyline`/`away_moneyline`, `home_spread_odds`/`away_spread_odds`, `over_odds`/`under_odds`. No external odds source needed; ATS / O-U / ML / ROI / CLV all gradeable offline.
-- **Known gaps / limits:** `spread_line`/`total_line` are the **closing** line only — no opening line or line-movement history in nflverse (line-movement probes need an external tick source). `temp`/`wind` null for domes (plugin neutral-fills). Injury reports have gametime-decision noise; snap counts are prior-week only. PBP is sparse-per-team (~17 games/yr) so rolling windows are shallow. Historical **player-prop** lines are absent for free.
+- **Odds / market (for grading):** Built into schedules: `spread_line` (home-relative closing), `total_line`, `home_moneyline`/`away_moneyline`, `home_spread_odds`/`away_spread_odds`, `over_odds`/`under_odds`. No external odds source needed; ATS / O-U / ML / ROI / CLV all gradeable offline.
+- **Known gaps / limits:** `spread_line`/`total_line` are the **closing** line only, no opening line or line-movement history in nflverse (line-movement probes need an external tick source). `temp`/`wind` null for domes (plugin neutral-fills). Injury reports have gametime-decision noise; snap counts are prior-week only. PBP is sparse-per-team (~17 games/yr) so rolling windows are shallow. Historical **player-prop** lines are absent for free.
 
-### Feature ladder — NFL
+### Feature ladder: NFL
 
-#### NFL-01 · Season-to-date points scored (OFF)   (Rung 1 — Basic box stats)
+#### NFL-01 · Season-to-date points scored (OFF)   (Rung 1 - Basic box stats)
 - **Data field / source:** `pts` → `OFF` (expanding mean, `shift(1)`), `team_features.py`
 - **Hypothesis:** A team's own scoring rate is the crudest predictor of how many points it will put up next week.
 - **Impact measured:** Δ score MAE + Δ margin/total log-loss vs a league-average constant baseline, walk-forward 1999–present.
 - **Act:** 1
 
-#### NFL-02 · Season-to-date points allowed (DEF)   (Rung 1 — Basic box stats)
+#### NFL-02 · Season-to-date points allowed (DEF)   (Rung 1 - Basic box stats)
 - **Data field / source:** `opp_pts` → `DEF` (expanding mean, `shift(1)`)
 - **Hypothesis:** Points allowed captures baseline defensive quality that shapes the opponent's total.
 - **Impact measured:** Δ score MAE / total log-loss vs NFL-01-only model, walk-forward from 1999.
 - **Act:** 1
 
-#### NFL-03 · Net point differential (NET_DIFF)   (Rung 1 — Basic box stats)
+#### NFL-03 · Net point differential (NET_DIFF)   (Rung 1 - Basic box stats)
 - **Data field / source:** `(HOME_OFF − HOME_DEF) − (AWAY_OFF − AWAY_DEF)` = `NET_DIFF`
 - **Hypothesis:** Point differential is a better team-strength summary than win/loss and should predict margin directly.
 - **Impact measured:** Δ margin MAE / winner accuracy vs OFF+DEF entered separately, walk-forward.
 - **Act:** 1
 
-#### NFL-04 · Season-to-date win pct (WINPCT)   (Rung 1 — Basic box stats)
+#### NFL-04 · Season-to-date win pct (WINPCT)   (Rung 1 - Basic box stats)
 - **Data field / source:** `win = pts > opp_pts` → `WINPCT` (expanding mean, `shift(1)`)
 - **Hypothesis:** Raw win rate is a noisy but non-zero prior on who wins in a low-sample sport.
 - **Impact measured:** Δ winner log-loss vs NET_DIFF-only; expect near-zero once differential is in (records noisy at ~17 games).
 - **Act:** 1
 
-#### NFL-05 · Prior-season point differential carryover (PRIOR_DIFF)   (Rung 1 — Basic box stats)
+#### NFL-05 · Prior-season point differential carryover (PRIOR_DIFF)   (Rung 1 - Basic box stats)
 - **Data field / source:** last season's mean `diff`, merged onto `season+1` = `PRIOR_DIFF`
 - **Hypothesis:** With only ~17 games/year, last year's team strength is a strong Week-1 prior before this year's sample accrues.
 - **Impact measured:** Δ margin MAE especially in Weeks 1–4 (early-season slice), walk-forward.
 - **Act:** 1
 
-#### NFL-06 · Last-3-game form (FORM)   (Rung 2 — Rolling windows)
+#### NFL-06 · Last-3-game form (FORM)   (Rung 2 - Rolling windows)
 - **Data field / source:** `diff` → `FORM` (`shift(1).rolling(3)` mean), `team_features.py`
 - **Hypothesis:** Recent point-differential form captures in-season improvement/decline the season-average smooths over.
 - **Impact measured:** Δ margin MAE vs season-to-date-only model, walk-forward from 1999.
 - **Act:** 1
 
-#### NFL-07 · Recency-weighted OFF/DEF (EWMA)   (Rung 2 — Rolling windows)
+#### NFL-07 · Recency-weighted OFF/DEF (EWMA)   (Rung 2 - Rolling windows)
 - **Data field / source:** `pts`/`opp_pts` re-rolled as `shift(1).ewm(halflife≈4 games)`
 - **Hypothesis:** Exponentially decaying weights beat a flat expanding mean by tracking the current roster/scheme.
 - **Impact measured:** Δ score MAE, EWMA vs flat mean at matched leakage; tune half-life on walk-forward folds.
 - **Act:** 1
 
-#### NFL-08 · Last-3 scoring & allowed variance (volatility)   (Rung 2 — Rolling windows)
+#### NFL-08 · Last-3 scoring & allowed variance (volatility)   (Rung 2 - Rolling windows)
 - **Data field / source:** `shift(1).rolling(3).std()` of `pts` and `opp_pts`
-- **Hypothesis:** Boom/bust teams have wider score distributions — volatility should sharpen total (over/under) calibration, not the point estimate.
+- **Hypothesis:** Boom/bust teams have wider score distributions; volatility should sharpen total (over/under) calibration, not the point estimate.
 - **Impact measured:** Δ total log-loss / calibration (reliability curve) vs mean-only, walk-forward.
 - **Act:** 1
 
-#### NFL-09 · Rolling form window sweep (last-5 / last-8)   (Rung 2 — Rolling windows)
+#### NFL-09 · Rolling form window sweep (last-5 / last-8)   (Rung 2 - Rolling windows)
 - **Data field / source:** `diff` rolled at windows {3,5,8} with `shift(1)`
 - **Hypothesis:** There's an optimal memory length for NFL form; too short is noise, too long ignores change.
 - **Impact measured:** Δ margin MAE across window choices on walk-forward folds; keep the best, publish the curve.
 - **Act:** 1
 
-#### NFL-10 · Opponent-adjusted OFF (offense vs schedule faced)   (Rung 3 — Opponent adjustment)
+#### NFL-10 · Opponent-adjusted OFF (offense vs schedule faced)   (Rung 3 - Opponent adjustment)
 - **Data field / source:** `OFF` minus mean `DEF` of prior opponents (from `opponent` in `load_team_games`)
 - **Hypothesis:** Raw scoring is inflated/deflated by schedule; adjusting for defenses faced isolates true offense.
 - **Impact measured:** Δ margin/total MAE vs unadjusted OFF/DEF, walk-forward from 1999.
 - **Act:** 1
 
-#### NFL-11 · Opponent-adjusted DEF (defense vs offenses faced)   (Rung 3 — Opponent adjustment)
+#### NFL-11 · Opponent-adjusted DEF (defense vs offenses faced)   (Rung 3 - Opponent adjustment)
 - **Data field / source:** `DEF` minus mean `OFF` of prior opponents faced
 - **Hypothesis:** A defense that faced weak offenses looks better than it is; adjusting reveals real defensive strength.
 - **Impact measured:** Δ margin MAE / winner log-loss vs NFL-10-only, walk-forward.
 - **Act:** 1
 
-#### NFL-12 · Iterative strength-of-schedule rating (SRS-style)   (Rung 3 — Opponent adjustment)
+#### NFL-12 · Iterative strength-of-schedule rating (SRS-style)   (Rung 3 - Opponent adjustment)
 - **Data field / source:** prior-only fixed-point solve of `diff` adjusted for `opponent` strength (Simple Rating System)
 - **Hypothesis:** One convergent net rating that nets out schedule beats one-pass opponent adjustment as a single strength summary.
 - **Impact measured:** Δ margin MAE vs NFL-10/11 one-pass adjustment, walk-forward.
 - **Act:** 1
 
-#### NFL-13 · Strength-of-schedule faced (past & future)   (Rung 3 — Opponent adjustment)
+#### NFL-13 · Strength-of-schedule faced (past & future)   (Rung 3 - Opponent adjustment)
 - **Data field / source:** mean prior-opponent `PRIOR_DIFF`/rating from the schedule
 - **Hypothesis:** A hard past slate depresses a team's raw stats; encoding SoS explicitly lets the model discount them.
 - **Impact measured:** Δ margin MAE vs opponent-adjusted-only, walk-forward.
 - **Act:** 1
 
-#### NFL-14 · Rest days (REST) and rest differential (REST_DIFF)   (Rung 4 — Rest / schedule / travel)
+#### NFL-14 · Rest days (REST) and rest differential (REST_DIFF)   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** `home_rest`, `away_rest` (schedule) and plugin `REST`/`REST_DIFF` from `game_date` diffs
 - **Hypothesis:** More rest than the opponent is a real edge; the rest gap should move margin.
 - **Impact measured:** Δ margin MAE / ATS accuracy vs no-rest model, walk-forward.
 - **Act:** 1
 
-#### NFL-15 · Off-a-bye flag   (Rung 4 — Rest / schedule / travel)
+#### NFL-15 · Off-a-bye flag   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** `home_rest`/`away_rest` ≥ 13 (bye-week rest) as a binary
 - **Hypothesis:** Coming off a bye (extra prep + health) is a well-known situational bump, distinct from the linear rest term.
 - **Impact measured:** Δ ATS accuracy / margin MAE on the bye-team subset, walk-forward.
 - **Act:** 1
 
-#### NFL-16 · Short week / Thursday game   (Rung 4 — Rest / schedule / travel)
+#### NFL-16 · Short week / Thursday game   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** `home_rest`/`away_rest` ≤ 4 (or `weekday == 'Thursday'` from schedule)
 - **Hypothesis:** Short-week teams are fatigued/under-prepared, depressing scoring and margin.
 - **Impact measured:** Δ total/margin MAE on short-week games vs baseline, walk-forward.
 - **Act:** 1
 
-#### NFL-17 · Travel distance & time-zone shift   (Rung 4 — Rest / schedule / travel)
+#### NFL-17 · Travel distance & time-zone shift   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** `stadium_id`/`location` → lat-long → haversine + tz delta between consecutive games
 - **Hypothesis:** Long travel and body-clock mismatch (esp. West→East early kickoffs) shave points off the traveling team.
 - **Impact measured:** Δ margin MAE / road-team ATS on high-travel subset vs no-travel model, walk-forward.
 - **Act:** 1
 
-#### NFL-18 · International / neutral-site game   (Rung 4 — Rest / schedule / travel)
+#### NFL-18 · International / neutral-site game   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** `location` == 'Neutral' (London/Munich/Mexico) from schedule
-- **Hypothesis:** Neutral-site games erase home advantage and add travel — a distinct regime worth flagging.
+- **Hypothesis:** Neutral-site games erase home advantage and add travel, a distinct regime worth flagging.
 - **Impact measured:** Δ margin MAE on neutral-site subset; small-N but published, walk-forward.
 - **Act:** 1
 
-#### NFL-19 · Offensive EPA/play (prior-only)   (Rung 5 — Derived efficiency)
+#### NFL-19 · Offensive EPA/play (prior-only)   (Rung 5 - Derived efficiency)
 - **Data field / source:** team mean `epa` on offensive plays from `import_pbp_data`, rolled `shift(1)`
 - **Hypothesis:** EPA/play is the single most predictive team-efficiency metric and should beat raw points once schedule-noise is stripped.
 - **Impact measured:** Δ margin MAE / winner log-loss vs box-score-only model (biggest expected Act-1 jump), walk-forward.
 - **Act:** 1
 
-#### NFL-20 · Defensive EPA/play allowed   (Rung 5 — Derived efficiency)
+#### NFL-20 · Defensive EPA/play allowed   (Rung 5 - Derived efficiency)
 - **Data field / source:** team mean `epa` allowed (opponent offensive plays), rolled `shift(1)`
 - **Hypothesis:** EPA allowed measures defense far better than points allowed (which is drive/field-position contaminated).
 - **Impact measured:** Δ margin MAE vs points-allowed (DEF) feature, walk-forward.
 - **Act:** 1
 
-#### NFL-21 · Pass-EPA vs rush-EPA split (offense & defense)   (Rung 5 — Derived efficiency)
+#### NFL-21 · Pass-EPA vs rush-EPA split (offense & defense)   (Rung 5 - Derived efficiency)
 - **Data field / source:** `epa` split by `play_type in {pass,run}` / `qb_epa`, per team, `shift(1)`
 - **Hypothesis:** Pass efficiency is stickier and more predictive than rush efficiency; splitting them adds signal over blended EPA.
 - **Impact measured:** Δ margin MAE vs single blended-EPA feature, walk-forward.
 - **Act:** 1
 
-#### NFL-22 · Success rate (offense & defense)   (Rung 5 — Derived efficiency)
+#### NFL-22 · Success rate (offense & defense)   (Rung 5 - Derived efficiency)
 - **Data field / source:** team mean `success` (down-adjusted positive-EPA share) from PBP, `shift(1)`
-- **Hypothesis:** Success rate captures consistency/floor where EPA captures explosiveness — complementary to NFL-19/20.
+- **Hypothesis:** Success rate captures consistency/floor where EPA captures explosiveness, complementary to NFL-19/20.
 - **Impact measured:** Δ margin MAE and total calibration vs EPA-only, walk-forward.
 - **Act:** 1
 
-#### NFL-23 · CPOE — completion pct over expected   (Rung 5 — Derived efficiency)
+#### NFL-23 · CPOE, completion pct over expected   (Rung 5 - Derived efficiency)
 - **Data field / source:** team offensive `cpoe` from PBP (or `completion_percentage_above_expectation` from NGS), `shift(1)`
 - **Hypothesis:** CPOE isolates QB/passing-game accuracy independent of scheme depth and should add to pass-EPA.
 - **Impact measured:** Δ margin MAE vs pass-EPA-only, walk-forward from PBP era (1999)/NGS era (2016).
 - **Act:** 1
 
-#### NFL-24 · EPA-composite (CPOE+EPA passing rating)   (Rung 5 — Derived efficiency)
+#### NFL-24 · EPA-composite (CPOE+EPA passing rating)   (Rung 5 - Derived efficiency)
 - **Data field / source:** blended `qb_epa` + `cpoe` (nflverse's standard passing composite), rolled `shift(1)`
 - **Hypothesis:** The community-standard EPA+CPOE passing metric is more stable per-game than either alone.
 - **Impact measured:** Δ margin MAE vs NFL-21/23 entered separately, walk-forward.
 - **Act:** 1
 
-#### NFL-25 · Pace / plays & seconds-per-play   (Rung 5 — Derived efficiency)
+#### NFL-25 · Pace / plays & seconds-per-play   (Rung 5 - Derived efficiency)
 - **Data field / source:** offensive play count per game + `game_seconds_remaining` deltas / `no_huddle` rate from PBP, `shift(1)`
 - **Hypothesis:** Faster teams create more possessions, lifting the game total independent of per-play efficiency.
 - **Impact measured:** Δ total MAE / O-U accuracy vs efficiency-only model, walk-forward.
 - **Act:** 1
 
-#### NFL-26 · Explosive-play & early-down EPA rate   (Rung 5 — Derived efficiency)
+#### NFL-26 · Explosive-play & early-down EPA rate   (Rung 5 - Derived efficiency)
 - **Data field / source:** share of plays with `air_yards`/gain over threshold; `epa` filtered to `down in {1,2}` from PBP, `shift(1)`
 - **Hypothesis:** Explosiveness and early-down efficiency drive scoring variance and predict blowout margins.
 - **Impact measured:** Δ margin MAE (esp. tails) vs mean-EPA-only, walk-forward.
 - **Act:** 1
 
-#### NFL-27 · Third/fourth-down conversion & red-zone rate   (Rung 5 — Derived efficiency)
+#### NFL-27 · Third/fourth-down conversion & red-zone rate   (Rung 5 - Derived efficiency)
 - **Data field / source:** `third_down_converted/failed`, `fourth_down_converted/failed`, drive `inside20`/`fixed_drive_result` from PBP, `shift(1)`
 - **Hypothesis:** Finishing drives (situational conversion) turns yards into points and should add to total prediction.
 - **Impact measured:** Δ total/points MAE vs EPA+pace model; may be partly redundant with EPA (publish either way), walk-forward.
 - **Act:** 1
 
-#### NFL-28 · Turnover & giveaway rate   (Rung 5 — Derived efficiency)
+#### NFL-28 · Turnover & giveaway rate   (Rung 5 - Derived efficiency)
 - **Data field / source:** per-play `interception` + `fumble_lost` (offense) and takeaways (defense) from PBP, rolled `shift(1)`
-- **Hypothesis:** Turnover margin swings games — but it's noisy/low-stickiness, so it should help less than efficiency (a "regresses hard" lesson).
+- **Hypothesis:** Turnover margin swings games, but it's noisy/low-stickiness, so it should help less than efficiency (a "regresses hard" lesson).
 - **Impact measured:** Δ margin MAE / winner log-loss vs efficiency-only; expect small/unstable gains, walk-forward.
 - **Act:** 1
 
-#### NFL-29 · Sack & pressure rate (offense allowed / defense generated)   (Rung 5 — Derived efficiency)
+#### NFL-29 · Sack & pressure rate (offense allowed / defense generated)   (Rung 5 - Derived efficiency)
 - **Data field / source:** per-dropback `sack` rate from PBP (and `avg_time_to_throw` from NGS), `shift(1)`
 - **Hypothesis:** Pass-rush/protection is a stable trench signal that shapes pass-EPA and scoring.
 - **Impact measured:** Δ margin MAE vs pass-EPA-only, walk-forward.
 - **Act:** 1
 
-#### NFL-30 · Penalty rate & penalty yards   (Rung 5 — Derived efficiency)
+#### NFL-30 · Penalty rate & penalty yards   (Rung 5 - Derived efficiency)
 - **Data field / source:** `penalty`, `penalty_yards` per team from PBP, rolled `shift(1)`
 - **Hypothesis:** Discipline (few penalties) is a minor persistent team trait nudging field position and drives.
 - **Impact measured:** Δ margin MAE vs model without it; expect near-zero (a "does nothing" honest result), walk-forward.
 - **Act:** 1
 
-#### NFL-31 · Net EPA matchup (off-EPA vs opp def-EPA)   (Rung 6 — Matchup & interaction)
+#### NFL-31 · Net EPA matchup (off-EPA vs opp def-EPA)   (Rung 6 - Matchup & interaction)
 - **Data field / source:** interaction of NFL-19 `home off-EPA` with NFL-20 `away def-EPA` (and symmetric), from rolled PBP
-- **Hypothesis:** What matters is each offense against that specific defense — the interaction beats the two main effects alone.
+- **Hypothesis:** What matters is each offense against that specific defense, the interaction beats the two main effects alone.
 - **Impact measured:** Δ margin MAE vs additive off-EPA + def-EPA, walk-forward.
 - **Act:** 1
 
-#### NFL-32 · Pass-offense vs pass-defense mismatch   (Rung 6 — Matchup & interaction)
+#### NFL-32 · Pass-offense vs pass-defense mismatch   (Rung 6 - Matchup & interaction)
 - **Data field / source:** interaction of team pass-EPA/CPOE (NFL-21/23) with opponent pass-EPA allowed, from PBP
 - **Hypothesis:** A strong passing attack vs a weak pass defense is the highest-leverage mismatch in the modern NFL.
 - **Impact measured:** Δ margin MAE on high-pass-mismatch games vs generic net-EPA, walk-forward.
 - **Act:** 1
 
-#### NFL-33 · Rush-offense vs rush-defense mismatch   (Rung 6 — Matchup & interaction)
+#### NFL-33 · Rush-offense vs rush-defense mismatch   (Rung 6 - Matchup & interaction)
 - **Data field / source:** interaction of team rush-EPA/success (NFL-21/22) with opponent rush-EPA allowed, from PBP
 - **Hypothesis:** Rush mismatches matter mainly for game-script/clock control, so expect a smaller edge than the pass mismatch.
 - **Impact measured:** Δ total/margin MAE vs pass-mismatch-only, walk-forward.
 - **Act:** 1
 
-#### NFL-34 · Pace × pace interaction (game-total driver)   (Rung 6 — Matchup & interaction)
+#### NFL-34 · Pace × pace interaction (game-total driver)   (Rung 6 - Matchup & interaction)
 - **Data field / source:** product/sum of both teams' pace & pass-rate (NFL-25) with combined off-efficiency
 - **Hypothesis:** Two fast, pass-heavy offenses compound into shootouts; the interaction predicts totals better than summed pace.
 - **Impact measured:** Δ total MAE / O-U accuracy vs additive pace, walk-forward.
 - **Act:** 1
 
-#### NFL-35 · Trench-mismatch composite (pressure vs protection)   (Rung 6 — Matchup & interaction)
+#### NFL-35 · Trench-mismatch composite (pressure vs protection)   (Rung 6 - Matchup & interaction)
 - **Data field / source:** interaction of defense sack/pressure rate (NFL-29) with opponent sack-allowed rate
 - **Hypothesis:** A dominant pass rush against a leaky line disproportionately collapses the opponent's passing game.
 - **Impact measured:** Δ margin MAE on high-trench-gap games vs main effects, walk-forward.
 - **Act:** 1
 
-#### NFL-36 · Home-field advantage (is_home + HFA constant)   (Rung 7 — Situational)
+#### NFL-36 · Home-field advantage (is_home + HFA constant)   (Rung 7 - Situational)
 - **Data field / source:** `is_home` (plugin) and the schedule home/away assignment
 - **Hypothesis:** Home teams win at a persistent baseline rate; encoding HFA is a cheap, reliable margin shift.
 - **Impact measured:** Δ margin MAE / winner accuracy vs no-HFA model (should confirm the ~2-pt HFA), walk-forward.
 - **Act:** 1
 
-#### NFL-37 · Divisional-game flag (DIV_GAME)   (Rung 7 — Situational)
+#### NFL-37 · Divisional-game flag (DIV_GAME)   (Rung 7 - Situational)
 - **Data field / source:** `div_game` → `DIV_GAME` (plugin `game_context`)
-- **Hypothesis:** Familiar division rivals play tighter, lower-variance games — margins compress toward zero.
+- **Hypothesis:** Familiar division rivals play tighter, lower-variance games; margins compress toward zero.
 - **Impact measured:** Δ margin MAE / ATS on divisional subset vs non-div, walk-forward.
 - **Act:** 1
 
-#### NFL-38 · Weather — wind & temperature   (Rung 7 — Situational)
+#### NFL-38 · Weather, wind & temperature   (Rung 7 - Situational)
 - **Data field / source:** `WIND`, `TEMP`, `IS_DOME` (plugin `game_context`, from schedule `wind`/`temp`/`roof`)
-- **Hypothesis:** High wind and extreme cold suppress passing/kicking, lowering totals — mostly an under signal.
+- **Hypothesis:** High wind and extreme cold suppress passing/kicking, lowering totals (mostly an under signal).
 - **Impact measured:** Δ total MAE / O-U accuracy on high-wind (>15mph) & cold games vs neutral, walk-forward.
 - **Act:** 1
 
-#### NFL-39 · Surface & roof (turf vs grass, dome)   (Rung 7 — Situational)
+#### NFL-39 · Surface & roof (turf vs grass, dome)   (Rung 7 - Situational)
 - **Data field / source:** `surface`, `roof` (schedule)
 - **Hypothesis:** Dome/turf environments modestly lift scoring vs open-air grass; a small controlled-conditions bump.
 - **Impact measured:** Δ total MAE vs weather-only model; expect small, walk-forward.
 - **Act:** 1
 
-#### NFL-40 · Motivation — late-season playoff/elimination stakes   (Rung 7 — Situational)
+#### NFL-40 · Motivation, late-season playoff/elimination stakes   (Rung 7 - Situational)
 - **Data field / source:** derived from `week` + standings implied by cumulative `result` (prior-only win totals)
 - **Hypothesis:** Teams eliminated or locked into seeds late (esp. Week 18 rest) play with different intensity, distorting margins.
 - **Impact measured:** Δ margin MAE on Weeks 15–18 subset vs no-motivation model, walk-forward.
 - **Act:** 1
 
-#### NFL-41 · Backup/rookie QB start (availability proxy)   (Rung 8 — Market-adjacent probe)
+#### NFL-41 · Backup/rookie QB start (availability proxy)   (Rung 8 - Market-adjacent probe)
 - **Data field / source:** `home_qb_id`/`away_qb_id` (schedule) diffed against the team's usual starter; cross-check `import_injuries` `report_status`
-- **Hypothesis:** QB is the highest-value position; a backup start should be huge — but the closing line already prices it, so blind gains are the residual.
+- **Hypothesis:** QB is the highest-value position; a backup start should be huge, but the closing line already prices it, so blind gains are the residual.
 - **Impact measured:** Δ margin MAE on backup-QB games AND gap-vs-`spread_line` (does knowing the QB close the market gap?), walk-forward.
 - **Act:** probe
 
-#### NFL-42 · Key-injury / inactives load (snaps-weighted)   (Rung 8 — Market-adjacent probe)
+#### NFL-42 · Key-injury / inactives load (snaps-weighted)   (Rung 8 - Market-adjacent probe)
 - **Data field / source:** `import_injuries` `report_status` (Out/Doubtful) weighted by prior-week `offense_pct`/`defense_pct` from `import_snap_counts`
-- **Hypothesis:** Losing high-snap starters degrades a team, but the market ingests the Friday report — expect little edge beyond the line.
+- **Hypothesis:** Losing high-snap starters degrades a team, but the market ingests the Friday report, expect little edge beyond the line.
 - **Impact measured:** Δ margin MAE and residual-vs-`spread_line` on high-injury-load games, walk-forward (injury data 2009+, snaps 2012+).
 - **Act:** probe
 
-#### NFL-43 · QB-adjusted team efficiency (EPA with current QB only)   (Rung 8 — Market-adjacent probe)
+#### NFL-43 · QB-adjusted team efficiency (EPA with current QB only)   (Rung 8 - Market-adjacent probe)
 - **Data field / source:** re-roll offensive `qb_epa`/`cpoe` filtered to the announced `*_qb_id` (from PBP by passer), `shift(1)`
 - **Hypothesis:** Attributing offensive efficiency to the actual starting QB (not the team) should matter most exactly when the market already moved on a QB change.
 - **Impact measured:** Δ margin MAE vs team-level EPA, and residual-vs-`spread_line`, walk-forward.
 - **Act:** probe
 
-#### NFL-44 · Coaching / referee tendency   (Rung 8 — Market-adjacent probe)
+#### NFL-44 · Coaching / referee tendency   (Rung 8 - Market-adjacent probe)
 - **Data field / source:** `home_coach`/`away_coach`, `referee` (schedule) → historical pace/penalty/total tendencies, prior-only
 - **Hypothesis:** Some coaches (aggressive 4th-down / tempo) and refs (penalty-heavy) nudge totals, but effects are tiny and largely in the number already.
 - **Impact measured:** Δ total MAE and O-U-vs-`total_line`; expect near-zero (honest Act-2 null), walk-forward.
 - **Act:** probe
 
-#### NFL-45 · Market-anchor residual & CLV probe (closing line)   (Rung 8 — Market-adjacent probe)
-- **Data field / source:** `spread_line`, `total_line`, `home_moneyline` (schedule) — used ONLY as the honesty yardstick, never a blind-model input
-- **Hypothesis:** The residual between our best blind margin/total and the closing line is exactly "what the market knows that we don't" — the thesis payoff; probing it quantifies the gap and any CLV.
-- **Impact measured:** Blind-vs-market margin/total MAE gap, ATS/O-U record vs close, ML ROI and CLV, per season, walk-forward — no external odds source needed.
+#### NFL-45 · Market-anchor residual & CLV probe (closing line)   (Rung 8 - Market-adjacent probe)
+- **Data field / source:** `spread_line`, `total_line`, `home_moneyline` (schedule), used ONLY as the honesty yardstick, never a blind-model input
+- **Hypothesis:** The residual between our best blind margin/total and the closing line is exactly "what the market knows that we don't", the thesis payoff; probing it quantifies the gap and any CLV.
+- **Impact measured:** Blind-vs-market margin/total MAE gap, ATS/O-U record vs close, ML ROI and CLV, per season, walk-forward; no external odds source needed.
 - **Act:** probe
 
 ---
 
 ## College Football 🏈
 
-### Data availability — CFB
-- **Source / client:** CollegeFootballData.com (CFBD) free JSON API. No existing plugin — this is a net-new `sports/cfb/` Sport plugin following the `sports/nfl/` pattern. Free API key required (Bearer token); a thin HTTP client with on-disk response caching keeps us under free rate limits. Live in-season pulls (`/games` refresh + `/lines`) may justify the ~$10/mo Patreon tier; historical backfill fits the free tier.
+### Data availability: CFB
+- **Source / client:** CollegeFootballData.com (CFBD) free JSON API. No existing plugin; this is a net-new `sports/cfb/` Sport plugin following the `sports/nfl/` pattern. Free API key required (Bearer token); a thin HTTP client with on-disk response caching keeps us under free rate limits. Live in-season pulls (`/games` refresh + `/lines`) may justify the ~$10/mo Patreon tier; historical backfill fits the free tier.
 - **History:** Games/scores robust from ~2001 (FBS). Advanced/PPA stats reliable ~2013+. SP+ ~2005+, Elo ~2001+. `/lines` (odds, grading only) ~2013+. Recruiting composites ~2010+; returning production ~2014+; team talent ~2015+. Practical modeling window: **2014–present** where every rung has coverage; early box-only rungs extend to ~2001.
 - **Core fields / tables available:** `/games` & `/calendar` (schedule, scores, `venue`, `neutralSite`, `conferenceGame`, `week`, `seasonType`); `/games/teams` (per-team box: `rushingYards`, `netPassingYards`, `firstDowns`, `thirdDownEff`, `fourthDownEff`, `totalYards`, `turnovers`, `possessionTime`, `penalties`/`penaltyYards`, `yardsPerRushAttempt`, `yardsPerPass`); `/games/players`; `/drives`; `/plays`; `/ppa/games` & `/ppa/teams` (PPA overall + by down/quarter, `passingPPA`/`rushingPPA`); `/stats/season/advanced` & `/stats/game/advanced` (`successRate`, `explosiveness`, `lineYards`, `stuffRate`, `havoc`, field position, finishing); `/ratings/sp`, `/ratings/srs`, `/ratings/elo`; `/roster`, `/player/returning`, `/talent`, `/recruiting/teams` & `/recruiting/players`.
-- **Odds / market (for grading):** `/lines` — spread, total, moneyline from multiple books (~2013+). Used only to grade the blind-vs-market gap, never a model input.
+- **Odds / market (for grading):** `/lines`, spread, total, moneyline from multiple books (~2013+). Used only to grade the blind-vs-market gap, never a model input.
 - **Known gaps / limits:** FCS opponents appear in FBS schedules but have thin/absent advanced+PPA data → SoS/opp-adjust needs a "non-FBS opponent" bucket. `possessionTime` is a clock string needing parse. Free-tier rate limits force cached backfill. Talent/recruiting don't exist pre-2010/2015. Neutral-site/bowl venues can lack lat/long → travel/altitude needs a venue geo table. Early-season rows (weeks 1–3) lean heavily on prior-season carryover + preseason ratings.
 
-### Feature ladder — CFB
-_Targets: `y_margin = home_pts − away_pts`, `y_total`, `home_pts`, `away_pts`. Discipline: prior-only `shift(1)` + expanding/rolling within `(team, season)`, prior-season as-of-merged with `season+1`, ratings/talent joined as-of publication week — walk-forward, no leakage._
+### Feature ladder: CFB
+_Targets: `y_margin = home_pts − away_pts`, `y_total`, `home_pts`, `away_pts`. Discipline: prior-only `shift(1)` + expanding/rolling within `(team, season)`, prior-season as-of-merged with `season+1`, ratings/talent joined as-of publication week; walk-forward, no leakage._
 
-#### CFB-01 · Season-to-date points scored (offense)   (Rung 1 — Basic box stats)
+#### CFB-01 · Season-to-date points scored (offense)   (Rung 1 - Basic box stats)
 - **Data field / source:** `/games/teams` team `points` (or `/games` scores), expanding mean shifted one game within `(team, season)`.
 - **Hypothesis:** Teams that have scored more so far this season score more today.
-- **Impact measured:** Establishes the day-1 baseline — walk-forward SU accuracy + margin/total MAE, 2016→present.
+- **Impact measured:** Establishes the day-1 baseline, walk-forward SU accuracy + margin/total MAE, 2016→present.
 - **Act:** 1
 
-#### CFB-02 · Season-to-date points allowed (defense)   (Rung 1 — Basic box stats)
+#### CFB-02 · Season-to-date points allowed (defense)   (Rung 1 - Basic box stats)
 - **Data field / source:** `/games/teams` opponent `points`, prior-only expanding mean.
 - **Hypothesis:** Teams allowing fewer points concede fewer today; pairs with CFB-01 to bound total.
 - **Impact measured:** Δ margin/total MAE vs CFB-01-only, walk-forward.
 - **Act:** 1
 
-#### CFB-03 · Season win pct   (Rung 1 — Basic box stats)
+#### CFB-03 · Season win pct   (Rung 1 - Basic box stats)
 - **Data field / source:** derived `win = points > opp_points`, prior-only expanding mean within `(team, season)`.
 - **Hypothesis:** Winning teams keep winning; a coarse quality signal (mirrors NFL `WINPCT`).
 - **Impact measured:** Δ SU accuracy / log-loss vs prior model, walk-forward.
 - **Act:** 1
 
-#### CFB-04 · Net yards per play differential   (Rung 1 — Basic box stats)
+#### CFB-04 · Net yards per play differential   (Rung 1 - Basic box stats)
 - **Data field / source:** `/games/teams` `totalYards` ÷ plays (or `yardsPerPass`/`yardsPerRushAttempt`), own minus opponent, prior-only expanding.
 - **Hypothesis:** Yards-per-play margin is a steadier quality proxy than points.
 - **Impact measured:** Δ margin MAE / log-loss vs points-only baseline.
 - **Act:** 1
 
-#### CFB-05 · Turnover margin   (Rung 1 — Basic box stats)
+#### CFB-05 · Turnover margin   (Rung 1 - Basic box stats)
 - **Data field / source:** `/games/teams` `turnovers` (own giveaways vs forced), prior-only expanding differential.
 - **Hypothesis:** Ball security/takeaways swing CFB outcomes; but turnovers are noisy/regressive, so expect a small, possibly fading edge.
 - **Impact measured:** Δ SU accuracy + margin MAE; flag stability across folds (turnover luck).
 - **Act:** 1
 
-#### CFB-06 · Third-down conversion rate   (Rung 1 — Basic box stats)
+#### CFB-06 · Third-down conversion rate   (Rung 1 - Basic box stats)
 - **Data field / source:** `/games/teams` `thirdDownEff` (parse "converted-attempts"), prior-only offense and defense rates.
 - **Hypothesis:** Sustaining/stopping drives correlates with scoring and time-of-possession control.
 - **Impact measured:** Δ margin/total MAE vs prior model.
 - **Act:** 1
 
-#### CFB-07 · Yards-per-rush and yards-per-pass split   (Rung 1 — Basic box stats)
+#### CFB-07 · Yards-per-rush and yards-per-pass split   (Rung 1 - Basic box stats)
 - **Data field / source:** `/games/teams` `yardsPerRushAttempt`, `yardsPerPass` (net), prior-only expanding, offense + defense.
 - **Hypothesis:** Separating run vs pass efficiency captures team identity better than blended yards/play.
 - **Impact measured:** Δ margin MAE vs CFB-04 (blended).
 - **Act:** 1
 
-#### CFB-08 · First downs & possession time   (Rung 1 — Basic box stats)
+#### CFB-08 · First downs & possession time   (Rung 1 - Basic box stats)
 - **Data field / source:** `/games/teams` `firstDowns`, `possessionTime` (parse mm:ss → seconds), prior-only expanding.
 - **Hypothesis:** Sustained drives → more scoring chances and fewer for the opponent; a tempo/control proxy that shapes the total.
 - **Impact measured:** Δ total MAE especially; small Δ margin.
 - **Act:** 1
 
-#### CFB-09 · Last-3-games scoring margin (form)   (Rung 2 — Rolling windows)
+#### CFB-09 · Last-3-games scoring margin (form)   (Rung 2 - Rolling windows)
 - **Data field / source:** derived `diff = points − opp_points`, prior-only `rolling(3, min_periods=1).mean()`.
 - **Hypothesis:** Recent form (injuries, QB settling, momentum) beats a flat season average in a ~12-game season.
 - **Impact measured:** Δ margin MAE / SU vs season-to-date-only (CFB-01/02).
 - **Act:** 1
 
-#### CFB-10 · Last-3 offensive & defensive yards/play   (Rung 2 — Rolling windows)
+#### CFB-10 · Last-3 offensive & defensive yards/play   (Rung 2 - Rolling windows)
 - **Data field / source:** `/games/teams` yards/play, prior-only rolling-3 for offense and defense separately.
 - **Hypothesis:** Short-window efficiency trends catch a team trending up/down before points reflect it.
 - **Impact measured:** Δ margin MAE vs CFB-04 (season) + CFB-09.
 - **Act:** 1
 
-#### CFB-11 · Exponentially-weighted team rating   (Rung 2 — Rolling windows)
+#### CFB-11 · Exponentially-weighted team rating   (Rung 2 - Rolling windows)
 - **Data field / source:** derived scoring-margin EWMA (half-life ~4 games), prior-only within season with prior-season seed.
 - **Hypothesis:** Recency-weighting better tracks a young roster's true level mid-season.
 - **Impact measured:** Δ log-loss / margin MAE vs equal-weight expanding baseline.
 - **Act:** 1
 
-#### CFB-12 · Prior-season point differential carryover   (Rung 2 — Rolling windows)
+#### CFB-12 · Prior-season point differential carryover   (Rung 2 - Rolling windows)
 - **Data field / source:** `/games` prior-year mean `diff`, as-of merged `season+1`, used mainly for weeks 1–3.
 - **Hypothesis:** Program strength persists year-to-year; anchors early-season rows.
 - **Impact measured:** Δ SU/MAE on weeks 1–4 subset specifically, walk-forward.
 - **Act:** 1
 
-#### CFB-13 · Opponent-adjusted scoring margin (iterative SoS)   (Rung 3 — Opponent adjustment)
+#### CFB-13 · Opponent-adjusted scoring margin (iterative SoS)   (Rung 3 - Opponent adjustment)
 - **Data field / source:** `/games` results + `/games/teams`; ridge/iterative adjustment of each team's margin for opponents faced (prior weeks only), FCS bucketed as a single weak level.
-- **Hypothesis:** **The single biggest CFB rung** — raw box stats are meaningless without schedule context (a G5 3–0 ≠ an SEC 3–0).
-- **Impact measured:** Δ SU accuracy + margin MAE vs all raw/rolling box stats — expected the biggest single-feature gain.
+- **Hypothesis:** **The single biggest CFB rung**: raw box stats are meaningless without schedule context (a G5 3–0 ≠ an SEC 3–0).
+- **Impact measured:** Δ SU accuracy + margin MAE vs all raw/rolling box stats, expected the biggest single-feature gain.
 - **Act:** 1
 
-#### CFB-14 · Opponent-adjusted offensive & defensive efficiency   (Rung 3 — Opponent adjustment)
+#### CFB-14 · Opponent-adjusted offensive & defensive efficiency   (Rung 3 - Opponent adjustment)
 - **Data field / source:** adjust prior-only offensive/defensive yards-per-play (and success rate later) for opponents faced.
 - **Hypothesis:** A defense that looks elite only played cupcakes; adjusting each unit sharpens both margin and total.
 - **Impact measured:** Δ margin + total MAE vs unadjusted CFB-04/07/10.
 - **Act:** 1
 
-#### CFB-15 · Conference-strength tier   (Rung 3 — Opponent adjustment)
+#### CFB-15 · Conference-strength tier   (Rung 3 - Opponent adjustment)
 - **Data field / source:** `/games` `conference` per team + `conferenceGame`; prior-season conference average opponent-adjusted rating as an as-of feature.
 - **Hypothesis:** Conference is a cheap prior on schedule strength (P5 vs G5) that stabilizes early-season SoS.
 - **Impact measured:** Δ SU/MAE on weeks 1–5 subset vs CFB-13 alone.
 - **Act:** 1
 
-#### CFB-16 · Strength-of-schedule to date   (Rung 3 — Opponent adjustment)
+#### CFB-16 · Strength-of-schedule to date   (Rung 3 - Opponent adjustment)
 - **Data field / source:** mean opponent-adjusted rating of teams already played (prior-only) + count of FBS vs FCS opponents.
 - **Hypothesis:** Explicitly encoding schedule difficulty lets the model discount records built on weak slates.
 - **Impact measured:** Δ log-loss vs prior model; interaction check with win pct.
 - **Act:** 1
 
-#### CFB-17 · Days of rest since last game   (Rung 4 — Rest / schedule / travel)
+#### CFB-17 · Days of rest since last game   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** `/games` dates, `groupby(team).game_date.diff().dt.days` clipped; captures midweek MACtion short weeks.
-- **Hypothesis:** Short rest hurts; extra prep helps — a real but modest edge.
+- **Hypothesis:** Short rest hurts; extra prep helps, a real but modest edge.
 - **Impact measured:** Δ SU/margin MAE vs prior model; `REST_DIFF` coefficient.
 - **Act:** 1
 
-#### CFB-18 · Off-a-bye indicator   (Rung 4 — Rest / schedule / travel)
+#### CFB-18 · Off-a-bye indicator   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** derived from `/calendar` gap → flag when rest ≳ 13 days (open week).
 - **Hypothesis:** Extra prep week (esp. for the underdog) is a known CFB edge coaches exploit.
 - **Impact measured:** Δ SU on the off-a-bye subset; ATS-vs-market probe later.
 - **Act:** 1
 
-#### CFB-19 · Travel distance   (Rung 4 — Rest / schedule / travel)
+#### CFB-19 · Travel distance   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** `/venues` lat/long joined to `/games` venue → haversine between prior and current site (needs a `geo.py` venue table).
 - **Hypothesis:** Cross-country road trips degrade performance.
 - **Impact measured:** Δ margin MAE vs prior; isolate long-haul (>1500 mi) away subset.
 - **Act:** 1
 
-#### CFB-20 · Altitude / time-zone shift   (Rung 4 — Rest / schedule / travel)
+#### CFB-20 · Altitude / time-zone shift   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** `/venues` `elevation` + derived time-zone delta from lat/long; altitude gap and body-clock hours off.
 - **Hypothesis:** Altitude (Air Force, Wyoming, Utah) and body-clock disruption shave points from visitors.
 - **Impact measured:** Δ margin MAE on high-altitude-host and ≥2-TZ-shift subsets.
 - **Act:** 1
 
-#### CFB-21 · Early-kickoff body-clock flag   (Rung 4 — Rest / schedule / travel)
+#### CFB-21 · Early-kickoff body-clock flag   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** `/games` `startDate` → local kickoff hour relative to visitor's home time zone.
-- **Hypothesis:** West-coast teams in noon-ET (9am body-clock) games underperform — a specific testable folk edge.
+- **Hypothesis:** West-coast teams in noon-ET (9am body-clock) games underperform, a specific testable folk edge.
 - **Impact measured:** Δ SU/margin on that exact subset; likely small.
 - **Act:** 1
 
-#### CFB-22 · SP+ overall rating   (Rung 5 — Derived efficiency)
+#### CFB-22 · SP+ overall rating   (Rung 5 - Derived efficiency)
 - **Data field / source:** `/ratings/sp` overall, as-of the pre-game week (prior week's rating; prior-season final for weeks 1–3).
-- **Hypothesis:** SP+ is a mature tempo-free, opponent-adjusted efficiency rating — a strong single feature that may subsume earlier rungs.
+- **Hypothesis:** SP+ is a mature tempo-free, opponent-adjusted efficiency rating, a strong single feature that may subsume earlier rungs.
 - **Impact measured:** Δ SU accuracy + margin MAE vs full box+opp-adjust stack; feature-importance takeover check.
 - **Act:** 1
 
-#### CFB-23 · SP+ offense & defense & special-teams split   (Rung 5 — Derived efficiency)
+#### CFB-23 · SP+ offense & defense & special-teams split   (Rung 5 - Derived efficiency)
 - **Data field / source:** `/ratings/sp` `offense`/`defense`/`specialTeams`, as-of prior week.
 - **Hypothesis:** Unit-level SP+ predicts margin and total better than the composite alone.
 - **Impact measured:** Δ margin + total MAE vs CFB-22 composite-only.
 - **Act:** 1
 
-#### CFB-24 · Team PPA / EPA per play   (Rung 5 — Derived efficiency)
+#### CFB-24 · Team PPA / EPA per play   (Rung 5 - Derived efficiency)
 - **Data field / source:** `/ppa/teams` overall offensive & defensive PPA, prior-only expanding + opponent-adjusted.
-- **Hypothesis:** Predicted-Points-Added per play is the EPA-equivalent quality signal — more predictive than raw yards.
+- **Hypothesis:** Predicted-Points-Added per play is the EPA-equivalent quality signal, more predictive than raw yards.
 - **Impact measured:** Δ margin MAE / log-loss vs yards-based efficiency (CFB-04/14).
 - **Act:** 1
 
-#### CFB-25 · Success rate (offense & defense)   (Rung 5 — Derived efficiency)
+#### CFB-25 · Success rate (offense & defense)   (Rung 5 - Derived efficiency)
 - **Data field / source:** `/stats/season/advanced` `successRate` (overall + standard/passing downs), prior-only, opponent-adjusted.
 - **Hypothesis:** Down-to-down efficiency is the stable, high-floor predictor of drive success.
 - **Impact measured:** Δ log-loss vs prior model; stability across folds (expected high).
 - **Act:** 1
 
-#### CFB-26 · Explosiveness   (Rung 5 — Derived efficiency)
+#### CFB-26 · Explosiveness   (Rung 5 - Derived efficiency)
 - **Data field / source:** `/stats/season/advanced` `explosiveness` (PPA on successful plays), prior-only offense/defense.
-- **Hypothesis:** Big-play ability explains variance success rate misses — pairs with CFB-25 (the "Five Factors" core).
+- **Hypothesis:** Big-play ability explains variance success rate misses, pairs with CFB-25 (the "Five Factors" core).
 - **Impact measured:** Δ margin MAE vs CFB-25-only.
 - **Act:** 1
 
-#### CFB-27 · Line yards & stuff rate   (Rung 5 — Derived efficiency)
+#### CFB-27 · Line yards & stuff rate   (Rung 5 - Derived efficiency)
 - **Data field / source:** `/stats/season/advanced` `lineYards`, `stuffRate` (rushing), prior-only, both sides.
 - **Hypothesis:** Trench control (OL/DL) is a durable, injury-robust signal underlying rushing success.
 - **Impact measured:** Δ margin MAE vs prior model; small but stable.
 - **Act:** 1
 
-#### CFB-28 · Havoc rate   (Rung 5 — Derived efficiency)
+#### CFB-28 · Havoc rate   (Rung 5 - Derived efficiency)
 - **Data field / source:** `/stats/season/advanced` `havoc` (TFL+PBU+forced fumbles ÷ plays), prior-only defense (and offense allowed).
 - **Hypothesis:** Defensive disruption rate is a more stable takeaway proxy than raw turnovers (CFB-05).
 - **Impact measured:** Δ log-loss vs CFB-05; does havoc survive where raw turnovers didn't?
 - **Act:** 1
 
-#### CFB-29 · Field position & finishing drives   (Rung 5 — Derived efficiency)
+#### CFB-29 · Field position & finishing drives   (Rung 5 - Derived efficiency)
 - **Data field / source:** `/stats/season/advanced` avg start field position + points-per-scoring-opportunity; `/drives` start yardlines.
 - **Hypothesis:** Field-position edge and red-zone finishing convert efficiency into actual points.
 - **Impact measured:** Δ total + `home_pts`/`away_pts` MAE vs efficiency-only stack.
 - **Act:** 1
 
-#### CFB-30 · Elo rating   (Rung 5 — Derived efficiency)
+#### CFB-30 · Elo rating   (Rung 5 - Derived efficiency)
 - **Data field / source:** `/ratings/elo`, as-of prior week (result-based, self-updating).
 - **Hypothesis:** A pure results-Elo gives a complementary, low-variance win-prob signal alongside efficiency ratings.
 - **Impact measured:** Δ SU/log-loss vs SP+/PPA stack; ensemble-diversity check.
 - **Act:** 1
 
-#### CFB-31 · Pace / plays-per-game   (Rung 6 — Matchup & interaction)
+#### CFB-31 · Pace / plays-per-game   (Rung 6 - Matchup & interaction)
 - **Data field / source:** `/stats/game/advanced` or `/plays` counts → prior-only plays/game and seconds/play, both teams.
-- **Hypothesis:** Two fast offenses inflate the total; a fast vs ball-control clash sets play volume — a total-shaping term.
+- **Hypothesis:** Two fast offenses inflate the total; a fast vs ball-control clash sets play volume, a total-shaping term.
 - **Impact measured:** Δ total MAE vs additive efficiency features.
 - **Act:** 1
 
-#### CFB-32 · Offense-vs-opponent-defense unit matchup   (Rung 6 — Matchup & interaction)
+#### CFB-32 · Offense-vs-opponent-defense unit matchup   (Rung 6 - Matchup & interaction)
 - **Data field / source:** interaction of home offensive PPA/success (CFB-24/25) × away defensive PPA/success (and vice-versa), prior-only, opponent-adjusted.
-- **Hypothesis:** What matters is *this* offense against *that* defense, not each team's average.
+- **Hypothesis:** What matters is this offense against that defense, not each team's average.
 - **Impact measured:** Δ margin MAE vs purely additive team features.
 - **Act:** 1
 
-#### CFB-33 · Rush-vs-run-defense & pass-vs-pass-defense style clash   (Rung 6 — Matchup & interaction)
+#### CFB-33 · Rush-vs-run-defense & pass-vs-pass-defense style clash   (Rung 6 - Matchup & interaction)
 - **Data field / source:** `/ppa/teams` `rushingPPA`/`passingPPA` offense × opponent's rush/pass defense splits, prior-only.
 - **Hypothesis:** A run-heavy offense meeting a porous run defense predicts margin beyond blended efficiency.
 - **Impact measured:** Δ margin MAE vs CFB-32 (blended matchup).
 - **Act:** 1
 
-#### CFB-34 · Explosiveness-vs-havoc interaction   (Rung 6 — Matchup & interaction)
+#### CFB-34 · Explosiveness-vs-havoc interaction   (Rung 6 - Matchup & interaction)
 - **Data field / source:** home explosiveness (CFB-26) × away havoc (CFB-28), both directions, prior-only.
 - **Hypothesis:** An explosive offense against a high-havoc defense produces high-variance outcomes.
 - **Impact measured:** Δ margin MAE + calibration/interval check vs additive terms.
 - **Act:** 1
 
-#### CFB-35 · Home / away / neutral-site indicator   (Rung 7 — Situational)
+#### CFB-35 · Home / away / neutral-site indicator   (Rung 7 - Situational)
 - **Data field / source:** `/games` `neutralSite` flag + home/away → three-way HFA term.
-- **Hypothesis:** Home-field is worth ~2–3 pts in CFB; neutral-site bowls/kickoff games zero it out — must be explicit.
+- **Hypothesis:** Home-field is worth ~2–3 pts in CFB; neutral-site bowls/kickoff games zero it out; must be explicit.
 - **Impact measured:** Δ margin MAE; HFA coefficient; neutral-site subset check.
 - **Act:** 1
 
-#### CFB-36 · Rivalry game flag   (Rung 7 — Situational)
+#### CFB-36 · Rivalry game flag   (Rung 7 - Situational)
 - **Data field / source:** curated rivalry pairs joined to `/games`.
 - **Hypothesis:** "Throw out the records" rivalries compress margins (underdog overperforms).
 - **Impact measured:** Δ margin MAE on rivalry subset; sign of favorite-margin shrinkage.
 - **Act:** probe
 
-#### CFB-37 · Conference vs non-conference game   (Rung 7 — Situational)
+#### CFB-37 · Conference vs non-conference game   (Rung 7 - Situational)
 - **Data field / source:** `/games` `conferenceGame` (+ `seasonType`).
-- **Hypothesis:** Familiarity and stakes differ; non-con early games are noisier — a context flag.
+- **Hypothesis:** Familiarity and stakes differ; non-con early games are noisier, a context flag.
 - **Impact measured:** Δ log-loss overall; interaction with SoS (CFB-16).
 - **Act:** probe
 
-#### CFB-38 · Look-ahead / letdown spot   (Rung 7 — Situational)
-- **Data field / source:** derived schedule lookahead — big favorite the week before a marquee opponent, or after an emotional upset.
-- **Hypothesis:** Favorites underperform in trap spots — but the market also books it, so expect it to fade in Act 2.
+#### CFB-38 · Look-ahead / letdown spot   (Rung 7 - Situational)
+- **Data field / source:** derived schedule lookahead, big favorite the week before a marquee opponent, or after an emotional upset.
+- **Hypothesis:** Favorites underperform in trap spots, but the market also books it, so expect it to fade in Act 2.
 - **Impact measured:** Δ margin MAE on flagged subset (blind); later ATS-vs-`/lines`.
 - **Act:** probe
 
-#### CFB-39 · Bowl / postseason motivation flag   (Rung 7 — Situational)
+#### CFB-39 · Bowl / postseason motivation flag   (Rung 7 - Situational)
 - **Data field / source:** `/games` `seasonType = postseason`; join opt-outs/coaching-change context where available.
 - **Hypothesis:** Non-playoff bowls have erratic motivation (opt-outs, interim coaches) → ratings mispredict.
 - **Impact measured:** Δ margin MAE + calibration on bowl subset vs regular season.
 - **Act:** probe
 
-#### CFB-40 · Returning production   (Rung 8 — Market-adjacent probe · Act 2)
-- **Data field / source:** `/player/returning` — total/offensive/defensive returning-production %, as-of preseason, decaying through the season.
-- **Hypothesis:** **CFB-unique**: continuity predicts year-over-year change — but SP+ preseason and the market already ingest it.
-- **Impact measured:** Δ early-season (weeks 1–4) MAE blind; then ATS/total-vs-`/lines` — expected ≈ break-even vs market.
+#### CFB-40 · Returning production   (Rung 8 - Market-adjacent probe · Act 2)
+- **Data field / source:** `/player/returning`, total/offensive/defensive returning-production %, as-of preseason, decaying through the season.
+- **Hypothesis:** **CFB-unique**: continuity predicts year-over-year change, but SP+ preseason and the market already ingest it.
+- **Impact measured:** Δ early-season (weeks 1–4) MAE blind; then ATS/total-vs-`/lines`, expected ≈ break-even vs market.
 - **Act:** 2
 
-#### CFB-41 · Team talent composite   (Rung 8 — Market-adjacent probe · Act 2)
+#### CFB-41 · Team talent composite   (Rung 8 - Market-adjacent probe · Act 2)
 - **Data field / source:** `/talent` (247-style composite) + `/recruiting/teams` (rolling class rankings), as-of season start.
-- **Hypothesis:** **CFB-unique**: recruiting/talent explains the huge FBS talent gaps — but it's the market's *first* input.
-- **Impact measured:** Δ SU on blowout-prone mismatches (blind); ATS-vs-market — expected no edge.
+- **Hypothesis:** **CFB-unique**: recruiting/talent explains the huge FBS talent gaps, but it's the market's first input.
+- **Impact measured:** Δ SU on blowout-prone mismatches (blind); ATS-vs-market, expected no edge.
 - **Act:** 2
 
-#### CFB-42 · QB availability / starter change   (Rung 8 — Market-adjacent probe · Act 2)
+#### CFB-42 · QB availability / starter change   (Rung 8 - Market-adjacent probe · Act 2)
 - **Data field / source:** `/games/players` + `/roster` to detect starting-QB PPA and a starter-change/injury flag.
-- **Hypothesis:** A backup QB swings CFB margins more than any other single-player event — but injury news is what late line-movement encodes.
+- **Hypothesis:** A backup QB swings CFB margins more than any other single-player event, but injury news is what late line-movement encodes.
 - **Impact measured:** Δ margin MAE on QB-change games (blind); ATS-vs-`/lines` and vs line-movement (CFB-44).
 - **Act:** 2
 
-#### CFB-43 · Coaching change / interim regime   (Rung 8 — Market-adjacent probe · Act 2)
+#### CFB-43 · Coaching change / interim regime   (Rung 8 - Market-adjacent probe · Act 2)
 - **Data field / source:** roster/coaching metadata + `/games` (new HC, fired mid-season, interim, bowl opt-out coach).
-- **Hypothesis:** Scheme/motivation discontinuity breaks rating-based predictions — but it's public and priced.
+- **Hypothesis:** Scheme/motivation discontinuity breaks rating-based predictions, but it's public and priced.
 - **Impact measured:** Δ margin MAE on affected games (blind); ATS-vs-market.
 - **Act:** 2
 
-#### CFB-44 · Opening→current line movement   (Rung 8 — Market-adjacent probe · Act 2)
-- **Data field / source:** `/lines` opening vs latest spread/total across books — used only as a probe study, never fed to the blind model.
-- **Hypothesis:** Line movement encodes sharp money + late injury news — the clearest measure of "what the market knows that we don't."
-- **Impact measured:** Correlation of our blind residual with line movement; whether any Act-2 probe closes the gap — the thesis payoff.
+#### CFB-44 · Opening→current line movement   (Rung 8 - Market-adjacent probe · Act 2)
+- **Data field / source:** `/lines` opening vs latest spread/total across books, used only as a probe study, never fed to the blind model.
+- **Hypothesis:** Line movement encodes sharp money + late injury news, the clearest measure of "what the market knows that we don't."
+- **Impact measured:** Correlation of our blind residual with line movement; whether any Act-2 probe closes the gap, the thesis payoff.
 - **Act:** 2
 
 ---
 
 ## NBA 🏀
 
-### Data availability — NBA
+### Data availability: NBA
 - **Source / client:** Primary team-game log is `data/processed/kaggle_team_games.parquet` (built from the Kaggle NBA dataset; consumed by `feature_engine` and `sports/nba/team_features.py`). Player game logs are per-player CSVs under `data/player_data/<Name>/`. Deep box/context in `data/advanced_nba/nba.sqlite` (`game`, `line_score`, `other_stats`, `inactive_players`). Team×season ratings in `data/team_stats/all_team_stats.csv`. Live slate + geo via ESPN scoreboard (`sports/nba/sport.py`) + `sports/nba/geo.py`.
 - **History:** `kaggle_team_games.parquet` covers **2006–2025, 23,965 games / 51,170 team-rows**, incl. 3,240 playoff team-rows (`is_playoff`) and `is_overtime`. `inactive_players` spans 1996–2023. ~19 full seasons of team-market data.
-- **Core fields / tables available:** The parquet carries **73 columns** — box (`pts, fgm/fga, 3pm/3pa, ftm/fta, oreb/dreb/reb, ast, tov, stl, blk, pf, plus_minus`), ratings (`off_rtg, def_rtg, net_rtg, pace, pie`), **four factors both sides** (`efg_pct, tov_pct, oreb_pct, dreb_pct, fta_rate` + opponent versions), scoring mix (`pitp, fbps, 2nd_pts, pts_off_to`, `pct_pts_*`), all 100% non-null 2006–2025. Flags: `is_home_team, is_playoff, is_overtime, is_win`. sqlite adds `largest_lead, lead_changes`, per-quarter `line_score`, and per-game DNP `inactive_players`. Player CSVs carry full box + `MIN, DAYS_SINCE_LAST_GAME, position, height/weight`. Reconstructed availability at `data/auxiliary/team_availability.parquet` (`TM_OUT_MIN, TM_OUT_PTS, TM_OUT_COUNT, TM_TOP_OUT`).
-- **Odds / market (for grading):** `data/odds/nba_kaggle_backfill.csv` — **18,649 games with `spread_home` + `total`, 2007→Jan-2023**. Live via The Odds API (`sports/nba/live_odds.py`). Grading only; `config.settings.market_blind()` keeps the line out of the model path. Reference: blind model ~66% SU, closing line ~68% SU, margin σ≈12, total σ≈17.
-- **Known gaps / limits:** (1) **odds backfill ends Jan-2023** — post-2023 grading needs the live API. (2) `inactive_players` ends 2023 and is a *result-time* DNP list — the honest injuries probe must reconstruct pre-tip "expected rotation OUT" from prior-game minutes (as `collect_team_availability.py` does). (3) no possessions column — per-possession features use league-provided `off_rtg/def_rtg`. (4) no confirmed-starter feed and no line-movement history (single closing line). (5) the parquets require the Docker 3.10 / betting-venv stack (anaconda pyarrow bug).
+- **Core fields / tables available:** The parquet carries **73 columns**: box (`pts, fgm/fga, 3pm/3pa, ftm/fta, oreb/dreb/reb, ast, tov, stl, blk, pf, plus_minus`), ratings (`off_rtg, def_rtg, net_rtg, pace, pie`), **four factors both sides** (`efg_pct, tov_pct, oreb_pct, dreb_pct, fta_rate` + opponent versions), scoring mix (`pitp, fbps, 2nd_pts, pts_off_to`, `pct_pts_*`), all 100% non-null 2006–2025. Flags: `is_home_team, is_playoff, is_overtime, is_win`. sqlite adds `largest_lead, lead_changes`, per-quarter `line_score`, and per-game DNP `inactive_players`. Player CSVs carry full box + `MIN, DAYS_SINCE_LAST_GAME, position, height/weight`. Reconstructed availability at `data/auxiliary/team_availability.parquet` (`TM_OUT_MIN, TM_OUT_PTS, TM_OUT_COUNT, TM_TOP_OUT`).
+- **Odds / market (for grading):** `data/odds/nba_kaggle_backfill.csv`, **18,649 games with `spread_home` + `total`, 2007→Jan-2023**. Live via The Odds API (`sports/nba/live_odds.py`). Grading only; `config.settings.market_blind()` keeps the line out of the model path. Reference: blind model ~66% SU, closing line ~68% SU, margin σ≈12, total σ≈17.
+- **Known gaps / limits:** (1) **odds backfill ends Jan-2023**: post-2023 grading needs the live API. (2) `inactive_players` ends 2023 and is a result-time DNP list, the honest injuries probe must reconstruct pre-tip "expected rotation OUT" from prior-game minutes (as `collect_team_availability.py` does). (3) no possessions column, per-possession features use league-provided `off_rtg/def_rtg`. (4) no confirmed-starter feed and no line-movement history (single closing line). (5) the parquets require the Docker 3.10 / betting-venv stack (anaconda pyarrow bug).
 
-### Feature ladder — NBA
+### Feature ladder: NBA
 _Impact metric throughout: Δ SU accuracy / Δ log-loss on winner, Δ margin-MAE & Δ total-MAE, walk-forward per season 2006→2025 (expanding-train / next-season-test), vs the immediately-prior rung. Every rolling feature is prior-only (`shift(1)` / cumulative-through-previous-game), merged backward-exclusive._
 
-#### NBA-01 · Home-court indicator + league-average score prior   (Rung 1 — Basic box stats)
+#### NBA-01 · Home-court indicator + league-average score prior   (Rung 1 - Basic box stats)
 - **Data field / source:** `is_home_team`; league-mean `pts`/`y_total` as intercept.
 - **Hypothesis:** Home teams win ~58–60% and score a few points more; a constant home edge is a real day-1 baseline.
 - **Impact measured:** Baseline SU accuracy + margin/total MAE, walk-forward (the reference all later rungs beat).
 - **Act:** 1
 
-#### NBA-02 · Season-to-date points scored   (Rung 1 — Basic box stats)
+#### NBA-02 · Season-to-date points scored   (Rung 1 - Basic box stats)
 - **Data field / source:** `pts`, cumulative-through-previous-game per `(team, season)`.
 - **Hypothesis:** How much a team has scored predicts how much it will score.
 - **Impact measured:** Δ total-MAE and Δ margin-MAE vs NBA-01.
 - **Act:** 1
 
-#### NBA-03 · Season-to-date points allowed   (Rung 1 — Basic box stats)
+#### NBA-03 · Season-to-date points allowed   (Rung 1 - Basic box stats)
 - **Data field / source:** opponent `pts` mapped as points-against, cumulative prior-only.
 - **Hypothesis:** Points allowed to date is a coarse defense signal improving margin and total.
 - **Impact measured:** Δ total-MAE + Δ margin-MAE vs NBA-02.
 - **Act:** 1
 
-#### NBA-04 · Season-to-date point differential   (Rung 1 — Basic box stats)
+#### NBA-04 · Season-to-date point differential   (Rung 1 - Basic box stats)
 - **Data field / source:** `plus_minus` / (`pts` − opp `pts`), cumulative prior-only.
 - **Hypothesis:** Average scoring margin is the best crude team-strength proxy and should move winner accuracy the most of any box feature.
 - **Impact measured:** Δ SU accuracy + Δ log-loss vs NBA-03.
 - **Act:** 1
 
-#### NBA-05 · Prior-game shooting profile (FG%, 3P%, FT rate)   (Rung 1 — Basic box stats)
+#### NBA-05 · Prior-game shooting profile (FG%, 3P%, FT rate)   (Rung 1 - Basic box stats)
 - **Data field / source:** `fg_pct`, `3p_pct`, `fta`/`fga`, prior-game team values (`KG_PREV_*`).
 - **Hypothesis:** Recent shooting accuracy carries a little scoring signal beyond raw points.
 - **Impact measured:** Δ total-MAE vs NBA-04 (expect small).
 - **Act:** 1
 
-#### NBA-06 · Prior-game rebound & turnover counts   (Rung 1 — Basic box stats)
+#### NBA-06 · Prior-game rebound & turnover counts   (Rung 1 - Basic box stats)
 - **Data field / source:** `oreb, dreb, reb, tov, stl` prior-game team values.
 - **Hypothesis:** Possession-count proxies nudge scoring and margin.
 - **Impact measured:** Δ margin-MAE + Δ total-MAE vs NBA-05.
 - **Act:** 1
 
-#### NBA-07 · Last-3 / last-5 form (points & margin)   (Rung 2 — Rolling windows)
+#### NBA-07 · Last-3 / last-5 form (points & margin)   (Rung 2 - Rolling windows)
 - **Data field / source:** rolling means of `pts`, opp `pts`, `plus_minus` over last 3 and 5 games (`shift(1).rolling(w)`).
 - **Hypothesis:** Short-window form captures streaks the season-to-date mean smooths away.
 - **Impact measured:** Δ SU accuracy + Δ margin-MAE vs season-to-date model.
 - **Act:** 1
 
-#### NBA-08 · Last-10 / last-20 rolling ratings   (Rung 2 — Rolling windows)
+#### NBA-08 · Last-10 / last-20 rolling ratings   (Rung 2 - Rolling windows)
 - **Data field / source:** rolling means of `off_rtg, def_rtg, net_rtg` over 10- and 20-game windows.
 - **Hypothesis:** A 10–20 game window balances signal vs noise better than either extreme.
 - **Impact measured:** Δ log-loss + Δ margin-MAE vs NBA-07; pick the best window empirically.
 - **Act:** 1
 
-#### NBA-09 · Recency-weighted (EWMA) net rating   (Rung 2 — Rolling windows)
+#### NBA-09 · Recency-weighted (EWMA) net rating   (Rung 2 - Rolling windows)
 - **Data field / source:** exponentially-weighted mean of `net_rtg` (prior-only).
 - **Hypothesis:** Exponential decay tracks form transitions more smoothly than a hard window.
 - **Impact measured:** Δ margin-MAE + Δ SU vs the best fixed window.
 - **Act:** 1
 
-#### NBA-10 · Rolling volatility (form consistency)   (Rung 2 — Rolling windows)
+#### NBA-10 · Rolling volatility (form consistency)   (Rung 2 - Rolling windows)
 - **Data field / source:** rolling `std` of `plus_minus`/`net_rtg` over 10 games.
 - **Hypothesis:** Inconsistent teams are harder to predict; volatility should widen margin σ (better-calibrated win probs).
 - **Impact measured:** Δ log-loss / calibration vs NBA-09.
 - **Act:** 1
 
-#### NBA-11 · Home/away split form   (Rung 2 — Rolling windows)
+#### NBA-11 · Home/away split form   (Rung 2 - Rolling windows)
 - **Data field / source:** venue-partitioned rolling means (`HA_HOME_*` / `HA_AWAY_*`, windows 5/10).
 - **Hypothesis:** Some teams are far better at home than on the road beyond the league-average edge.
 - **Impact measured:** Δ SU accuracy + Δ margin-MAE vs NBA-08, split home vs road.
 - **Act:** 1
 
-#### NBA-12 · Elo rating (MOV-adjusted, home-aware)   (Rung 3 — Opponent adjustment)
-- **Data field / source:** `_elo_timeline` — sequential MOV-multiplier Elo, home term, 25% preseason regression (`HOME_ELO/AWAY_ELO/ELO_DIFF`).
+#### NBA-12 · Elo rating (MOV-adjusted, home-aware)   (Rung 3 - Opponent adjustment)
+- **Data field / source:** `_elo_timeline`, sequential MOV-multiplier Elo, home term, 25% preseason regression (`HOME_ELO/AWAY_ELO/ELO_DIFF`).
 - **Hypothesis:** Elo implicitly adjusts each result for opponent strength, beating raw net rating.
 - **Impact measured:** Δ SU accuracy + Δ margin-MAE vs rolling-ratings model.
 - **Act:** 1
 
-#### NBA-13 · Strength-of-schedule to date   (Rung 3 — Opponent adjustment)
+#### NBA-13 · Strength-of-schedule to date   (Rung 3 - Opponent adjustment)
 - **Data field / source:** mean opponent Elo over each team's prior games.
 - **Hypothesis:** Teams with gaudy records vs weak schedules are overrated; SoS corrects crude form.
 - **Impact measured:** Δ SU + Δ log-loss vs NBA-12, largest early-season.
 - **Act:** 1
 
-#### NBA-14 · Opponent defensive rating (as-of)   (Rung 3 — Opponent adjustment)
+#### NBA-14 · Opponent defensive rating (as-of)   (Rung 3 - Opponent adjustment)
 - **Data field / source:** opponent `def_rtg` via prior-only as-of merge (`OPP_DEF_RATING`).
 - **Hypothesis:** You score less against elite defenses; conditioning offense on opponent defense sharpens total.
 - **Impact measured:** Δ total-MAE + per-team points MAE vs NBA-13.
 - **Act:** 1
 
-#### NBA-15 · Opponent offensive rating (as-of)   (Rung 3 — Opponent adjustment)
+#### NBA-15 · Opponent offensive rating (as-of)   (Rung 3 - Opponent adjustment)
 - **Data field / source:** opponent `off_rtg` via backward-exclusive as-of merge.
 - **Hypothesis:** Facing a high-powered offense raises points conceded; pairs with NBA-14 to pin the total.
 - **Impact measured:** Δ total-MAE + Δ margin-MAE vs NBA-14.
 - **Act:** 1
 
-#### NBA-16 · Net-rating differential (opponent-adjusted matchup)   (Rung 3 — Opponent adjustment)
+#### NBA-16 · Net-rating differential (opponent-adjusted matchup)   (Rung 3 - Opponent adjustment)
 - **Data field / source:** `NET_DIFF = HOME_NET − AWAY_NET` built on opponent-adjusted ratings.
 - **Hypothesis:** The adjusted net-rating gap is the cleanest single margin predictor once opponent context is in.
 - **Impact measured:** Δ margin-MAE + Δ SU vs NBA-15.
 - **Act:** 1
 
-#### NBA-17 · Days of rest (both teams)   (Rung 4 — Rest / schedule / travel)
+#### NBA-17 · Days of rest (both teams)   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** `team_days_rest` → `HOME_REST`, `AWAY_REST`, `REST_DIFF`.
 - **Hypothesis:** More rest lifts performance; the rest differential moves margin.
 - **Impact measured:** Δ SU + Δ margin-MAE vs NBA-16, sliced by rest-mismatch.
 - **Act:** 1
 
-#### NBA-18 · Back-to-back flag (both teams)   (Rung 4 — Rest / schedule / travel)
+#### NBA-18 · Back-to-back flag (both teams)   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** `team_is_b2b` (`team_days_rest <= 1`) → `HOME_B2B`, `AWAY_B2B`.
 - **Hypothesis:** The second night of a back-to-back is a well-known drag, especially on the road.
 - **Impact measured:** Δ SU + Δ margin-MAE vs NBA-17, isolated on B2B games.
 - **Act:** 1
 
-#### NBA-19 · Schedule density — games in last 7 days   (Rung 4 — Rest / schedule / travel)
+#### NBA-19 · Schedule density, games in last 7 days   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** trailing 7-day game count per team.
 - **Hypothesis:** 3-in-4 / 4-in-6 congestion fatigues teams beyond a single B2B flag.
 - **Impact measured:** Δ margin-MAE + Δ total-MAE vs NBA-18 on high-density spots.
 - **Act:** 1
 
-#### NBA-20 · Travel distance since last game   (Rung 4 — Rest / schedule / travel)
+#### NBA-20 · Travel distance since last game   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** `haversine_miles` between previous and current arena via `TEAM_GEO`.
 - **Hypothesis:** Long trips (and cumulative road miles) shave a little off performance.
 - **Impact measured:** Δ margin-MAE vs NBA-19, long-haul games (expect small).
 - **Act:** 1
 
-#### NBA-21 · Time-zone change / body-clock shift   (Rung 4 — Rest / schedule / travel)
+#### NBA-21 · Time-zone change / body-clock shift   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** Δ `tz_offset_hours` between previous and current arena.
 - **Hypothesis:** East↔West body-clock disruption hurts the traveling team beyond raw miles.
 - **Impact measured:** Δ margin-MAE vs NBA-20 on multi-zone trips.
 - **Act:** 1
 
-#### NBA-22 · Per-possession efficiency (ORtg/DRtg)   (Rung 5 — Derived efficiency)
+#### NBA-22 · Per-possession efficiency (ORtg/DRtg)   (Rung 5 - Derived efficiency)
 - **Data field / source:** rolling `off_rtg` / `def_rtg` used directly (replacing raw points), prior-only.
-- **Hypothesis:** Points-per-100 normalizes for pace — a strictly better strength signal than raw points.
+- **Hypothesis:** Points-per-100 normalizes for pace, a strictly better strength signal than raw points.
 - **Impact measured:** Δ margin-MAE + Δ SU vs the points-based rungs.
 - **Act:** 1
 
-#### NBA-23 · Pace (both teams) + pace sum   (Rung 5 — Derived efficiency)
+#### NBA-23 · Pace (both teams) + pace sum   (Rung 5 - Derived efficiency)
 - **Data field / source:** rolling `pace` → `HOME_PACE`, `AWAY_PACE`, `PACE_SUM`.
 - **Hypothesis:** Two fast teams inflate possessions and the total; pace is the dominant lever on the over/under.
 - **Impact measured:** Δ total-MAE vs NBA-22 (expect the biggest total-MAE gain of the ladder).
 - **Act:** 1
 
-#### NBA-24 · Effective FG% (eFG%, off & def)   (Rung 5 — Derived efficiency)
+#### NBA-24 · Effective FG% (eFG%, off & def)   (Rung 5 - Derived efficiency)
 - **Data field / source:** `efg_pct` and `opp_efg_pct`, rolling prior-only.
 - **Hypothesis:** Shooting efficiency is the heaviest four-factor; own vs opponent-allowed drives scoring.
 - **Impact measured:** Δ total-MAE + per-team points MAE vs NBA-23.
 - **Act:** 1
 
-#### NBA-25 · Turnover rate (TOV%, off & def)   (Rung 5 — Derived efficiency)
+#### NBA-25 · Turnover rate (TOV%, off & def)   (Rung 5 - Derived efficiency)
 - **Data field / source:** `tov_pct` and `opp_tov_pct`, rolling prior-only.
 - **Hypothesis:** Giving the ball away (and forcing giveaways) swings possession counts and points.
 - **Impact measured:** Δ margin-MAE + Δ total-MAE vs NBA-24.
 - **Act:** 1
 
-#### NBA-26 · Offensive-rebound rate (OREB%, off & def)   (Rung 5 — Derived efficiency)
+#### NBA-26 · Offensive-rebound rate (OREB%, off & def)   (Rung 5 - Derived efficiency)
 - **Data field / source:** `oreb_pct` and `opp_oreb_pct` (and `dreb_pct`), rolling prior-only.
 - **Hypothesis:** Second-chance rate adds possessions and points, especially vs poor defensive-rebounding opponents.
 - **Impact measured:** Δ total-MAE vs NBA-25.
 - **Act:** 1
 
-#### NBA-27 · Free-throw rate (FTA rate, off & def)   (Rung 5 — Derived efficiency)
+#### NBA-27 · Free-throw rate (FTA rate, off & def)   (Rung 5 - Derived efficiency)
 - **Data field / source:** `fta_rate` and `opp_fta_rate`, rolling prior-only.
 - **Hypothesis:** Getting to the line (the fourth factor) is efficient scoring and a modest total lift.
 - **Impact measured:** Δ total-MAE vs NBA-26 (completes the four-factors block).
 - **Act:** 1
 
-#### NBA-28 · Three-point reliance (shot & scoring mix)   (Rung 5 — Derived efficiency)
+#### NBA-28 · Three-point reliance (shot & scoring mix)   (Rung 5 - Derived efficiency)
 - **Data field / source:** `pct_fga_3pt`, `pct_pts_3pt`, rolling prior-only.
 - **Hypothesis:** Three-heavy teams have wider outcomes; reliance should widen margin σ and slightly move totals.
 - **Impact measured:** Δ log-loss / margin-σ calibration + Δ total-MAE vs NBA-27.
 - **Act:** 1
 
-#### NBA-29 · Pace-interaction expected-possessions term   (Rung 6 — Matchup & interaction)
+#### NBA-29 · Pace-interaction expected-possessions term   (Rung 6 - Matchup & interaction)
 - **Data field / source:** interaction of both teams' rolling `pace` (product/harmonic) vs the additive `PACE_SUM`.
 - **Hypothesis:** Realized possessions are jointly determined; a proper interaction predicts totals better than the sum.
 - **Impact measured:** Δ total-MAE vs the additive `PACE_SUM` model.
 - **Act:** 1
 
-#### NBA-30 · Offense-vs-defense style cross terms   (Rung 6 — Matchup & interaction)
+#### NBA-30 · Offense-vs-defense style cross terms   (Rung 6 - Matchup & interaction)
 - **Data field / source:** interactions of own `off_rtg`/`efg_pct` with opponent `def_rtg`/`opp_efg_pct`.
-- **Hypothesis:** A great offense vs a great defense isn't the average — the cross term captures matchup-specific scoring.
+- **Hypothesis:** A great offense vs a great defense isn't the average, the cross term captures matchup-specific scoring.
 - **Impact measured:** Δ margin-MAE + per-team points MAE vs NBA-16.
 - **Act:** 1
 
-#### NBA-31 · Transition / paint-scoring style match   (Rung 6 — Matchup & interaction)
+#### NBA-31 · Transition / paint-scoring style match   (Rung 6 - Matchup & interaction)
 - **Data field / source:** own `pct_pts_fbps`, `pct_pts_pitp` vs opponent `opp_fbps`/`opp_pitp` allowed.
 - **Hypothesis:** Fast-break-heavy offenses feast on teams that concede transition/paint points.
 - **Impact measured:** Δ total-MAE + Δ margin-MAE vs NBA-30.
 - **Act:** 1
 
-#### NBA-32 · Assist-dependence (shot-creation) interaction   (Rung 6 — Matchup & interaction)
+#### NBA-32 · Assist-dependence (shot-creation) interaction   (Rung 6 - Matchup & interaction)
 - **Data field / source:** `ast_pct` / `fgm_pct_ast` vs opponent defense, rolling prior-only.
 - **Hypothesis:** Heavily assist-dependent offenses degrade more vs strong defenses than iso-heavy ones.
 - **Impact measured:** Δ log-loss + Δ margin-MAE vs NBA-31 (expect small).
 - **Act:** 1
 
-#### NBA-33 · Explicit home/road effect by team   (Rung 7 — Situational)
+#### NBA-33 · Explicit home/road effect by team   (Rung 7 - Situational)
 - **Data field / source:** `is_home_team` × team identity, informed by NBA-11 splits.
 - **Hypothesis:** Per-team home advantage varies materially beyond the league-average constant.
 - **Impact measured:** Δ SU + Δ margin-MAE vs NBA-01/16, per-team.
 - **Act:** 1
 
-#### NBA-34 · Altitude (Denver / Utah)   (Rung 7 — Situational)
+#### NBA-34 · Altitude (Denver / Utah)   (Rung 7 - Situational)
 - **Data field / source:** `altitude_ft` from `TEAM_GEO` (threshold 3000 ft).
-- **Hypothesis:** Visitors tire faster at altitude — a small, geographically-concentrated home edge.
+- **Hypothesis:** Visitors tire faster at altitude, a small, geographically-concentrated home edge.
 - **Impact measured:** Δ margin-MAE vs NBA-33, restricted to DEN/UTA home games.
 - **Act:** 1
 
-#### NBA-35 · Playoff-vs-regular-season context   (Rung 7 — Situational)
+#### NBA-35 · Playoff-vs-regular-season context   (Rung 7 - Situational)
 - **Data field / source:** `is_playoff` flag (3,240 playoff team-rows).
-- **Hypothesis:** Playoff basketball is tighter and lower-scoring — a total/margin regime shift.
+- **Hypothesis:** Playoff basketball is tighter and lower-scoring, a total/margin regime shift.
 - **Impact measured:** Δ total-MAE + Δ margin-MAE vs NBA-16, sliced to playoff games.
 - **Act:** 1
 
-#### NBA-36 · Late-season motivation / tanking proxy   (Rung 7 — Situational)
+#### NBA-36 · Late-season motivation / tanking proxy   (Rung 7 - Situational)
 - **Data field / source:** games-remaining + season-to-date win% (from schedule sequence and `is_win`).
 - **Hypothesis:** Eliminated/tanking teams (and contenders resting starters) underperform ratings down the stretch.
 - **Impact measured:** Δ SU + Δ margin-MAE vs NBA-35 on late-season games.
 - **Act:** 1
 
-#### NBA-37 · Schedule-spot / trap-game context   (Rung 7 — Situational)
-- **Data field / source:** derived flags — road end of a long trip, both-on-B2B, big rest-mismatch (combines rest/travel).
+#### NBA-37 · Schedule-spot / trap-game context   (Rung 7 - Situational)
+- **Data field / source:** derived flags, road end of a long trip, both-on-B2B, big rest-mismatch (combines rest/travel).
 - **Hypothesis:** Named "letdown/trap" spots carry residual signal once individual rest/travel mains are in.
 - **Impact measured:** Δ margin-MAE vs NBA-19 on flagged spots (expect small).
 - **Act:** 1
 
-#### NBA-38 · Rotation-minutes OUT (reconstructed availability)   (Rung 8 — Market-adjacent probe)
+#### NBA-38 · Rotation-minutes OUT (reconstructed availability)   (Rung 8 - Market-adjacent probe)
 - **Data field / source:** `TM_OUT_MIN`, `TM_OUT_COUNT` from `team_availability.parquet` (expected rotation from prior 3 games, OUT set is same-day roster) → `HOME/AWAY_OUT_MIN`, `OUT_MIN_DIFF`.
-- **Hypothesis:** Vacated rotation minutes is the single biggest thing the ratings-only model is blind to — and where the market's edge concentrates. **Marquee decomposition experiment.**
+- **Hypothesis:** Vacated rotation minutes is the single biggest thing the ratings-only model is blind to, and where the market's edge concentrates. **Marquee decomposition experiment.**
 - **Impact measured:** Δ SU + Δ margin-MAE vs the full Act-1 model **and** vs the closing line (does it close the model→market gap?).
 - **Act:** probe
 
-#### NBA-39 · Star-player-out points weighting   (Rung 8 — Market-adjacent probe)
+#### NBA-39 · Star-player-out points weighting   (Rung 8 - Market-adjacent probe)
 - **Data field / source:** `TM_OUT_PTS`, `TM_TOP_OUT` → `HOME/AWAY_OUT_PTS`, `OUT_PTS_DIFF`.
 - **Hypothesis:** Losing your leading scorer hurts far more than an equal quantity of bench minutes.
 - **Impact measured:** Δ margin-MAE + Δ SU vs NBA-38 (minutes-only), on star-out games; compare residual-vs-market.
 - **Act:** probe
 
-#### NBA-40 · Injury-adjusted team rating   (Rung 8 — Market-adjacent probe)
+#### NBA-40 · Injury-adjusted team rating   (Rung 8 - Market-adjacent probe)
 - **Data field / source:** Elo/net-rating discounted by `TM_OUT_MIN`/`TM_OUT_PTS` share (combines NBA-12/16 with NBA-38/39).
 - **Hypothesis:** Folding availability into the strength prior recovers more of the line's info than either component alone.
 - **Impact measured:** Δ SU + Δ margin-MAE vs NBA-39 **and** shrinkage of the model→market residual.
 - **Act:** probe
 
-#### NBA-41 · Confirmed-DNP list at tip (upper-bound probe)   (Rung 8 — Market-adjacent probe)
-- **Data field / source:** `inactive_players` (per-game confirmed DNPs, 1996→2023) — as-of-tip snapshot, matched to that game's teams only.
-- **Hypothesis:** A *confirmed* out-list is the ceiling of the availability signal — quantifies reconstruction error in NBA-38.
+#### NBA-41 · Confirmed-DNP list at tip (upper-bound probe)   (Rung 8 - Market-adjacent probe)
+- **Data field / source:** `inactive_players` (per-game confirmed DNPs, 1996→2023), as-of-tip snapshot, matched to that game's teams only.
+- **Hypothesis:** A confirmed out-list is the ceiling of the availability signal, quantifies reconstruction error in NBA-38.
 - **Impact measured:** Δ SU + Δ margin-MAE vs NBA-38 on the overlap; gap = value of confirmed-lineup access. **Caveat:** result-time list → probe/upper-bound, not deployable pre-tip; ends 2023.
 - **Act:** probe
 
-#### NBA-42 · Line-anchoring reference (honesty grade)   (Rung 8 — Market-adjacent probe)
-- **Data field / source:** `nba_kaggle_backfill.csv` (`spread_home`, `total`, 2007→Jan-2023) + live Odds API — read only under `market_blind()==False`.
+#### NBA-42 · Line-anchoring reference (honesty grade)   (Rung 8 - Market-adjacent probe)
+- **Data field / source:** `nba_kaggle_backfill.csv` (`spread_home`, `total`, 2007→Jan-2023) + live Odds API, read only under `market_blind()==False`.
 - **Hypothesis:** The closing line (~68% SU) is the market ceiling; the standing gap is exactly what the market knows that we don't.
-- **Impact measured:** SU / log-loss / margin-MAE of the blind model **minus** the line-anchored metrics, per season — the headline two-act number.
+- **Impact measured:** SU / log-loss / margin-MAE of the blind model **minus** the line-anchored metrics, per season, the headline two-act number.
 - **Act:** probe
 
 ---
 
 ## NHL 🏒
 
-### Data availability — NHL
-- **Source / client:** (1) **NHL public API** (`https://api-web.nhle.com/v1/`, no key) — plugin already pulls `club-schedule-season`, `score/{date}`, `roster`, and skater `game-log`. Available-not-wired: `gamecenter/{id}/boxscore`, `play-by-play`, `right-rail`, `shiftcharts`. (2) **MoneyPuck** free shot-level CSVs — 1.7M+ shots since 2007-08, 124 attributes/shot incl. **xGoals**, plus team/goalie CSVs. MoneyPuck is **not yet cached on disk** → Rungs 5+ need a one-time backfill.
+### Data availability: NHL
+- **Source / client:** (1) **NHL public API** (`https://api-web.nhle.com/v1/`, no key), plugin already pulls `club-schedule-season`, `score/{date}`, `roster`, and skater `game-log`. Available-not-wired: `gamecenter/{id}/boxscore`, `play-by-play`, `right-rail`, `shiftcharts`. (2) **MoneyPuck** free shot-level CSVs, 1.7M+ shots since 2007-08, 124 attributes/shot incl. **xGoals**, plus team/goalie CSVs. MoneyPuck is **not yet cached on disk** → Rungs 5+ need a one-time backfill.
 - **History:** schedules cached `data/nhl/schedule_{2015..2024}.parquet`; skater logs `2023,2024`. MoneyPuck shot-quality history back to **2007-08** (the constraint on Rung-5+ walk-forward).
 - **Core fields / tables available:** per team-game (`load_team_games`): `game_id, season, game_date, home, away, home_goals, away_goals, status, is_home, goals, opp_goals`. Engineered: `OFF, DEF, WINPCT, FORM (L10 goal-diff), REST, PRIOR_DIFF`, + diffs. Skater logs: `points (G+A), shots, toi, is_home, opp`. MoneyPuck (per game×team, situation 5on5/5on4/4on5/all): `xGoalsFor/Against`, `shotAttemptsFor/Against` (Corsi), `unblockedShotAttemptsFor/Against` (Fenwick), `highDangerShotsFor/Against`, `highDangerxGoalsFor/Against`, `savedShotsOnGoalAgainst`; per-goalie: `xGoals, goals, savePctg`. Boxscore/right-rail exposes **confirmed starting goaltenders**, PP `powerPlayConversion`, and `lastPeriodType` (REG/OT/SO).
 - **Odds / market (for grading):** live via **The Odds API** (`icehockey_nhl`, `h2h,totals`) in `live_odds.py`, de-vigged to `p_home_win` + `total`; puck line fixed **±1.5** (moneyline is the margin anchor, MLB-style). Historical via the `csv_backfill` OddsProvider (Scottfree/OddsPapi/Kaggle). Grading only.
-- **Known gaps / limits:** (a) cached schedule has only `status ∈ {OFF, FINAL}` + goals — **no OT/SO flag yet**, so regulation-result target needs a boxscore backfill of `lastPeriodType`. (b) A **pre-game** starting goalie isn't in any cached table — boxscore has confirmed starters ~30–60 min pre-puck → the Act-2 goalie probe needs live scraping and is a same-day signal. (c) MoneyPuck + NHL API are unofficial → retries/graceful-skip. (d) historical player-prop lines scarce. (e) shootout-decided games attribute the winner in goals → handle so `y_margin`/winner don't over-credit shot-quality.
+- **Known gaps / limits:** (a) cached schedule has only `status ∈ {OFF, FINAL}` + goals, **no OT/SO flag yet**, so regulation-result target needs a boxscore backfill of `lastPeriodType`. (b) A **pre-game** starting goalie isn't in any cached table, boxscore has confirmed starters ~30–60 min pre-puck → the Act-2 goalie probe needs live scraping and is a same-day signal. (c) MoneyPuck + NHL API are unofficial → retries/graceful-skip. (d) historical player-prop lines scarce. (e) shootout-decided games attribute the winner in goals → handle so `y_margin`/winner don't over-credit shot-quality.
 
-### Feature ladder — NHL
+### Feature ladder: NHL
 
-#### NHL-01 · Season-to-date goals for (OFF)   (Rung 1 — Basic box stats)
+#### NHL-01 · Season-to-date goals for (OFF)   (Rung 1 - Basic box stats)
 - **Data field / source:** `goals` → `OFF` expanding mean, `shift(1)`.
 - **Hypothesis:** Teams scoring more per game so far will score more tonight.
 - **Impact measured:** Δ score MAE vs a league-mean (3.1 g/g) constant, walk-forward 2015–2024.
 - **Act:** 1
 
-#### NHL-02 · Season-to-date goals against (DEF)   (Rung 1 — Basic box stats)
+#### NHL-02 · Season-to-date goals against (DEF)   (Rung 1 - Basic box stats)
 - **Data field / source:** `opp_goals` → `DEF` expanding mean, `shift(1)`.
 - **Hypothesis:** Teams allowing fewer goals will allow fewer tonight.
 - **Impact measured:** Δ total MAE + Δ margin MAE vs NHL-01-only.
 - **Act:** 1
 
-#### NHL-03 · Win% to date (WINPCT)   (Rung 1 — Basic box stats)
+#### NHL-03 · Win% to date (WINPCT)   (Rung 1 - Basic box stats)
 - **Data field / source:** `win = goals > opp_goals` → `WINPCT` expanding, `shift(1)`.
 - **Hypothesis:** A higher season win rate predicts a higher win probability tonight.
 - **Impact measured:** Δ winner accuracy + Δ log-loss vs a 55% home prior.
 - **Act:** 1
 
-#### NHL-04 · Net goal differential (NET_DIFF)   (Rung 1 — Basic box stats)
+#### NHL-04 · Net goal differential (NET_DIFF)   (Rung 1 - Basic box stats)
 - **Data field / source:** `(HOME_OFF − HOME_DEF) − (AWAY_OFF − AWAY_DEF)`.
 - **Hypothesis:** The gap in goal differentials is the best day-1 margin signal.
 - **Impact measured:** Δ margin MAE + Δ winner log-loss vs OFF/DEF separately.
 - **Act:** 1
 
-#### NHL-05 · Home-ice indicator   (Rung 1 — Basic box stats)
+#### NHL-05 · Home-ice indicator   (Rung 1 - Basic box stats)
 - **Data field / source:** `is_home` → intercept/last-change advantage.
 - **Hypothesis:** The home team wins ≈ 54–55%.
 - **Impact measured:** Δ winner accuracy vs a no-home-term model; report the fitted home-goal bump.
 - **Act:** 1
 
-#### NHL-06 · Prior-season goal differential (PRIOR_DIFF)   (Rung 1 — Basic box stats)
+#### NHL-06 · Prior-season goal differential (PRIOR_DIFF)   (Rung 1 - Basic box stats)
 - **Data field / source:** prior-season mean `diff` merged on `season+1` (leakage-safe carryover).
 - **Hypothesis:** Last year's goal diff is a useful cold-start prior for the first ~15 games.
 - **Impact measured:** Δ margin MAE on each team's first 15 games, walk-forward.
 - **Act:** 1
 
-#### NHL-07 · Last-10 goal-differential form (FORM)   (Rung 2 — Rolling windows)
+#### NHL-07 · Last-10 goal-differential form (FORM)   (Rung 2 - Rolling windows)
 - **Data field / source:** `diff` → `FORM` = `shift(1).rolling(10).mean()`.
 - **Hypothesis:** Recent 10-game goal differential captures current form better than season mean.
 - **Impact measured:** Δ margin MAE + Δ winner log-loss vs NET_DIFF-only.
 - **Act:** 1
 
-#### NHL-08 · Rolling goals for/against, last-10   (Rung 2 — Rolling windows)
+#### NHL-08 · Rolling goals for/against, last-10   (Rung 2 - Rolling windows)
 - **Data field / source:** `goals`/`opp_goals` → `shift(1).rolling(10).mean()`.
 - **Hypothesis:** A recent-form scoring/defense rate beats the season mean once ~10 games exist.
 - **Impact measured:** Δ score MAE vs expanding OFF/DEF; report the L10-vs-STD crossover count.
 - **Act:** 1
 
-#### NHL-09 · Rolling win% (L10 / L20 points pace)   (Rung 2 — Rolling windows)
+#### NHL-09 · Rolling win% (L10 / L20 points pace)   (Rung 2 - Rolling windows)
 - **Data field / source:** `win` → `shift(1).rolling({10,20}).mean()`; points pace once OT flag backfilled.
 - **Hypothesis:** A short-window points pace tracks true strength faster than season win%.
 - **Impact measured:** Δ winner log-loss vs WINPCT-only across windows; pick the min-log-loss window.
 - **Act:** 1
 
-#### NHL-10 · Rolling goal-diff volatility (L10 std)   (Rung 2 — Rolling windows)
+#### NHL-10 · Rolling goal-diff volatility (L10 std)   (Rung 2 - Rolling windows)
 - **Data field / source:** `diff` → `shift(1).rolling(10).std()`.
 - **Hypothesis:** High goal-diff variance should widen predicted score intervals and soften win probability.
 - **Impact measured:** Δ winner log-loss + interval calibration (coverage) vs mean-only form.
 - **Act:** 1
 
-#### NHL-11 · Opponent-adjusted goals for/against (SoS)   (Rung 3 — Opponent adjustment)
+#### NHL-11 · Opponent-adjusted goals for/against (SoS)   (Rung 3 - Opponent adjustment)
 - **Data field / source:** `opponent` + all opponents' `DEF`/`OFF` → SoS adjustment of NHL-01/02 (as-of).
 - **Hypothesis:** Goals scored/allowed mean more once adjusted for defenses/offenses faced.
 - **Impact measured:** Δ margin MAE + Δ total MAE vs raw OFF/DEF.
 - **Act:** 1
 
-#### NHL-12 · Opponent defensive rating faced   (Rung 3 — Opponent adjustment)
+#### NHL-12 · Opponent defensive rating faced   (Rung 3 - Opponent adjustment)
 - **Data field / source:** tonight's `opponent` → their `DEF`, as-of merge.
 - **Hypothesis:** A team facing a leaky defense will out-score its baseline.
 - **Impact measured:** Δ home/away-goals MAE vs own-OFF-only.
 - **Act:** 1
 
-#### NHL-13 · Opponent goaltending faced (save-rate proxy)   (Rung 3 — Opponent adjustment)
+#### NHL-13 · Opponent goaltending faced (save-rate proxy)   (Rung 3 - Opponent adjustment)
 - **Data field / source:** opponent team save rate from boxscore `saveShotsAgainst` (or MoneyPuck `savedShotsOnGoalAgainst/shotsOnGoalAgainst`), `shift(1)` rolling.
 - **Hypothesis:** Team-level goaltending quality faced predicts scoring suppression independent of skater defense.
 - **Impact measured:** Δ total MAE vs opponent-DEF-only; the team-level precursor to the Act-2 goalie probe.
 - **Act:** 1
 
-#### NHL-14 · Elo / iterative strength rating   (Rung 3 — Opponent adjustment)
+#### NHL-14 · Elo / iterative strength rating   (Rung 3 - Opponent adjustment)
 - **Data field / source:** derived from `home/away` + `win` + `y_margin` (goal-margin-weighted Elo), chronological, `shift(1)`.
 - **Hypothesis:** A single opponent-adjusted rating summarizes strength more cleanly than raw win%/diff.
 - **Impact measured:** Δ winner accuracy + Δ log-loss vs NET_DIFF + FORM stack.
 - **Act:** 1
 
-#### NHL-15 · Days rest   (Rung 4 — Rest / schedule / travel)
+#### NHL-15 · Days rest   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** `game_date.diff()` per team → `REST` (clipped 0–7).
 - **Hypothesis:** More days of rest → sharper, higher-scoring, more-likely-to-win team.
 - **Impact measured:** Δ winner log-loss + Δ margin MAE vs no-rest model.
 - **Act:** 1
 
-#### NHL-16 · Rest differential (REST_DIFF)   (Rung 4 — Rest / schedule / travel)
+#### NHL-16 · Rest differential (REST_DIFF)   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** `HOME_REST − AWAY_REST`.
 - **Hypothesis:** The rest edge between the two teams predicts margin better than either alone.
 - **Impact measured:** Δ margin MAE + Δ winner accuracy vs rest-levels-only.
 - **Act:** 1
 
-#### NHL-17 · Back-to-back flag (2nd of B2B)   (Rung 4 — Rest / schedule / travel)
+#### NHL-17 · Back-to-back flag (2nd of B2B)   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** `REST == 0` (played yesterday) per team.
 - **Hypothesis:** Teams on the 2nd night of a B2B win less and allow more (tired legs, backup goalie likely).
 - **Impact measured:** Δ winner log-loss on the B2B subset; report the fitted penalty.
 - **Act:** 1
 
-#### NHL-18 · Opponent rest / B2B (rest mismatch)   (Rung 4 — Rest / schedule / travel)
+#### NHL-18 · Opponent rest / B2B (rest mismatch)   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** opponent's `REST`/B2B via `opponent` as-of merge.
 - **Hypothesis:** Facing a tired (B2B) opponent boosts your win prob and scoring more than your own rest helps.
 - **Impact measured:** Δ winner accuracy on rested-vs-tired mismatch games vs symmetric REST_DIFF.
 - **Act:** 1
 
-#### NHL-19 · Games in last 7 days (density/fatigue)   (Rung 4 — Rest / schedule / travel)
+#### NHL-19 · Games in last 7 days (density/fatigue)   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** rolling count of `game_date` within 7 days per team.
 - **Hypothesis:** A congested week (3–4 games) drags down scoring and win rate late in the stretch.
 - **Impact measured:** Δ margin MAE vs days-rest-only.
 - **Act:** 1
 
-#### NHL-20 · Travel distance / time-zone change   (Rung 4 — Rest / schedule / travel)
+#### NHL-20 · Travel distance / time-zone change   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** home-arena lat/long/tz table keyed by canonical `home` → great-circle + `Δtz` vs previous city.
 - **Hypothesis:** Long west↔east and multi-zone jumps degrade the visitor (circadian penalty).
 - **Impact measured:** Δ winner log-loss on high-travel road games vs no-travel model.
 - **Act:** 1
 
-#### NHL-21 · xG for / against, rolling (MoneyPuck)   (Rung 5 — Derived efficiency)
+#### NHL-21 · xG for / against, rolling (MoneyPuck)   (Rung 5 - Derived efficiency)
 - **Data field / source:** MoneyPuck `xGoalsFor` / `xGoalsAgainst` (situation `all`), `shift(1).rolling(10)`; backfill required.
-- **Hypothesis:** Shot-quality xG is more stable and predictive than raw goals — the central NHL thesis.
+- **Hypothesis:** Shot-quality xG is more stable and predictive than raw goals, the central NHL thesis.
 - **Impact measured:** Δ total MAE + Δ margin MAE + Δ winner log-loss vs the goals-based stack, walk-forward from 2007-08.
 - **Act:** 1
 
-#### NHL-22 · 5-on-5 xG differential   (Rung 5 — Derived efficiency)
+#### NHL-22 · 5-on-5 xG differential   (Rung 5 - Derived efficiency)
 - **Data field / source:** MoneyPuck `xGoalsFor − xGoalsAgainst` at `5on5`, rolling `shift(1)`.
 - **Hypothesis:** Even-strength xG differential is the cleanest measure of underlying team quality.
 - **Impact measured:** Δ winner log-loss vs all-situations xG-diff (NHL-21).
 - **Act:** 1
 
-#### NHL-23 · Corsi / shot-attempt share (CF%)   (Rung 5 — Derived efficiency)
+#### NHL-23 · Corsi / shot-attempt share (CF%)   (Rung 5 - Derived efficiency)
 - **Data field / source:** MoneyPuck `shotAttemptsFor/(For+Against)` at `5on5`, rolling `shift(1)`.
 - **Hypothesis:** Territorial shot-attempt share predicts future goal share better than past goals.
 - **Impact measured:** Δ margin MAE vs goals-diff form; incremental value once xG is in.
 - **Act:** 1
 
-#### NHL-24 · Fenwick / unblocked-attempt share (FF%)   (Rung 5 — Derived efficiency)
+#### NHL-24 · Fenwick / unblocked-attempt share (FF%)   (Rung 5 - Derived efficiency)
 - **Data field / source:** MoneyPuck `unblockedShotAttemptsFor/Against` at `5on5`, rolling `shift(1)`.
 - **Hypothesis:** Unblocked-attempt share adds marginal signal over raw Corsi.
-- **Impact measured:** Δ log-loss vs CF%-only; expected small/near-zero (collinearity) — publish either way.
+- **Impact measured:** Δ log-loss vs CF%-only; expected small/near-zero (collinearity), publish either way.
 - **Act:** 1
 
-#### NHL-25 · High-danger chance share   (Rung 5 — Derived efficiency)
+#### NHL-25 · High-danger chance share   (Rung 5 - Derived efficiency)
 - **Data field / source:** MoneyPuck `highDangerShotsFor/Against` and `highDangerxGoalsFor/Against`, rolling `shift(1)`.
 - **Hypothesis:** Slot/high-danger chance share predicts goals better than total shot volume.
 - **Impact measured:** Δ total MAE + Δ margin MAE vs Corsi/Fenwick-only.
 - **Act:** 1
 
-#### NHL-26 · PDO (shooting% + save%)   (Rung 5 — Derived efficiency)
+#### NHL-26 · PDO (shooting% + save%)   (Rung 5 - Derived efficiency)
 - **Data field / source:** MoneyPuck-derived `goalsFor/shotsOnGoalFor` + `1 − goalsAgainst/shotsOnGoalAgainst`, rolling `shift(1)`.
-- **Hypothesis:** PDO far from 100 flags unsustainable luck; regressing it should *improve* forward margin prediction.
+- **Hypothesis:** PDO far from 100 flags unsustainable luck; regressing it should improve forward margin prediction.
 - **Impact measured:** Δ margin MAE when PDO enters as a mean-reversion term vs xG-only; a null/negative result is itself the story.
 - **Act:** 1
 
-#### NHL-27 · Power-play % (PP)   (Rung 5 — Derived efficiency)
+#### NHL-27 · Power-play % (PP)   (Rung 5 - Derived efficiency)
 - **Data field / source:** boxscore `powerPlayConversion` or MoneyPuck `5on4 goalsFor / opportunities`, rolling `shift(1)`.
 - **Hypothesis:** A hotter power play scores more and wins tight, penalty-filled games.
 - **Impact measured:** Δ total MAE + Δ home/away-goals MAE vs even-strength-only model.
 - **Act:** 1
 
-#### NHL-28 · Penalty kill % (PK)   (Rung 5 — Derived efficiency)
+#### NHL-28 · Penalty kill % (PK)   (Rung 5 - Derived efficiency)
 - **Data field / source:** boxscore PK / MoneyPuck `4on5 goalsAgainst / timesShorthanded`, rolling `shift(1)`.
 - **Hypothesis:** A strong penalty kill suppresses opponent goals independent of even-strength defense.
 - **Impact measured:** Δ opponent-goals MAE vs PP-only + even-strength stack.
 - **Act:** 1
 
-#### NHL-29 · Special-teams net (PP% − opp PK%) interaction   (Rung 6 — Matchup & interaction)
+#### NHL-29 · Special-teams net (PP% − opp PK%) interaction   (Rung 6 - Matchup & interaction)
 - **Data field / source:** interaction of this team's `PP%` (NHL-27) with opponent's `PK%` (NHL-28), as-of.
 - **Hypothesis:** A top power play vs a weak penalty kill is worth more than either rating alone.
 - **Impact measured:** Δ total MAE vs PP% and PK% entered additively.
 - **Act:** 1
 
-#### NHL-30 · xG-offense × opponent-xG-defense matchup   (Rung 6 — Matchup & interaction)
+#### NHL-30 · xG-offense × opponent-xG-defense matchup   (Rung 6 - Matchup & interaction)
 - **Data field / source:** interaction of team `xGoalsFor` rate (NHL-21) with opponent `xGoalsAgainst` rate, as-of.
 - **Hypothesis:** The product of one team's shot-quality offense and the other's shot-quality defense beats a linear sum.
 - **Impact measured:** Δ home/away-goals MAE vs additive xG features.
 - **Act:** 1
 
-#### NHL-31 · Pace / combined shot-volume interaction (total)   (Rung 6 — Matchup & interaction)
+#### NHL-31 · Pace / combined shot-volume interaction (total)   (Rung 6 - Matchup & interaction)
 - **Data field / source:** sum of both teams' `shotAttemptsFor` rates (Corsi pace) → total-goals predictor.
 - **Hypothesis:** Two high-event teams produce higher totals than their individual rates suggest.
 - **Impact measured:** Δ total MAE vs OFF+DEF-sum baseline.
 - **Act:** 1
 
-#### NHL-32 · Style clash: high-danger interaction   (Rung 6 — Matchup & interaction)
+#### NHL-32 · Style clash: high-danger interaction   (Rung 6 - Matchup & interaction)
 - **Data field / source:** team `highDangerxGoalsFor` (NHL-25) × opponent `highDangerxGoalsAgainst`.
 - **Hypothesis:** A high-danger-heavy attack against a team that bleeds slot chances over-performs its base rate.
-- **Impact measured:** Δ margin MAE vs additive high-danger features; expected thin — publish the delta.
+- **Impact measured:** Δ margin MAE vs additive high-danger features; expected thin, publish the delta.
 - **Act:** 1
 
-#### NHL-33 · Divisional / rivalry game   (Rung 7 — Situational)
+#### NHL-33 · Divisional / rivalry game   (Rung 7 - Situational)
 - **Data field / source:** division lookup from canonical `home`/`away` (32-team → 4-division map).
 - **Hypothesis:** Divisional games are tighter and lower-scoring, compressing margins.
 - **Impact measured:** Δ margin MAE + interval calibration on divisional subset.
 - **Act:** 1
 
-#### NHL-34 · Home/road split (as-of home & road form)   (Rung 7 — Situational)
+#### NHL-34 · Home/road split (as-of home & road form)   (Rung 7 - Situational)
 - **Data field / source:** `is_home`-conditioned rolling `OFF`/`DEF`/`win` per team, `shift(1)`.
 - **Hypothesis:** Some teams are meaningfully better at home vs on the road beyond the league constant.
 - **Impact measured:** Δ winner log-loss vs a single home-ice term (NHL-05).
 - **Act:** 1
 
-#### NHL-35 · Schedule spot: long homestand / road trip   (Rung 7 — Situational)
+#### NHL-35 · Schedule spot: long homestand / road trip   (Rung 7 - Situational)
 - **Data field / source:** consecutive `is_home` run-length per team.
 - **Hypothesis:** Deep into a long road trip teams fade; early in a homestand they surge.
 - **Impact measured:** Δ winner accuracy on trip-game≥4 subset vs the rest/travel stack.
 - **Act:** 1
 
-#### NHL-36 · Regulation-result target (OT/SO handling)   (Rung 7 — Situational)
+#### NHL-36 · Regulation-result target (OT/SO handling)   (Rung 7 - Situational)
 - **Data field / source:** boxscore `lastPeriodType` (REG/OT/SO) backfill → separate regulation winner from final; down-weight SO margins in `y_margin`.
 - **Hypothesis:** Modeling regulation outcome (shootouts ≈ coin-flips) yields a better-calibrated moneyline than the raw final.
 - **Impact measured:** Δ winner log-loss + calibration vs final-result-only target; report the SO-game accuracy ceiling.
 - **Act:** 1
 
-#### NHL-37 · Confirmed starting goaltender   (Rung 8 — Market-adjacent probe)
+#### NHL-37 · Confirmed starting goaltender   (Rung 8 - Market-adjacent probe)
 - **Data field / source:** boxscore/`right-rail` confirmed starter + that goalie's MoneyPuck save-quality (`goals` vs `xGoals`, `savePctg`), as-of game-day.
-- **Hypothesis:** The single biggest same-day NHL swing — a backup vs a Vezina starter reshapes win prob and total; the marquee decomposition of what the market knows that our blind team model doesn't.
-- **Impact measured:** Δ winner log-loss + Δ total MAE vs the team-only model, AND the same delta vs the closing moneyline/total — quantifying how much of the market's edge is just goalie news.
+- **Hypothesis:** The single biggest same-day NHL swing, a backup vs a Vezina starter reshapes win prob and total; the marquee decomposition of what the market knows that our blind team model doesn't.
+- **Impact measured:** Δ winner log-loss + Δ total MAE vs the team-only model, AND the same delta vs the closing moneyline/total, quantifying how much of the market's edge is just goalie news.
 - **Act:** probe
 
-#### NHL-38 · Backup / tandem / tired-starter flag   (Rung 8 — Market-adjacent probe)
+#### NHL-38 · Backup / tandem / tired-starter flag   (Rung 8 - Market-adjacent probe)
 - **Data field / source:** starter identity (NHL-37) cross-referenced with B2B (NHL-17) and starts-in-last-N from game logs.
-- **Hypothesis:** A backup or a starter on his 3rd game in 4 nights underperforms — often the largest single line-move driver.
+- **Hypothesis:** A backup or a starter on his 3rd game in 4 nights underperforms, often the largest single line-move driver.
 - **Impact measured:** Δ total MAE + Δ winner log-loss on flagged games vs team-only; compare recovered edge to the observed line move.
 - **Act:** probe
 
-#### NHL-39 · Key-skater injury / lineup availability   (Rung 8 — Market-adjacent probe)
+#### NHL-39 · Key-skater injury / lineup availability   (Rung 8 - Market-adjacent probe)
 - **Data field / source:** roster/scratch deltas from `roster` vs game-day lineup (top-line/PP-unit absences); optional injury feed.
 - **Hypothesis:** Losing a top-line forward or #1 D-man measurably lowers a team's xG and win prob.
-- **Impact measured:** Δ winner log-loss on games with a top-6 F or top-pair D out vs no-injury model; expect small residual after xG — publish it.
+- **Impact measured:** Δ winner log-loss on games with a top-6 F or top-pair D out vs no-injury model; expect small residual after xG, publish it.
 - **Act:** probe
 
-#### NHL-40 · Line-movement / opening-vs-current probe (honesty gauge)   (Rung 8 — Market-adjacent probe)
-- **Data field / source:** The Odds API `h2h`/`totals` opening vs current (de-vigged) — market-only, excluded from the blind model.
-- **Hypothesis:** Most of the blind-model-to-market gap is priced by goalie confirmation + sharp money pre-puck, and our features will NOT recover it — the two-act punchline.
+#### NHL-40 · Line-movement / opening-vs-current probe (honesty gauge)   (Rung 8 - Market-adjacent probe)
+- **Data field / source:** The Odds API `h2h`/`totals` opening vs current (de-vigged), market-only, excluded from the blind model.
+- **Hypothesis:** Most of the blind-model-to-market gap is priced by goalie confirmation + sharp money pre-puck, and our features will NOT recover it, the two-act punchline.
 - **Impact measured:** Correlation of (market − blind) with post-open line movement; residual log-loss the blind model can't close after all Act-1 rungs. Measurement only.
 - **Act:** probe
 
@@ -1142,491 +1140,491 @@ _Impact metric throughout: Δ SU accuracy / Δ log-loss on winner, Δ margin-MAE
 
 ## MLB ⚾
 
-### Data availability — MLB
-- **Source / client:** Free **MLB StatsAPI** (`statsapi.mlb.com`, no key) is the plugin's spine — `sports/mlb/data.py` (schedules/results/probables), `pitcher_data.py`, `batter_data.py`. The ladder additionally taps **pybaseball → Statcast** (pitch physics), **FanGraphs** (wOBA/wRC+/FIP/xFIP), **Baseball-Reference**, and **Retrosheet** — wrapped behind the data adapter with retries + graceful skips.
+### Data availability: MLB
+- **Source / client:** Free **MLB StatsAPI** (`statsapi.mlb.com`, no key) is the plugin's spine, `sports/mlb/data.py` (schedules/results/probables), `pitcher_data.py`, `batter_data.py`. The ladder additionally taps **pybaseball → Statcast** (pitch physics), **FanGraphs** (wOBA/wRC+/FIP/xFIP), **Baseball-Reference**, and **Retrosheet**: wrapped behind the data adapter with retries + graceful skips.
 - **History:** StatsAPI schedule + logs cached **2015–2025** (`schedule_{year}.parquet`, `pitcher_starts_{year}`, `batter_games_{year}`). **Statcast is pitch-level since 2015** (binding constraint for xwOBA/barrel%/spin). Retrosheet PBP ~a century for classic stats. Walk-forward trains 2015→N-1, tests year N.
 - **Core fields / tables available:** *Schedule:* `game_id, season, game_date, home, away, home_score, away_score, home_sp, away_sp, status` (`home_sp`/`away_sp` = probable-pitcher ids). *Team-games:* `team, opponent, is_home, runs, opp_runs, sp, opp_sp`. *Pitcher starts:* `pitcher_id, date, K, IP, ER, BF, opp, is_home`. *Batter games:* `batter_id, date, hits, totalBases, homeRuns, atBats, is_home, team, name`. *Engineered team features:* `OFF, DEF, WINPCT, FORM (L10 run diff), REST, PRIOR_DIFF, SP_RA, SP_ERA` + diffs. *Statcast (to ingest):* `launch_speed`, `launch_angle`, `release_spin_rate`, `pfx_x/pfx_z`, `plate_x/plate_z`, `estimated_woba_using_speedangle` (xwOBA), `pitch_type`, `p_throws`, `stand`, `events`.
 - **Odds / market (for grading):** `sports/mlb/live_odds.py` → The Odds API (`baseball_mlb`) → de-vigged **moneyline → `p_home_win`** + market `total`. Run line fixed ±1.5. Historical via Scottfree/OddsAPI feeding `csv_backfill`. Grading only.
-- **Known gaps / limits:** (1) **probable ≠ confirmed** starter — early rungs use rolling starter identity; confirmed card is an Act-2 probe. (2) no free park-factor/weather/umpire feed yet — new ingests (static park table, scraped weather, Retrosheet umpires). (3) Statcast pre-2015 doesn't exist. (4) StatsAPI/Savant unofficial-ish → rate-limit/skip. (5) historical lineup cards/bullpen availability scarce → forward-collection probes. (6) baseball is high-variance → single-feature deltas small over a large sample (reported honestly).
+- **Known gaps / limits:** (1) **probable ≠ confirmed** starter, early rungs use rolling starter identity; confirmed card is an Act-2 probe. (2) no free park-factor/weather/umpire feed yet, new ingests (static park table, scraped weather, Retrosheet umpires). (3) Statcast pre-2015 doesn't exist. (4) StatsAPI/Savant unofficial-ish → rate-limit/skip. (5) historical lineup cards/bullpen availability scarce → forward-collection probes. (6) baseball is high-variance → single-feature deltas small over a large sample (reported honestly).
 
-### Feature ladder — MLB
+### Feature ladder: MLB
 
-#### MLB-01 · Season-to-date runs scored per game (OFF)   (Rung 1 — Basic box stats)
+#### MLB-01 · Season-to-date runs scored per game (OFF)   (Rung 1 - Basic box stats)
 - **Data field / source:** `runs` (StatsAPI scores), expanding mean `shift(1)` per team-season → `OFF`.
 - **Hypothesis:** Teams scoring more runs to date score more tonight.
 - **Impact measured:** Δ score-MAE (home/away runs) + Δ log-loss on winner, walk-forward 2016→2025.
 - **Act:** 1
 
-#### MLB-02 · Season-to-date runs allowed per game (DEF)   (Rung 1 — Basic box stats)
+#### MLB-02 · Season-to-date runs allowed per game (DEF)   (Rung 1 - Basic box stats)
 - **Data field / source:** `opp_runs` expanding mean `shift(1)` → `DEF`.
 - **Hypothesis:** Teams allowing fewer runs suppress the opponent tonight.
 - **Impact measured:** Δ total-MAE + Δ margin-MAE vs MLB-01-only.
 - **Act:** 1
 
-#### MLB-03 · Season-to-date win% (WINPCT)   (Rung 1 — Basic box stats)
+#### MLB-03 · Season-to-date win% (WINPCT)   (Rung 1 - Basic box stats)
 - **Data field / source:** `win = runs>opp_runs`, expanding mean `shift(1)` → `WINPCT`.
 - **Hypothesis:** Higher win% maps to a higher win probability (coarse prior).
 - **Impact measured:** Δ winner accuracy + Δ log-loss vs OFF/DEF baseline.
 - **Act:** 1
 
-#### MLB-04 · Net run differential per game (NET_DIFF)   (Rung 1 — Basic box stats)
+#### MLB-04 · Net run differential per game (NET_DIFF)   (Rung 1 - Basic box stats)
 - **Data field / source:** `(HOME_OFF − HOME_DEF) − (AWAY_OFF − AWAY_DEF)` (Pythagorean-style).
 - **Hypothesis:** Run differential predicts future wins better than raw win% (regresses out record luck).
 - **Impact measured:** Δ log-loss vs WINPCT-only; expect small positive.
 - **Act:** 1
 
-#### MLB-05 · Prior-season run differential (PRIOR_DIFF)   (Rung 1 — Basic box stats)
+#### MLB-05 · Prior-season run differential (PRIOR_DIFF)   (Rung 1 - Basic box stats)
 - **Data field / source:** prior season's mean `diff` merged on `(team, season+1)` → cold-start prior for April.
 - **Hypothesis:** Last year's run diff carries roster-strength signal into early games.
 - **Impact measured:** Δ log-loss on first-30-games subset vs no-prior baseline.
 - **Act:** 1
 
-#### MLB-06 · Last-10-game run-differential form (FORM)   (Rung 2 — Rolling windows)
+#### MLB-06 · Last-10-game run-differential form (FORM)   (Rung 2 - Rolling windows)
 - **Data field / source:** `diff` rolling(10) `shift(1)` → `FORM`.
 - **Hypothesis:** Recent 10-game run diff captures current hot/cold state beyond the season mean.
 - **Impact measured:** Δ margin-MAE + Δ log-loss vs expanding-only (MLB-01..05).
 - **Act:** 1
 
-#### MLB-07 · Rolling runs scored/allowed, last-15 & last-30   (Rung 2 — Rolling windows)
+#### MLB-07 · Rolling runs scored/allowed, last-15 & last-30   (Rung 2 - Rolling windows)
 - **Data field / source:** `runs` / `opp_runs` rolling(15) and rolling(30) `shift(1)`.
 - **Hypothesis:** A medium window (≈2–4 weeks) balances signal vs noise better than season mean or last-10.
 - **Impact measured:** Δ total-MAE across window choices; keep the min-holdout-MAE window.
 - **Act:** 1
 
-#### MLB-08 · Home vs road split form (venue-conditioned)   (Rung 2 — Rolling windows)
+#### MLB-08 · Home vs road split form (venue-conditioned)   (Rung 2 - Rolling windows)
 - **Data field / source:** `runs`/`opp_runs` rolling within `is_home==1` vs `==0`, `shift(1)`.
 - **Hypothesis:** Some teams' recent scoring is venue-dependent; splitting sharpens the run estimate.
 - **Impact measured:** Δ score-MAE vs unsplit FORM (MLB-06/07).
 - **Act:** 1
 
-#### MLB-09 · Rolling win% variants (last-10 / last-20)   (Rung 2 — Rolling windows)
+#### MLB-09 · Rolling win% variants (last-10 / last-20)   (Rung 2 - Rolling windows)
 - **Data field / source:** `win` rolling(10)/rolling(20) `shift(1)`.
 - **Hypothesis:** Short-window win% adds a small momentum signal over season WINPCT.
-- **Impact measured:** Δ winner log-loss vs expanding WINPCT; likely near-zero (weak MLB momentum — reported honestly).
+- **Impact measured:** Δ winner log-loss vs expanding WINPCT; likely near-zero (weak MLB momentum, reported honestly).
 - **Act:** 1
 
-#### MLB-10 · Opponent-adjusted offense/defense (SoS run rates)   (Rung 3 — Opponent adjustment)
+#### MLB-10 · Opponent-adjusted offense/defense (SoS run rates)   (Rung 3 - Opponent adjustment)
 - **Data field / source:** adjust `OFF`/`DEF` by mean `DEF`/`OFF` of opponents faced (season-to-date SoS, `shift(1)`).
 - **Hypothesis:** Run rates padded vs weak pitching overstate strength; opponent-adjusting improves margin and total.
 - **Impact measured:** Δ margin-MAE + Δ log-loss vs raw OFF/DEF.
 - **Act:** 1
 
-#### MLB-11 · Opponent quality of pitching faced   (Rung 3 — Opponent adjustment)
+#### MLB-11 · Opponent quality of pitching faced   (Rung 3 - Opponent adjustment)
 - **Data field / source:** mean opposing-starter `SP_ERA`/team `DEF` faced in the rolling window, `shift(1)`.
 - **Hypothesis:** A hot bat streak vs soft arms should be discounted.
 - **Impact measured:** Δ total-MAE vs unadjusted rolling offense (MLB-07).
 - **Act:** 1
 
-#### MLB-12 · Division / repeat-opponent familiarity   (Rung 3 — Opponent adjustment)
+#### MLB-12 · Division / repeat-opponent familiarity   (Rung 3 - Opponent adjustment)
 - **Data field / source:** flag from `opponent` + games-vs-opponent count (division opponents play ~13x).
 - **Hypothesis:** Frequently-faced opponents produce lower-variance, slightly lower-scoring games.
 - **Impact measured:** Δ total-MAE + margin calibration on division vs non-division; expect tiny.
 - **Act:** 1
 
-#### MLB-13 · Days of rest / days since last game (REST)   (Rung 4 — Rest / schedule / travel)
+#### MLB-13 · Days of rest / days since last game (REST)   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** `game_date.diff().days` clipped 0–10 → `REST` / `REST_DIFF`.
 - **Hypothesis:** Rest matters far less than other sports, but extremes still move output slightly.
 - **Impact measured:** Δ score-MAE vs no-rest baseline; expect near-zero (deliberate honest null).
 - **Act:** 1
 
-#### MLB-14 · Series game number & getaway-day flag   (Rung 4 — Rest / schedule / travel)
+#### MLB-14 · Series game number & getaway-day flag   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** position within series (consecutive same-opponent runs); getaway-day = final before travel.
 - **Hypothesis:** Series openers and getaway finales differ subtly in run environment (bullpen state, lineup rest).
 - **Impact measured:** Δ total-MAE by series-spot bucket.
 - **Act:** 1
 
-#### MLB-15 · Day-after-night & doubleheader flags   (Rung 4 — Rest / schedule / travel)
+#### MLB-15 · Day-after-night & doubleheader flags   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** game start hour vs prior game's hour (StatsAPI `gameDate`); two `game_id`s same team/date → doubleheader.
 - **Hypothesis:** Day-after-night and (esp. game 2 of) doubleheaders depress offense via fatigue/spot starters.
 - **Impact measured:** Δ total-MAE on flagged games vs baseline.
 - **Act:** 1
 
-#### MLB-16 · Travel distance & time-zone change   (Rung 4 — Rest / schedule / travel)
+#### MLB-16 · Travel distance & time-zone change   (Rung 4 - Rest / schedule / travel)
 - **Data field / source:** great-circle between consecutive home-park lat/long (static table) + TZ delta.
 - **Hypothesis:** Long west↔east jumps produce a small road-team run penalty.
 - **Impact measured:** Δ margin-MAE vs no-travel baseline on high-distance subset; expect small.
 - **Act:** 1
 
-#### MLB-17 · Team wOBA   (Rung 5 — Derived efficiency)
+#### MLB-17 · Team wOBA   (Rung 5 - Derived efficiency)
 - **Data field / source:** FanGraphs team `wOBA` (or reconstructed from `hits/totalBases/BB/HBP` linear weights), rolling `shift(1)`.
 - **Hypothesis:** wOBA weights each event by run value, predicting production better than raw runs/hits.
 - **Impact measured:** Δ total-MAE + Δ margin-MAE vs OFF (MLB-01).
 - **Act:** 1
 
-#### MLB-18 · Team wRC+ (park- & league-adjusted offense)   (Rung 5 — Derived efficiency)
+#### MLB-18 · Team wRC+ (park- & league-adjusted offense)   (Rung 5 - Derived efficiency)
 - **Data field / source:** FanGraphs team `wRC+`, rolling `shift(1)` (100 = avg, park-neutral).
 - **Hypothesis:** wRC+ isolates true hitting from park/league run environment, esp. for extreme parks.
 - **Impact measured:** Δ margin-MAE vs wOBA-only (MLB-17).
 - **Act:** 1
 
-#### MLB-19 · Team Statcast xwOBA (expected wOBA on contact)   (Rung 5 — Derived efficiency)
+#### MLB-19 · Team Statcast xwOBA (expected wOBA on contact)   (Rung 5 - Derived efficiency)
 - **Data field / source:** Statcast `estimated_woba_using_speedangle` aggregated to team, rolling `shift(1)`.
 - **Hypothesis:** xwOBA strips batted-ball luck from wOBA, giving a more stable, predictive estimate.
 - **Impact measured:** Δ total-MAE vs wOBA (MLB-17); expect a real de-luck gain.
 - **Act:** 1
 
-#### MLB-20 · Team barrel% and hard-hit%   (Rung 5 — Derived efficiency)
+#### MLB-20 · Team barrel% and hard-hit%   (Rung 5 - Derived efficiency)
 - **Data field / source:** Statcast `launch_speed` + `launch_angle` → barrel; hard-hit = `launch_speed ≥ 95`. Team rolling rate, `shift(1)`.
 - **Hypothesis:** Quality-of-contact predicts future extra-base/run production earlier than results-based stats stabilize.
 - **Impact measured:** Δ margin-MAE + Δ total-MAE vs xwOBA-only (MLB-19).
 - **Act:** 1
 
-#### MLB-21 · Starting-pitcher rolling ERA (SP_ERA) & runs-allowed (SP_RA)   (Rung 5 — Derived efficiency)
+#### MLB-21 · Starting-pitcher rolling ERA (SP_ERA) & runs-allowed (SP_RA)   (Rung 5 - Derived efficiency)
 - **Data field / source:** existing `SP_ERA` (ΣER·9/ΣIP over prior starts, keyed by `home_sp`/`away_sp`+date), `SP_RA`, + diffs.
 - **Hypothesis:** *Who starts tonight* is the single biggest per-game MLB signal; recent ERA sharply improves winner and total.
 - **Impact measured:** Δ winner log-loss + Δ total-MAE vs team-only run model; expect the largest single-rung gain so far.
 - **Act:** 1
 
-#### MLB-22 · Starting-pitcher FIP / xFIP   (Rung 5 — Derived efficiency)
+#### MLB-22 · Starting-pitcher FIP / xFIP   (Rung 5 - Derived efficiency)
 - **Data field / source:** FanGraphs starter `FIP`/`xFIP` (or from `K`, `BB`, `HR`, `IP`), rolling `shift(1)` over prior starts.
 - **Hypothesis:** FIP/xFIP isolate the pitcher's controllables, predicting run prevention better than ERA.
 - **Impact measured:** Δ total-MAE + Δ margin-MAE vs SP_ERA (MLB-21).
 - **Act:** 1
 
-#### MLB-23 · Starting-pitcher K-BB%   (Rung 5 — Derived efficiency)
+#### MLB-23 · Starting-pitcher K-BB%   (Rung 5 - Derived efficiency)
 - **Data field / source:** `(K − BB)/BF` from pitcher-starts, rolling `shift(1)`.
 - **Hypothesis:** K-BB% is the most stable, predictive single pitcher skill metric.
 - **Impact measured:** Δ log-loss + Δ total-MAE vs FIP/xFIP (MLB-22).
 - **Act:** 1
 
-#### MLB-24 · Starting-pitcher Statcast stuff (velo / spin / movement)   (Rung 5 — Derived efficiency)
+#### MLB-24 · Starting-pitcher Statcast stuff (velo / spin / movement)   (Rung 5 - Derived efficiency)
 - **Data field / source:** Statcast `release_speed`, `release_spin_rate`, `pfx_x`/`pfx_z` per starter, rolling `shift(1)`; velo-trend flag.
 - **Hypothesis:** Declining velocity/spin foreshadows worse outcomes before ERA reacts.
 - **Impact measured:** Δ total-MAE vs K-BB% (MLB-23); small but real on velo-drop subset.
 - **Act:** 1
 
-#### MLB-25 · Bullpen quality (rolling reliever ERA/FIP)   (Rung 5 — Derived efficiency)
+#### MLB-25 · Bullpen quality (rolling reliever ERA/FIP)   (Rung 5 - Derived efficiency)
 - **Data field / source:** team reliever runs/FIP (team `opp_runs` minus starter `ER`, or FanGraphs bullpen FIP), rolling `shift(1)`.
 - **Hypothesis:** Since starters rarely finish games, bullpen quality is a large distinct run-prevention term.
 - **Impact measured:** Δ margin-MAE + Δ total-MAE vs starter-only (MLB-21..24).
 - **Act:** 1
 
-#### MLB-26 · Bullpen fatigue / recent usage   (Rung 5 — Derived efficiency)
+#### MLB-26 · Bullpen fatigue / recent usage   (Rung 5 - Derived efficiency)
 - **Data field / source:** relief innings/pitches over the prior 2–3 days (StatsAPI game logs), `shift(1)`.
 - **Hypothesis:** A gassed bullpen allows more late runs, nudging total up and win prob down.
 - **Impact measured:** Δ total-MAE on high-recent-usage subset vs bullpen-quality-only (MLB-25).
 - **Act:** 1
 
-#### MLB-27 · Starter × opposing-lineup platoon matchup   (Rung 6 — Matchup & interaction)
+#### MLB-27 · Starter × opposing-lineup platoon matchup   (Rung 6 - Matchup & interaction)
 - **Data field / source:** starter handedness `p_throws` vs opposing lineup L/R composition (`stand`); starter's rolling xwOBA-allowed by batter hand.
 - **Hypothesis:** A LHP vs a lefty-heavy lineup shifts expected runs beyond the starter's overall rate.
 - **Impact measured:** Δ total-MAE + Δ margin-MAE vs handedness-blind starter model.
 - **Act:** 1
 
-#### MLB-28 · Starter-quality × opponent-offense interaction   (Rung 6 — Matchup & interaction)
+#### MLB-28 · Starter-quality × opponent-offense interaction   (Rung 6 - Matchup & interaction)
 - **Data field / source:** `starter_xwOBA_allowed × opponent_team_xwOBA` (MLB-19 × MLB-24 inputs).
 - **Hypothesis:** Elite-arm-vs-elite-bat games behave non-additively; an explicit interaction beats independent terms.
 - **Impact measured:** Δ margin-MAE vs additive starter+offense model.
 - **Act:** 1
 
-#### MLB-29 · Park run/HR factor   (Rung 6 — Matchup & interaction)
+#### MLB-29 · Park run/HR factor   (Rung 6 - Matchup & interaction)
 - **Data field / source:** static park run-factor & HR-factor table (Savant/FanGraphs) keyed by `home` venue.
 - **Hypothesis:** Park effects materially move totals (Coors vs Petco).
 - **Impact measured:** Δ total-MAE vs park-blind model; expect one of the larger total-MAE gains.
 - **Act:** 1
 
-#### MLB-30 · Park × batted-ball-profile interaction   (Rung 6 — Matchup & interaction)
+#### MLB-30 · Park × batted-ball-profile interaction   (Rung 6 - Matchup & interaction)
 - **Data field / source:** park HR-factor × team `barrel%`/fly-ball rate (MLB-20 inputs).
 - **Hypothesis:** A fly-ball/high-barrel offense gains more in a hitter's park than a groundball team.
 - **Impact measured:** Δ total-MAE vs flat park factor (MLB-29).
 - **Act:** 1
 
-#### MLB-31 · Batter-vs-pitcher handedness team aggregate (platoon edge)   (Rung 6 — Matchup & interaction)
+#### MLB-31 · Batter-vs-pitcher handedness team aggregate (platoon edge)   (Rung 6 - Matchup & interaction)
 - **Data field / source:** team's rolling `wOBA` vs LHP and vs RHP (`stand`×`p_throws` splits) matched to tonight's starter hand.
 - **Hypothesis:** The lineup's platoon-specific offense is the right input given the announced starter's hand.
 - **Impact measured:** Δ margin-MAE vs overall-wOBA offense (MLB-17).
 - **Act:** 1
 
-#### MLB-32 · Home / road indicator (baseline home edge)   (Rung 7 — Situational)
+#### MLB-32 · Home / road indicator (baseline home edge)   (Rung 7 - Situational)
 - **Data field / source:** existing `is_home`; league home-scoring baseline.
 - **Hypothesis:** Home teams win ~54%; last-at-bat/familiarity gives a small stable edge.
 - **Impact measured:** Δ winner log-loss vs no-HFA baseline.
 - **Act:** 1
 
-#### MLB-33 · Temperature effect on run environment   (Rung 7 — Situational)
+#### MLB-33 · Temperature effect on run environment   (Rung 7 - Situational)
 - **Data field / source:** game-time temperature (StatsAPI game context / scraped weather) by `game_id`.
 - **Hypothesis:** Warmer air carries the ball farther → more runs/HRs.
 - **Impact measured:** Δ total-MAE vs weather-blind model on outdoor games.
 - **Act:** 1
 
-#### MLB-34 · Wind speed & direction (out-to-CF vs in)   (Rung 7 — Situational)
+#### MLB-34 · Wind speed & direction (out-to-CF vs in)   (Rung 7 - Situational)
 - **Data field / source:** wind vector (scraped) × park orientation (static table).
 - **Hypothesis:** Wind out (esp. Wrigley) sharply raises HR/run totals; wind in suppresses them.
 - **Impact measured:** Δ total-MAE on strong-wind outdoor subset vs temperature-only (MLB-33).
 - **Act:** 1
 
-#### MLB-35 · Roof / dome & precipitation state   (Rung 7 — Situational)
+#### MLB-35 · Roof / dome & precipitation state   (Rung 7 - Situational)
 - **Data field / source:** roof-open/closed + dome flag (StatsAPI venue/`weather`), rain flag.
 - **Hypothesis:** Closed roofs/domes create a neutral, slightly hitter-friendly, low-variance run environment.
 - **Impact measured:** Δ total-MAE + total calibration on dome/closed subset.
 - **Act:** 1
 
-#### MLB-36 · Home-plate umpire strike-zone tendency   (Rung 7 — Situational)
+#### MLB-36 · Home-plate umpire strike-zone tendency   (Rung 7 - Situational)
 - **Data field / source:** umpire id (Retrosheet/StatsAPI officials) → rolling called-strike-rate / runs-per-game vs Statcast zone, `shift(1)`.
 - **Hypothesis:** Pitcher-friendly umpires expand the zone, boosting Ks and suppressing runs.
 - **Impact measured:** Δ total-MAE vs umpire-blind model; expect small.
 - **Act:** 1
 
-#### MLB-37 · Confirmed starting pitcher (lineup-lock)   (Rung 8 — Market-adjacent probe)
-- **Data field / source:** StatsAPI confirmed probable at/after lineup lock — replaces day-ahead `home_sp`/`away_sp`; re-key SP features.
-- **Hypothesis:** Locking the true starter (catching scratches/bullpen games) is the highest-value pre-game info — and exactly what the market prices.
+#### MLB-37 · Confirmed starting pitcher (lineup-lock)   (Rung 8 - Market-adjacent probe)
+- **Data field / source:** StatsAPI confirmed probable at/after lineup lock, replaces day-ahead `home_sp`/`away_sp`; re-key SP features.
+- **Hypothesis:** Locking the true starter (catching scratches/bullpen games) is the highest-value pre-game info, and exactly what the market prices.
 - **Impact measured:** Δ winner log-loss + Δ total-MAE at confirmed-time vs probable-time; compare gain to the closing-line's edge over our blind model.
 - **Act:** probe
 
-#### MLB-38 · Posted lineup card (regulars in/out, DH, order)   (Rung 8 — Market-adjacent probe)
-- **Data field / source:** StatsAPI boxscore/lineup at lock — recompute team offense from present hitters' rolling wOBA/xwOBA (MLB-19/31).
+#### MLB-38 · Posted lineup card (regulars in/out, DH, order)   (Rung 8 - Market-adjacent probe)
+- **Data field / source:** StatsAPI boxscore/lineup at lock, recompute team offense from present hitters' rolling wOBA/xwOBA (MLB-19/31).
 - **Hypothesis:** Knowing who's actually playing refines the offensive input; but the market moves on the same card.
 - **Impact measured:** Δ margin-MAE + Δ total-MAE vs roster-aggregate offense; net of the market's reaction.
 - **Act:** probe
 
-#### MLB-39 · Bullpen availability (rested/unavailable tonight)   (Rung 8 — Market-adjacent probe)
+#### MLB-39 · Bullpen availability (rested/unavailable tonight)   (Rung 8 - Market-adjacent probe)
 - **Data field / source:** prior-days relief usage (MLB-26) → per-reliever available/unavailable flag; available-bullpen-quality aggregate.
-- **Hypothesis:** Explicit unavailability of top relievers raises late-game run risk beyond generic fatigue — but sharps know pen status.
+- **Hypothesis:** Explicit unavailability of top relievers raises late-game run risk beyond generic fatigue, but sharps know pen status.
 - **Impact measured:** Δ total-MAE on games with ≥2 top relievers down vs the fatigue proxy (MLB-26).
 - **Act:** probe
 
-#### MLB-40 · Line-movement / market-total probe (honesty gauge)   (Rung 8 — Market-adjacent probe)
+#### MLB-40 · Line-movement / market-total probe (honesty gauge)   (Rung 8 - Market-adjacent probe)
 - **Data field / source:** The Odds API de-vigged `p_home_win` + `total`; open→close movement from historical-odds CSV. Decomposition only.
 - **Hypothesis:** The residual gap between our fully-climbed blind model and the closing line measures what the market knows that our features don't; line movement localizes where.
-- **Impact measured:** Blind vs closing-line Δ log-loss / total-MAE, and how much each prior rung (esp. MLB-21/29/37) closed the gap — the two-act payoff.
+- **Impact measured:** Blind vs closing-line Δ log-loss / total-MAE, and how much each prior rung (esp. MLB-21/29/37) closed the gap, the two-act payoff.
 - **Act:** probe
 
 ---
 
 ## Soccer ⚽
 
-### Data availability — Soccer
+### Data availability: Soccer
 - **Source / client:** `soccerdata` (wraps Club Elo, Understat, FBref, football-data.co.uk, ESPN, FotMob, Sofascore, WhoScored) + **StatsBomb Open** (`statsbombpy`). The live plugin (`backend/sports/soccer/team_features.py`) already fetches **football-data.co.uk** season CSVs and caches per-season parquet in `backend/data/soccer/`. Live 1X2/totals for grading via The Odds API (`live_odds.py`, de-vigged).
-- **History:** football-data.co.uk back to **1993/94** for England (E0–E3 + Conference) and ~2000s for ~22 European leagues — deep results + odds. Understat covers the **top-5 leagues from 2014/15**. Club Elo daily ratings back to 1939. StatsBomb Open is a curated non-contiguous set (World Cups, Euros, Messi's La Liga, select WSL/NWSL, Serie A 2015/16). Repo cache holds EPL 2021/22–2024/25.
-- **Core fields / tables available:** *football-data.co.uk* (the model's real base — many leagues, shallow): `FTHG`/`FTAG` (→ `fthg`/`ftag`), `FTR` (H/D/A), `HTHG`/`HTAG`/`HTR`, and for bigger leagues `HS`/`AS` (shots), `HST`/`AST` (on target), `HC`/`AC` (corners), `HF`/`AF` (fouls), `HY`/`AY`/`HR`/`AR` (cards), `Referee`. *Understat* (top-5): team & per-shot **xG**, `xG`/`xGA`, `npxG`, `xpts`, shot `x`/`y`, `situation`, `shotType`. *Club Elo:* daily `Elo`. *StatsBomb Open:* full events + StatsBomb xG + 360 (select comps).
-- **Odds / market (grading only):** football-data.co.uk ships **historical bookmaker odds** in the same CSVs — `B365H/D/A`, `PSH/D/A` (Pinnacle), `WHH/D/A`, aggregates `AvgH/D/A`/`MaxH/D/A`, **opening vs closing** (`PSCH/D/A`, `AvgCH/D/A`, `B365CH/D/A`), over/under 2.5 (`B365>2.5`/`<2.5`, `Avg>2.5`), and Asian handicap. De-vigged 1X2 + totals + **CLV** for essentially every league we predict.
+- **History:** football-data.co.uk back to **1993/94** for England (E0–E3 + Conference) and ~2000s for ~22 European leagues; deep results + odds. Understat covers the **top-5 leagues from 2014/15**. Club Elo daily ratings back to 1939. StatsBomb Open is a curated non-contiguous set (World Cups, Euros, Messi's La Liga, select WSL/NWSL, Serie A 2015/16). Repo cache holds EPL 2021/22–2024/25.
+- **Core fields / tables available:** football-data.co.uk (the model's real base, many leagues, shallow): `FTHG`/`FTAG` (→ `fthg`/`ftag`), `FTR` (H/D/A), `HTHG`/`HTAG`/`HTR`, and for bigger leagues `HS`/`AS` (shots), `HST`/`AST` (on target), `HC`/`AC` (corners), `HF`/`AF` (fouls), `HY`/`AY`/`HR`/`AR` (cards), `Referee`. *Understat* (top-5): team & per-shot **xG**, `xG`/`xGA`, `npxG`, `xpts`, shot `x`/`y`, `situation`, `shotType`. *Club Elo:* daily `Elo`. *StatsBomb Open:* full events + StatsBomb xG + 360 (select comps).
+- **Odds / market (grading only):** football-data.co.uk ships **historical bookmaker odds** in the same CSVs, `B365H/D/A`, `PSH/D/A` (Pinnacle), `WHH/D/A`, aggregates `AvgH/D/A`/`MaxH/D/A`, **opening vs closing** (`PSCH/D/A`, `AvgCH/D/A`, `B365CH/D/A`), over/under 2.5 (`B365>2.5`/`<2.5`, `Avg>2.5`), and Asian handicap. De-vigged 1X2 + totals + **CLV** for essentially every league we predict.
 - **Known gaps / limits:**
   - **3-way outcome.** The target is **win / draw / loss** → the model must emit a real **P(draw)** (Poisson goals summed over a scoreline grid via `three_way_from_lambdas`). Draws are ~25% of matches and the **hardest class**; a picked side that draws counts as a **LOSS** (matches `seed_writer` grading).
   - **Per-league data-depth variance is severe.** xG (Understat) and events (StatsBomb) exist for a handful of comps; football-data gives results+odds+basic match stats for ~22 leagues but **no xG, no lineups**. So Rungs 1–4 + 7 are league-wide; **Rung 5 (xG) is top-5-only**; deep event features are StatsBomb-comp-only. Each feature states its scope.
   - **FBref/Opta Jan-2026 caveat.** FBref lost its Opta licence in Jan 2026 and no longer updates advanced stats going forward; the historical archive is usable but frozen. Prefer Understat + StatsBomb for live advanced/xG.
   - **The wall (measured).** The blind Poisson model **does not beat the closing line in any of 10 leagues** (log-loss worse in all 10; flat-stake ROI −2.5% to −12%), and an open-vs-close test (2025, 6,102 bets) found **negative CLV** (market moves away from our picks ~59%; opening −4.8% vs closing −3.9% ROI). Lower/thinner leagues did not help. Soccer is CHALK's clearest **Act-2 "hit the wall"** story.
 
-### Feature ladder — Soccer
+### Feature ladder: Soccer
 
-#### SOC-01 · Home-field base rate (H/D/A prior)   (Rung 1 — Basic box stats)
+#### SOC-01 · Home-field base rate (H/D/A prior)   (Rung 1 - Basic box stats)
 - **Data field / source:** `FTR` (all leagues); repo's `_BASE = {p_home:0.45, p_draw:0.27, p_away:0.28}`.
 - **Hypothesis:** A static league-average H/D/A split beats a uniform 1/3 prior because home advantage is real and stable.
 - **Impact measured:** Walk-forward 3-way log-loss vs a uniform-third baseline, per season, pooled across leagues.
 - **Act:** 1
 
-#### SOC-02 · Season goals-for / goals-against rate   (Rung 1 — Basic box stats)
+#### SOC-02 · Season goals-for / goals-against rate   (Rung 1 - Basic box stats)
 - **Data field / source:** `FTHG`/`FTAG` season-to-date per team (all leagues).
 - **Hypothesis:** Cumulative scoring/conceding rates separate strong from weak sides before opponent adjustment.
 - **Impact measured:** Δ log-loss / Δ accuracy vs SOC-01; prior-only cumulative (`shift(1)`).
 - **Act:** 1
 
-#### SOC-03 · Simple Poisson on goals (independent λ)   (Rung 1 — Basic box stats)
+#### SOC-03 · Simple Poisson on goals (independent λ)   (Rung 1 - Basic box stats)
 - **Data field / source:** `FTHG`/`FTAG` → per-team goal means → `three_way_from_lambdas` over a 0–10 grid (`MAX_GOALS`, all leagues). The repo's day-1 engine minus opponent strength.
 - **Hypothesis:** Turning two goal-rate estimates into a full scoreline distribution yields a principled P(draw) and total.
 - **Impact measured:** 3-way log-loss + **goals MAE** (predicted vs `FTHG+FTAG`) vs SOC-02.
 - **Act:** 1
 
-#### SOC-04 · Win/draw/loss rate features   (Rung 1 — Basic box stats)
-- **Data field / source:** derived from `FTR` — season W%, D%, L% per team (all leagues).
+#### SOC-04 · Win/draw/loss rate features   (Rung 1 - Basic box stats)
+- **Data field / source:** derived from `FTR`, season W%, D%, L% per team (all leagues).
 - **Hypothesis:** Result-outcome frequencies capture "draw-prone" clubs a pure goals model misses.
 - **Impact measured:** Δ log-loss with a focus on **draw-class log-loss / Brier**.
 - **Act:** 1
 
-#### SOC-05 · Rolling last-6 goals form (venue-split)   (Rung 2 — Rolling windows)
-- **Data field / source:** `fthg`/`ftag` rolling `_prior_mean(s, ROLL=6)` split home/away — the repo's attack/defense.
+#### SOC-05 · Rolling last-6 goals form (venue-split)   (Rung 2 - Rolling windows)
+- **Data field / source:** `fthg`/`ftag` rolling `_prior_mean(s, ROLL=6)` split home/away, the repo's attack/defense.
 - **Hypothesis:** Recent form (last 6) tracks the current squad/manager better than season-to-date.
 - **Impact measured:** Δ log-loss / goals MAE vs SOC-03; sweep `ROLL ∈ {4,6,8,10}`.
 - **Act:** 1
 
-#### SOC-06 · Rolling points-per-game form   (Rung 2 — Rolling windows)
+#### SOC-06 · Rolling points-per-game form   (Rung 2 - Rolling windows)
 - **Data field / source:** points from `FTR` (3/1/0), rolling last-N, prior-only (all leagues).
 - **Hypothesis:** Recent PPG is a cleaner "are they winning right now" signal than goal difference.
 - **Impact measured:** Δ accuracy / log-loss vs SOC-05.
 - **Act:** 1
 
-#### SOC-07 · Rolling shots & shots-on-target form   (Rung 2 — Rolling windows)
+#### SOC-07 · Rolling shots & shots-on-target form   (Rung 2 - Rolling windows)
 - **Data field / source:** `HS`/`AS`, `HST`/`AST` rolling last-N (football-data **big leagues only**).
 - **Hypothesis:** Shot volume/quality is more stable game-to-game than goals and pre-figures scoring regression.
 - **Impact measured:** Δ log-loss vs SOC-05, reported **split by league-has-shots vs not**.
 - **Act:** 1
 
-#### SOC-08 · Rolling goals-conceded / clean-sheet form   (Rung 2 — Rolling windows)
+#### SOC-08 · Rolling goals-conceded / clean-sheet form   (Rung 2 - Rolling windows)
 - **Data field / source:** `ftag` (conceded), clean-sheet indicator from `FTR`/goals, rolling last-N (all leagues).
 - **Hypothesis:** Defensive form is more persistent than attacking form and sharpens λ_away and P(draw).
 - **Impact measured:** Δ log-loss + **λ_away goals MAE**.
 - **Act:** 1
 
-#### SOC-09 · Weighted recency (exponential decay)   (Rung 2 — Rolling windows)
+#### SOC-09 · Weighted recency (exponential decay)   (Rung 2 - Rolling windows)
 - **Data field / source:** same `fthg`/`ftag` stream, exponential-decay weights vs flat window (all leagues).
 - **Hypothesis:** Recency-weighting beats an equal-weight last-6.
 - **Impact measured:** Δ log-loss vs SOC-05 across a half-life sweep.
 - **Act:** 1
 
-#### SOC-10 · Club Elo rating (pre-match)   (Rung 3 — Opponent adjustment)
+#### SOC-10 · Club Elo rating (pre-match)   (Rung 3 - Opponent adjustment)
 - **Data field / source:** Club Elo daily `Elo` via `soccerdata.ClubElo`, as-of match date, backward-exclusive (many leagues).
 - **Hypothesis:** A single opponent-adjusted rating (Elo discounts schedule) beats raw form, which ignores who you played.
 - **Impact measured:** Δ log-loss / Δ accuracy vs SOC-05; the first big expected jump.
 - **Act:** 1
 
-#### SOC-11 · Elo difference → 1X2 mapping (with draw band)   (Rung 3 — Opponent adjustment)
+#### SOC-11 · Elo difference → 1X2 mapping (with draw band)   (Rung 3 - Opponent adjustment)
 - **Data field / source:** home `Elo` − away `Elo` + home-field bump, mapped to P(H/D/A) via a fitted ordinal link.
 - **Hypothesis:** Elo gap plus an explicit draw band predicts draws better than a Poisson diagonal.
 - **Impact measured:** Δ **draw-class** log-loss + overall log-loss vs SOC-10; calibration curve.
 - **Act:** 1
 
-#### SOC-12 · Dixon-Coles attack/defense strengths   (Rung 3 — Opponent adjustment)
-- **Data field / source:** `fthg`/`ftag` → per-team attack & defense + home-field (the repo's `home_attack*away_defense*HOME_FIELD*league_avg` λ), upgraded to jointly-fit **Dixon-Coles** ρ (all leagues).
+#### SOC-12 · Dixon-Coles attack/defense strengths   (Rung 3 - Opponent adjustment)
+- **Data field / source:** `fthg`/`ftag` → per-team attack & defense + home-field (the repo's `home_attackaway_defenseHOME_FIELD*league_avg` λ), upgraded to jointly-fit **Dixon-Coles** ρ (all leagues).
 - **Hypothesis:** Jointly estimating attack/defense and the low-score correlation ρ fixes the independent-Poisson under-prediction of 0–0/1–1 draws.
 - **Impact measured:** Δ log-loss + **P(draw) calibration** vs SOC-03/SOC-10; goals MAE.
 - **Act:** 1
 
-#### SOC-13 · Dixon-Coles time-decay weighting   (Rung 3 — Opponent adjustment)
+#### SOC-13 · Dixon-Coles time-decay weighting   (Rung 3 - Opponent adjustment)
 - **Data field / source:** the SOC-12 fit with the Dixon-Coles exponential time-decay ξ on match age (all leagues).
 - **Hypothesis:** Down-weighting old matches tracks squad changes and beats an unweighted fit.
 - **Impact measured:** Δ log-loss vs SOC-12 over a ξ half-life sweep.
 - **Act:** 1
 
-#### SOC-14 · Promoted / relegated cold-start prior   (Rung 3 — Opponent adjustment)
+#### SOC-14 · Promoted / relegated cold-start prior   (Rung 3 - Opponent adjustment)
 - **Data field / source:** cross-season club continuity from football-data; seed newly-promoted teams from prior-division Elo/finish (all leagues with promotion).
 - **Hypothesis:** Shrinking a promoted side toward a "newly-promoted" prior beats the neutral 1.0 rating pre-`MIN_PRIOR`.
 - **Impact measured:** Δ log-loss on **August/September fixtures only** (the cold-start window).
 - **Act:** 1
 
-#### SOC-15 · Days of rest (home & away)   (Rung 4 — Rest / schedule / congestion)
+#### SOC-15 · Days of rest (home & away)   (Rung 4 - Rest / schedule / congestion)
 - **Data field / source:** days since each team's previous `date` (all leagues).
 - **Hypothesis:** A rested side outperforms one on short rest; small but real in congested stretches.
 - **Impact measured:** Δ log-loss / goals MAE vs SOC-12.
 - **Act:** 1
 
-#### SOC-16 · Rest-differential (home − away)   (Rung 4 — Rest / schedule / congestion)
+#### SOC-16 · Rest-differential (home − away)   (Rung 4 - Rest / schedule / congestion)
 - **Data field / source:** signed difference of SOC-15 (all leagues).
-- **Hypothesis:** The *gap* in rest predicts better than each side's absolute rest.
+- **Hypothesis:** The gap in rest predicts better than each side's absolute rest.
 - **Impact measured:** Δ accuracy on the subset where |rest gap| ≥ 2 days.
 - **Act:** 1
 
-#### SOC-17 · Midweek European-fixture fatigue   (Rung 4 — Rest / schedule / congestion)
+#### SOC-17 · Midweek European-fixture fatigue   (Rung 4 - Rest / schedule / congestion)
 - **Data field / source:** UCL/UEL match dates flagged onto each club's next-weekend league match; weekday-of-match (all leagues, richest for top-5 European clubs).
 - **Hypothesis:** Clubs playing a midweek European tie underperform their strength on the following matchday.
 - **Impact measured:** Δ log-loss on the flagged subset vs SOC-12.
 - **Act:** 1
 
-#### SOC-18 · Fixture congestion (matches in last 10/14 days)   (Rung 4 — Rest / schedule / congestion)
+#### SOC-18 · Fixture congestion (matches in last 10/14 days)   (Rung 4 - Rest / schedule / congestion)
 - **Data field / source:** count of each club's matches in trailing 10/14-day windows from `date` (all leagues).
 - **Hypothesis:** Rolling match density degrades performance beyond single-game rest.
 - **Impact measured:** Δ log-loss vs SOC-15/16.
 - **Act:** 1
 
-#### SOC-19 · Travel distance / cross-country trips   (Rung 4 — Rest / schedule / congestion)
+#### SOC-19 · Travel distance / cross-country trips   (Rung 4 - Rest / schedule / congestion)
 - **Data field / source:** stadium lat/long (static club-geo table) → haversine for the away side (NBA `geo.py` pattern; all leagues once geo filled).
 - **Hypothesis:** Long away trips cost the traveling team; mostly a totals/λ_away nudge.
 - **Impact measured:** Δ log-loss on the long-trip tail.
 - **Act:** 1
 
-#### SOC-20 · Understat team xG / xGA form   (Rung 5 — Derived efficiency)
+#### SOC-20 · Understat team xG / xGA form   (Rung 5 - Derived efficiency)
 - **Data field / source:** Understat `xG`/`xGA` rolling last-N (**top-5 leagues only, 2014/15+**).
 - **Hypothesis:** Rolling xG estimates true scoring rate better than rolling goals (less finishing noise).
 - **Impact measured:** Δ log-loss / goals MAE vs SOC-05 on **top-5 matches only**.
 - **Act:** 1
 
-#### SOC-21 · Poisson driven by xG instead of goals   (Rung 5 — Derived efficiency)
+#### SOC-21 · Poisson driven by xG instead of goals   (Rung 5 - Derived efficiency)
 - **Data field / source:** Understat team `xG`/`xGA` fed into the Dixon-Coles λ in place of `fthg`/`ftag` (top-5 leagues).
 - **Hypothesis:** Strengths built on xG regress less and predict better than strengths built on realized goals.
 - **Impact measured:** Δ log-loss vs SOC-12 head-to-head on top-5 matches; calibration.
 - **Act:** 1
 
-#### SOC-22 · xG-difference form vs raw goal-difference form   (Rung 5 — Derived efficiency)
+#### SOC-22 · xG-difference form vs raw goal-difference form   (Rung 5 - Derived efficiency)
 - **Data field / source:** rolling (xG − xGA) vs rolling (GF − GA) as competing features (top-5 leagues).
 - **Hypothesis:** A team over/under-performing its xG will regress; xG-diff carries info the scoreboard already spent.
 - **Impact measured:** Δ log-loss from adding xG-diff on top of goal-diff (ablation).
 - **Act:** 1
 
-#### SOC-23 · Non-penalty xG (npxG) form   (Rung 5 — Derived efficiency)
+#### SOC-23 · Non-penalty xG (npxG) form   (Rung 5 - Derived efficiency)
 - **Data field / source:** Understat `npxG`/`npxGA` (top-5 leagues).
 - **Hypothesis:** Stripping penalties (noisy, low-frequency) gives a more stable underlying-quality estimate.
 - **Impact measured:** Δ log-loss vs SOC-20/21.
 - **Act:** 1
 
-#### SOC-24 · Shot quality (xG per shot) & shot volume   (Rung 5 — Derived efficiency)
+#### SOC-24 · Shot quality (xG per shot) & shot volume   (Rung 5 - Derived efficiency)
 - **Data field / source:** Understat shot-level `xG` → xG/shot + shot count (top-5); StatsBomb shot xG for open-data comps.
-- **Hypothesis:** Separating chance *volume* from chance *quality* explains variance a single xG hides.
+- **Hypothesis:** Separating chance volume from chance quality explains variance a single xG hides.
 - **Impact measured:** Δ log-loss vs SOC-20.
 - **Act:** 1
 
-#### SOC-25 · Expected points (xPts) form   (Rung 5 — Derived efficiency)
+#### SOC-25 · Expected points (xPts) form   (Rung 5 - Derived efficiency)
 - **Data field / source:** Understat `xpts` rolling (top-5 leagues).
 - **Hypothesis:** Expected-points trend is a compact, draw-aware efficiency summary that improves the 1X2 head.
 - **Impact measured:** Δ log-loss incl. **draw class**.
 - **Act:** 1
 
-#### SOC-26 · Home/away performance split (team-specific HFA)   (Rung 6 — Matchup & interaction)
+#### SOC-26 · Home/away performance split (team-specific HFA)   (Rung 6 - Matchup & interaction)
 - **Data field / source:** already venue-split in the repo; make the home-advantage term **team-specific** rather than the global `HOME_FIELD=1.19` (all leagues).
 - **Hypothesis:** Home advantage varies by club (fortress vs poor travelers); a per-team term beats one constant.
 - **Impact measured:** Δ log-loss vs the single-constant model (SOC-12).
 - **Act:** 1
 
-#### SOC-27 · Style mismatch: possession vs direct   (Rung 6 — Matchup & interaction)
+#### SOC-27 · Style mismatch: possession vs direct   (Rung 6 - Matchup & interaction)
 - **Data field / source:** possession / pass-completion / pace proxies from Understat + StatsBomb events (top-5 + StatsBomb comps); shot-shape from football-data big leagues.
 - **Hypothesis:** Certain style pairings (low-block vs possession) shift outcome/draw probability beyond raw strength.
 - **Impact measured:** Δ log-loss from style-interaction terms vs SOC-12; top-5 subset.
 - **Act:** 1
 
-#### SOC-28 · Favorite-vs-underdog interaction (Elo gap × home)   (Rung 6 — Matchup & interaction)
+#### SOC-28 · Favorite-vs-underdog interaction (Elo gap × home)   (Rung 6 - Matchup & interaction)
 - **Data field / source:** interaction of Elo gap (SOC-11) with home/away and with rest (all leagues).
 - **Hypothesis:** Home advantage matters more for evenly-matched games than lopsided ones.
 - **Impact measured:** Δ log-loss vs additive model.
 - **Act:** 1
 
-#### SOC-29 · Head-to-head history   (Rung 6 — Matchup & interaction)
+#### SOC-29 · Head-to-head history   (Rung 6 - Matchup & interaction)
 - **Data field / source:** prior meetings of the exact pair from football-data history (all leagues, deep archive).
-- **Hypothesis:** Some pairings have persistent stylistic outcomes beyond current strength (weak signal — test honestly).
+- **Hypothesis:** Some pairings have persistent stylistic outcomes beyond current strength (weak signal, test honestly).
 - **Impact measured:** Δ log-loss from H2H term (expected near-zero). Report even if null.
 - **Act:** 1
 
-#### SOC-30 · League-specific home advantage & draw rate   (Rung 7 — Situational)
+#### SOC-30 · League-specific home advantage & draw rate   (Rung 7 - Situational)
 - **Data field / source:** per-league home-win% and draw% from `FTR` (all leagues).
-- **Hypothesis:** Home edge and draw frequency vary by league/country; a per-league prior beats a global one — important as we widen past the EPL.
+- **Hypothesis:** Home edge and draw frequency vary by league/country; a per-league prior beats a global one, important as we widen past the EPL.
 - **Impact measured:** Δ log-loss pooled across leagues vs a global constant.
 - **Act:** 1
 
-#### SOC-31 · Derby / local-rivalry flag   (Rung 7 — Situational)
+#### SOC-31 · Derby / local-rivalry flag   (Rung 7 - Situational)
 - **Data field / source:** static rivalry table keyed by club pair (all leagues).
 - **Hypothesis:** Derbies compress favorites and raise draw/card variance; a derby flag shifts P(draw) up.
 - **Impact measured:** Δ **draw-class** log-loss on the derby subset.
 - **Act:** 1
 
-#### SOC-32 · Title / relegation / European stakes (late season)   (Rung 7 — Situational)
+#### SOC-32 · Title / relegation / European stakes (late season)   (Rung 7 - Situational)
 - **Data field / source:** league-position + points-gap context from standings built off `FTR`, plus matchday number (all leagues).
 - **Hypothesis:** Motivation asymmetry late in the season moves outcomes beyond strength.
 - **Impact measured:** Δ log-loss on final-quarter-of-season fixtures.
 - **Act:** 1
 
-#### SOC-33 · Dead-rubber / rotation risk   (Rung 7 — Situational)
+#### SOC-33 · Dead-rubber / rotation risk   (Rung 7 - Situational)
 - **Data field / source:** standings context (nothing to play for) + upcoming cup/European fixture proximity (all leagues; congestion from SOC-17/18).
 - **Hypothesis:** Safe teams with a big midweek fixture rotate and underperform their rating.
 - **Impact measured:** Δ log-loss on flagged dead-rubber/rotation subset.
 - **Act:** 1
 
-#### SOC-34 · Confirmed starting XI strength   (Rung 8 — Market-adjacent probe · Act 2)
+#### SOC-34 · Confirmed starting XI strength   (Rung 8 - Market-adjacent probe · Act 2)
 - **Data field / source:** confirmed lineups (~1h pre-kickoff) via Sofascore/FotMob (`soccerdata`); rate the XI by players' Understat xG/xA (top leagues where lineups + player xG exist).
 - **Hypothesis:** Knowing the actual XI (rotation, rested stars) closes part of the gap to the market, which prices lineups. Needs pre-match timing the model shouldn't "know" at build time.
 - **Impact measured:** Δ log-loss vs SOC-21 on matches with confirmed XI; **and Δ CLV** vs closing 1X2 (`PSCH`/`AvgC`).
 - **Act:** probe (Act 2)
 
-#### SOC-35 · Key-player / injury availability   (Rung 8 — Market-adjacent probe · Act 2)
+#### SOC-35 · Key-player / injury availability   (Rung 8 - Market-adjacent probe · Act 2)
 - **Data field / source:** injury/suspension lists (FotMob/Sofascore) mapped to player xG/xA weight; suspensions inferable from `HR`/second-yellow history (top leagues).
 - **Hypothesis:** A missing high-xG creator or first-choice keeper degrades a side more than a uniform rating implies.
-- **Impact measured:** Δ log-loss on matches with a flagged absence; explicitly test whether it moves **CLV** (the NBA analog found injuries did *not* explain the gap — expect the same caution).
+- **Impact measured:** Δ log-loss on matches with a flagged absence; explicitly test whether it moves **CLV** (the NBA analog found injuries did not explain the gap, expect the same caution).
 - **Act:** probe (Act 2)
 
-#### SOC-36 · Line-movement (opening → closing drift)   (Rung 8 — Market-adjacent probe · Act 2)
-- **Data field / source:** football-data opening vs closing odds (`B365H` vs `B365CH`, `PSH` vs `PSCH`, `AvgH` vs `AvgCH`) — grading/probe only (all leagues with odds).
-- **Hypothesis:** The *direction* the market moves encodes info (injuries, lineups, sharp money) our blind model lacks — quantify it, don't consume it.
-- **Impact measured:** The **wall exhibit** — our open-vs-close **CLV** was measured **negative** (2025, 6,102 bets; market drifts away ~59%; opening −4.8% vs closing −3.9%). Publish the CLV distribution as the decomposition endpoint.
+#### SOC-36 · Line-movement (opening → closing drift)   (Rung 8 - Market-adjacent probe · Act 2)
+- **Data field / source:** football-data opening vs closing odds (`B365H` vs `B365CH`, `PSH` vs `PSCH`, `AvgH` vs `AvgCH`), grading/probe only (all leagues with odds).
+- **Hypothesis:** The direction the market moves encodes info (injuries, lineups, sharp money) our blind model lacks, quantify it, don't consume it.
+- **Impact measured:** The **wall exhibit**: our open-vs-close **CLV** was measured **negative** (2025, 6,102 bets; market drifts away ~59%; opening −4.8% vs closing −3.9%). Publish the CLV distribution as the decomposition endpoint.
 - **Act:** probe (Act 2)
 
-#### SOC-37 · Model-vs-market gap decomposition (grading layer)   (Rung 8 — Market-adjacent probe · Act 2)
+#### SOC-37 · Model-vs-market gap decomposition (grading layer)   (Rung 8 - Market-adjacent probe · Act 2)
 - **Data field / source:** de-vigged closing 1X2 (`PSCH/D/A`) + totals (`Avg>2.5`) vs each rung's blind prediction; grading via `track_record` (draw = loss for a picked side).
-- **Hypothesis:** The residual log-loss gap between our best blind model and the closing line — after every feature above — is what the market knows that we structurally can't (transfers, team-news, sharp flow).
+- **Hypothesis:** The residual log-loss gap between our best blind model and the closing line, after every feature above, is what the market knows that we structurally can't (transfers, team-news, sharp flow).
 - **Impact measured:** Per-rung Δ(model log-loss − market log-loss) across all 10 leagues; confirms the honest finding that the closing line wins in **all 10**. The two-act payoff, not a to-beat target.
 - **Act:** probe (Act 2)
 
@@ -1634,6 +1632,6 @@ _Impact metric throughout: Δ SU accuracy / Δ log-loss on winner, Δ margin-MAE
 
 ## How this becomes the content calendar
 
-Each rung is one "feature of the day/week" post: *tested X → here's the walk-forward delta → here's what's next.* Cadence per `CHALK_MASTER_PLAN.md` §7 (NFL/CFB ~twice a week, NBA/NHL daily, MLB/soccer a few per week). Act-1 rungs are the "watch it climb" arc; the Rung-8 probes are the "hit the wall" Act-2 payoff — where we publish, honestly, exactly how much of the market's edge each signal does (and mostly doesn't) recover.
+Each rung is one "feature of the day/week" post: *tested X → here's the walk-forward delta → here's what's next.* Cadence per `CHALK_MASTER_PLAN.md` §7 (NFL/CFB ~twice a week, NBA/NHL daily, MLB/soccer a few per week). Act-1 rungs are the "watch it climb" arc; the Rung-8 probes are the "hit the wall" Act-2 payoff, where we publish, honestly, exactly how much of the market's edge each signal does (and mostly doesn't) recover.
 
 **Buildable today (cached data, zero new ingests):** NFL/NBA/NHL/MLB/soccer Rungs 1–4. **Needs a one-time free backfill first:** NFL PBP (Rung 5+), MLB Statcast/FanGraphs (Rung 5+), NHL MoneyPuck (Rung 5+), CFB the whole CFBD plugin. **Sequencing suggestion:** stand up the day-1 baseline + eval harness on NFL, prove the loop end-to-end on Rungs 1–3, then fan out.

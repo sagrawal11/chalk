@@ -1,7 +1,7 @@
 # `agent/` — the scheduled autonomy agent (NEW)
 
-**Milestone:** M5 (`BUILD_PLAN.md`). **Design:** `ARCHITECTURE.md` §5j,
-`OPS_RUNBOOK.md` §4–§6.
+**Milestone:** M5 (`docs/BUILD_PLAN.md`). **Design:** `docs/ARCHITECTURE.md` §5j,
+`docs/OPS_RUNBOOK.md` §4–§6.
 
 The 🟡 judgment layer the deterministic 🟢 GitHub Actions pipeline hands off to:
 finalize/tighten drafted copy, sanity-check the reel/cards against the numbers,
