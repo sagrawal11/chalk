@@ -1,4 +1,4 @@
-# CHALK — local dev (Hybrid: Docker services + native Vite).
+# CHALK: local dev (Hybrid: Docker services + native Vite).
 # Run `make setup` once, then `make dev`. Run `make test` for the suite.
 
 .PHONY: help setup build up down restart logs ps frontend dev seed-r2 cache redis-cli backend-shell test

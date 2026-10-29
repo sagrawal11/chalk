@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# First-run bootstrap for the local dev stack. Idempotent — safe to re-run.
+# First-run bootstrap for the local dev stack. Idempotent, safe to re-run.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -11,7 +11,7 @@ if [ ! -f .env ]; then
   cp .env.example .env
   echo "    Created .env from .env.example."
 else
-  echo "    .env already present — leaving as-is."
+  echo "    .env already present, leaving as-is."
 fi
 
 # 2. Preconditions.

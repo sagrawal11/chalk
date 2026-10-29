@@ -1,4 +1,4 @@
-# Keep the build context tiny — only requirements.txt is COPYed into the image.
+# Keep the build context tiny, only requirements.txt is COPYed into the image.
 # Code + data + artifacts arrive at runtime via the docker-compose bind mount.
 data/
 models/artifacts/
