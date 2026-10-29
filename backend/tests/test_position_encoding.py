@@ -42,7 +42,7 @@ def test_same_position_encodes_identically_across_frames():
 
     assert len(code_a) == 1 and len(code_b) == 1
     assert code_a[0] == code_b[0], (
-        f"'PG' encoded as {code_a[0]} in one frame but {code_b[0]} in another — "
+        f"'PG' encoded as {code_a[0]} in one frame but {code_b[0]} in another: "
         "per-frame categorical codes cause train-serve skew"
     )
 
