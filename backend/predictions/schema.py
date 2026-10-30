@@ -7,14 +7,14 @@ snapshot them immutably.
 
 Team predictions come from a normal model of game **margin** (home - away) and
 **total** (home + away): win probability and predicted scores fall out of those
-two normals. Player props carry a mean plus a distribution descriptor filled in
-by ``models.distribution`` (Phase 1).
+two normals. Player props carry a projected mean stat value, graded against the
+real stat.
 
 Sign convention: ``mu_margin`` is home minus away (positive => home favored).
 """
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from typing import Any, Dict, Optional
 
 
@@ -85,11 +85,6 @@ class PlayerPropPrediction:
     player_name: str = ""
     team: str = ""
     opponent: str = ""
-    # Distribution descriptor, filled by models.distribution (Phase 1):
-    #   "point" (mu only), "normal" ({"sigma": s}), "nb" ({"dispersion": r}),
-    #   "empirical" ({"quantiles": [...]})
-    dist_kind: str = "point"
-    dist_params: Dict[str, Any] = field(default_factory=dict)
     model_version: str = ""
     game_key: str = ""
 

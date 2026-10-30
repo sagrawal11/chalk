@@ -237,11 +237,11 @@ def evaluate_team_model(
         "sigma_total": sig_total,
         "home_win_rate_actual": float(y_win.mean()),
         "home_win_prob_mean": float(p_home.mean()),
-        "moneyline_brier": brier_score(p_home, y_win),
-        "moneyline_logloss": log_loss(p_home, y_win),
+        "winner_brier": brier_score(p_home, y_win),
+        "winner_logloss": log_loss(p_home, y_win),
         "margin": evaluate_normal_target(mu_margin, np.full(n, sig_margin), y_margin, "margin"),
         "total": evaluate_normal_target(mu_total, np.full(n, sig_total), y_total, "total"),
-        "reliability_moneyline": reliability_bins(p_home, y_win, nbins=8),
+        "reliability_winner": reliability_bins(p_home, y_win, nbins=8),
     }
 
 
@@ -267,10 +267,10 @@ def main() -> None:
         json.dump(report, f, indent=2)
     logger.info(
         "%s calibration (OOS) | holdout=%s n=%d | home win: actual=%.3f pred=%.3f | "
-        "ML Brier=%.4f | margin cov80=%.2f total cov80=%.2f",
+        "Winner Brier=%.4f | margin cov80=%.2f total cov80=%.2f",
         args.sport.upper(), report["holdout_season"], report["n_games"],
         report["home_win_rate_actual"], report["home_win_prob_mean"],
-        report["moneyline_brier"], report["margin"]["coverage_80"], report["total"]["coverage_80"],
+        report["winner_brier"], report["margin"]["coverage_80"], report["total"]["coverage_80"],
     )
     print(json.dumps(report, indent=2))
 

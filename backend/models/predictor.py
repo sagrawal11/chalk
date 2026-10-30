@@ -64,16 +64,6 @@ class NBAPredictor:
             if p_res.exists():
                 self.residual_models[t] = joblib.load(p_res)
 
-        # OOS-fit NB dispersions for prop P(over) distributions (Phase 1C).
-        self.dispersions: Dict[str, Any] = {}
-        disp_path = self.artifacts_dir / "stat_dispersions.json"
-        if disp_path.exists():
-            try:
-                with open(disp_path) as f:
-                    self.dispersions = json.load(f)
-            except Exception:
-                self.dispersions = {}
-
     def _feature_skew_report(self, row: pd.Series) -> Dict[str, Any]:
         """Which trained feature_columns would be silently filled with 0.0 for
         this inference row, counting BOTH columns absent from the row and
@@ -114,31 +104,6 @@ class NBAPredictor:
         if month >= 10:
             return f"{year}-{str(year + 1)[-2:]}"
         return f"{year - 1}-{str(year)[-2:]}"
-
-    def predict_player_distribution(
-        self,
-        player_name: str,
-        opponent_team: str,
-        is_home: bool,
-        game_date: str,
-        season: str,
-        injury_status: str = "Healthy",
-        teammates_out: Optional[List[str]] = None,
-    ) -> Optional[Dict[str, Any]]:
-        """Per-stat predictive distribution (P(over line)-capable): wraps each
-        point prediction in an NB head using the OOS-fit dispersion (Phase 1C)."""
-        point = self.predict_player_stats(
-            player_name, opponent_team, is_home, game_date, season,
-            injury_status, teammates_out,
-        )
-        if point is None:
-            return None
-        from models.distribution import PoissonNBHead
-
-        return {
-            stat: PoissonNBHead(mu=float(mu), dispersion=self.dispersions.get(stat))
-            for stat, mu in point.items()
-        }
 
     def predict_player_stats(
         self,

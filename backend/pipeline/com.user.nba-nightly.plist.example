@@ -13,7 +13,7 @@
   <key>Label</key>
   <string>com.user.nba-nightly</string>
   <key>WorkingDirectory</key>
-  <string>/ABSOLUTE/PATH/TO/basketball_betting/backend</string>
+  <string>/ABSOLUTE/PATH/TO/chalk/backend</string>
   <key>ProgramArguments</key>
   <array>
     <string>/ABSOLUTE/PATH/TO/venv/bin/python</string>

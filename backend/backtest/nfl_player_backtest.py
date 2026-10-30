@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Honest reliability check for NFL player-prop models.
 
-Player props have no abundant historical betting lines to grade against, so the
-meaningful backtest is *projection skill*: on the untouched holdout season, does
-the anchored LightGBM model beat the naive baselines a human would use for free?
+The meaningful backtest for player props is *projection skill*: on the untouched
+holdout season, does the anchored LightGBM model beat the naive baselines a human
+would use for free?
 
   - baseline "last-3":    predict the player's trailing-3-game average (the anchor)
   - baseline "season avg": predict the player's season-to-date average

@@ -1,5 +1,5 @@
-"""NHL sport plugin implementing the shared ``Sport`` interface (NHL API data;
-lines via The Odds API). Team goal-score model + skater points/shots props."""
+"""NHL sport plugin implementing the shared ``Sport`` interface (NHL API data).
+Team goal-score model + skater points/shots props."""
 from __future__ import annotations
 
 import logging

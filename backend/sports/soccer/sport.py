@@ -52,6 +52,6 @@ class SoccerSport(Sport):
         )
 
     def schedule(self, game_date: Optional[str] = None) -> List[Dict[str, Any]]:
-        """No free soccer fixtures source is wired yet (the prior source was the betting
-        odds API, now removed). Returns an empty slate until a free schedule feed is added."""
+        """No free soccer fixtures source is wired yet. Returns an empty slate
+        until a free schedule feed is added."""
         return []

@@ -7,7 +7,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Dict
 
-# The Odds API sport keys for the three competitions we cover.
+# Sport keys for the three competitions we cover.
 COMPETITIONS: Dict[str, str] = {
     "epl": "soccer_epl",
     "ucl": "soccer_uefa_champs_league",

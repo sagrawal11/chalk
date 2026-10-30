@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Train the team score model: LightGBM for game **margin** (home-away) and
 **total** (home+away), each paired with a holdout-fit residual sigma so it
-becomes a calibrated normal. Win / spread-cover / total over-under probabilities
-are derived from these two normals at serve time (see models.team_predictor).
+becomes a calibrated normal. Win probability and predicted scores are derived
+from these two normals at serve time (see models.team_predictor).
 
 Uses the same honest walk-forward + untouched-holdout methodology as the player
 trainer (model_training.validation).
