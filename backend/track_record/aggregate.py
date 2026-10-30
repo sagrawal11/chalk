@@ -75,3 +75,21 @@ def headline(ledger: pd.DataFrame) -> Dict[str, Any]:
         "n": int(len(ledger)),
         "score_mae": score_mae(ledger),
     }
+
+
+def prop_mae(ledger: pd.DataFrame) -> Optional[float]:
+    """Mean absolute error of the projected player stats (the ``abs_err`` column)."""
+    if ledger is None or ledger.empty or "abs_err" not in ledger.columns:
+        return None
+    errs = ledger["abs_err"].dropna()
+    return round(float(errs.mean()), 3) if len(errs) else None
+
+
+def prop_headline(ledger: pd.DataFrame) -> Dict[str, Any]:
+    """One-glance prop record: n, overall stat-MAE, mean signed bias, and per-stat MAE."""
+    if ledger is None or ledger.empty:
+        return {"n": 0, "mae": None, "bias": None, "by_stat": {}}
+    by_stat = {str(stat): round(float(g["abs_err"].mean()), 3)
+               for stat, g in ledger.groupby("stat")}
+    bias = round(float(ledger["err"].mean()), 3) if "err" in ledger.columns else None
+    return {"n": int(len(ledger)), "mae": prop_mae(ledger), "bias": bias, "by_stat": by_stat}

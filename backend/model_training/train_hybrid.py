@@ -37,7 +37,6 @@ from feature_engine import (
     split_features_targets,
 )
 from model_training.validation import walk_forward_train
-from models.distribution import nb_dispersion_from_moments
 from utils.names import player_slug
 
 logging.basicConfig(level=logging.INFO)
@@ -208,7 +207,6 @@ def main() -> None:
                 len(full), ROTATION_MIN_L10, len(feature_cols), y_cols)
 
     metrics_all: Dict[str, object] = {}
-    dispersions: Dict[str, Any] = {}
     for target in TARGET_STATS:
         if target not in full.columns:
             logger.warning("Skipping %s - not in data", target)
@@ -233,20 +231,12 @@ def main() -> None:
                 args.out / f"global_lgbm_{target}.joblib",
             )
 
-            # NB dispersion for prop P(over): residual variance is identical for the
-            # adjustment and the level; combine it with the stat's level moments.
-            rstd = m.get("holdout_resid_std") or 0.0
-            lvl = pd.to_numeric(full[target], errors="coerce")
-            disp = nb_dispersion_from_moments(float(lvl.mean()), float((lvl ** 2).mean()), rstd ** 2)
-            dispersions[target] = None if not np.isfinite(disp) else round(disp, 4)
-
             local_models, residual_count = train_residuals(
                 X_frame[feature_cols], y_adj, model, slugs, dates
             )
             joblib.dump(local_models, args.out / f"residuals_{target}.joblib")
 
             m["residual_models_trained"] = residual_count
-            m["nb_dispersion"] = dispersions[target]
             m["anchored"] = anchor_col is not None
             metrics_all[target] = m
             logger.info(
@@ -260,8 +250,6 @@ def main() -> None:
 
     with open(args.out / "hybrid_training_metrics.json", "w", encoding="utf-8") as f:
         json.dump(metrics_all, f, indent=2)
-    with open(args.out / "stat_dispersions.json", "w", encoding="utf-8") as f:
-        json.dump(dispersions, f, indent=2)
     logger.info("Done. Artifacts in %s", args.out)
 
 

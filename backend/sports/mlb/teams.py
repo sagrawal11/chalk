@@ -1,8 +1,8 @@
 """Canonical MLB team identity (StatsAPI abbreviations) + alias folding.
 
 Handles the abbreviation variants across sources (ARI/AZ, CHW/CWS, WAS/WSH,
-SDP/SD, SFG/SF, TBR/TB, KCR/KC, OAK/ATH after the A's move) and The Odds API
-full team names, so odds, StatsAPI, and content all resolve to one code.
+SDP/SD, SFG/SF, TBR/TB, KCR/KC, OAK/ATH after the A's move) and full team
+names, so every source resolves to one code.
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ CANONICAL_TEAMS: Set[str] = {
     "PHI", "PIT", "SD", "SEA", "SF", "STL", "TB", "TEX", "TOR", "WSH",
 }
 
-# Full team names (StatsAPI + The Odds API) -> canonical code.
+# Full team names -> canonical code.
 _FULL_NAMES: Dict[str, str] = {
     "Athletics": "ATH", "Oakland Athletics": "ATH", "Atlanta Braves": "ATL",
     "Arizona Diamondbacks": "AZ", "Baltimore Orioles": "BAL", "Boston Red Sox": "BOS",

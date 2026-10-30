@@ -351,7 +351,7 @@ def _recent_success(hours: float) -> bool:
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser(description="NBA betting backend nightly pipeline")
+    ap = argparse.ArgumentParser(description="CHALK nightly data + model pipeline")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--rebuild-features", action="store_true")
     ap.add_argument("--fit-archetypes", action="store_true")

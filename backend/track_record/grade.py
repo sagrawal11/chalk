@@ -16,6 +16,7 @@ from track_record.lock import load_lock
 
 logger = logging.getLogger(__name__)
 RESULTS_LEDGER = DATA_DIR / "predictions" / "results_ledger.parquet"
+PROP_RESULTS_LEDGER = DATA_DIR / "predictions" / "prop_results_ledger.parquet"
 
 
 def grade_game(pred: Dict[str, Any], home_pts: float, away_pts: float) -> Dict[str, Any]:
@@ -67,18 +68,69 @@ def grade_date(
     return pd.DataFrame(rows)
 
 
-def append_ledger(df: pd.DataFrame) -> int:
+def _upsert(df: pd.DataFrame, path, key: list) -> int:
+    """Idempotent append: concat with any existing ledger, de-dupe on ``key``
+    (keep latest), rewrite. Returns net rows added."""
     if df is None or df.empty:
         return 0
-    key = ["sport", "game_date", "home", "away"]
-    if RESULTS_LEDGER.exists():
-        old = pd.read_parquet(RESULTS_LEDGER)
+    if path.exists():
+        old = pd.read_parquet(path)
         n_old = len(old)
         combined = pd.concat([old, df], ignore_index=True)
     else:
         n_old = 0
         combined = df
     combined = combined.drop_duplicates(subset=key, keep="last")
-    RESULTS_LEDGER.parent.mkdir(parents=True, exist_ok=True)
-    combined.to_parquet(RESULTS_LEDGER, index=False)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    combined.to_parquet(path, index=False)
     return len(combined) - n_old
+
+
+def append_ledger(df: pd.DataFrame) -> int:
+    return _upsert(df, RESULTS_LEDGER, ["sport", "game_date", "home", "away"])
+
+
+# --------------------------------------------------------------------------- #
+# Player props: grade each projected stat against the real box-score value.    #
+# No line, no over/under: just the predicted number vs the actual number.      #
+# --------------------------------------------------------------------------- #
+def grade_prop(pred: Dict[str, Any], actual: float) -> Dict[str, Any]:
+    """Grade one locked PlayerPropPrediction dict against the real stat value:
+    the signed and absolute error of the projected stat."""
+    mu, actual = float(pred["mu"]), float(actual)
+    return {
+        "pred": round(mu, 2),
+        "actual": round(actual, 2),
+        "err": round(mu - actual, 2),
+        "abs_err": round(abs(mu - actual), 2),
+    }
+
+
+def _prop_key(pred: Dict[str, Any]) -> str:
+    return f"{pred['player_slug']}:{pred['stat']}"
+
+
+def grade_props_date(
+    sport: str,
+    game_date: str,
+    actuals: Dict[str, float],
+) -> pd.DataFrame:
+    """Grade a locked slate's prop predictions against actual stat values.
+    ``actuals`` maps ``"{player_slug}:{stat}"`` -> the real stat value; props
+    without a known actual are skipped."""
+    doc = load_lock(sport, game_date)
+    rows = []
+    for pp in doc.get("prop_predictions", []):
+        a = actuals.get(_prop_key(pp))
+        if a is None:
+            continue
+        rows.append({
+            "sport": sport, "game_date": game_date,
+            "player_slug": pp["player_slug"], "player_name": pp.get("player_name", ""),
+            "stat": pp["stat"], **grade_prop(pp, a), "source": "live",
+        })
+    return pd.DataFrame(rows)
+
+
+def append_prop_ledger(df: pd.DataFrame) -> int:
+    return _upsert(df, PROP_RESULTS_LEDGER, ["sport", "game_date", "player_slug", "stat"])

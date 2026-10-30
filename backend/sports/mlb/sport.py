@@ -1,5 +1,5 @@
-"""MLB sport plugin implementing the shared ``Sport`` interface (StatsAPI data;
-lines via The Odds API). Team run-score model wired; player props TBD."""
+"""MLB sport plugin implementing the shared ``Sport`` interface (StatsAPI data).
+Team run-score model wired; player props TBD."""
 from __future__ import annotations
 
 import logging

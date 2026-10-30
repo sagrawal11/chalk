@@ -1,7 +1,7 @@
 """Canonical NBA team identity + season-format bridge.
 
-A single choke point for team codes so every join (odds <-> predictions <->
-team model <-> ESPN feeds) speaks one vocabulary. Folding franchise relocations
+A single choke point for team codes so every join (predictions <-> team model
+<-> ESPN feeds) speaks one vocabulary. Folding franchise relocations
 and feed-specific aliases here prevents the silent empty-join corruption that
 mismatched codes cause.
 

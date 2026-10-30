@@ -44,15 +44,7 @@ class NBAPlayerPredictorV3:
         if mp.exists():
             met = json.load(open(mp))
             self._beats = {t: (met.get(t, {}).get("skill_pct", 0) or 0) > 0 for t in TARGET_STATS}
-        self._disp = {}
-        dp = self.model_dir / "stat_dispersions.json"
-        if dp.exists():
-            self._disp = json.load(open(dp))
         self._latest = None
-
-    def dispersion(self, stat: str):
-        """NB dispersion for the stat's predictive distribution (None => Poisson)."""
-        return self._disp.get(stat)
 
     def available(self) -> bool:
         return len(self._m) > 0

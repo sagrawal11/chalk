@@ -80,3 +80,34 @@ def test_aggregate_headline_and_summary():
     assert h["streak"] == -1              # most recent (01-17) is a loss
     assert h["score_mae"] is not None
     assert not summarize(df, ["sport"]).empty
+
+
+def _pp(slug="lebron_james", stat="PTS", mu=27.0):
+    from predictions.schema import PlayerPropPrediction
+    return PlayerPropPrediction(sport="nba", game_date="2025-01-15", player_slug=slug,
+                                stat=stat, mu=mu, home="LAL", away="BOS")
+
+
+def test_grade_props_mae_and_bias(tmp_path, monkeypatch):
+    from track_record.aggregate import prop_headline
+    monkeypatch.setattr(lock, "LOCKED_DIR", tmp_path / "locked")
+    monkeypatch.setattr(grade, "PROP_RESULTS_LEDGER", tmp_path / "props.parquet")
+    lock.lock_predictions("nba", "2025-01-15", [_gp()],
+                          prop_predictions=[_pp("lebron_james", "PTS", 27.0),
+                                            _pp("anthony_davis", "PTS", 22.0)])
+    res = grade.grade_props_date("nba", "2025-01-15",
+                                 {"lebron_james:PTS": 30.0, "anthony_davis:PTS": 18.0})
+    assert len(res) == 2
+    lebron = res[res["player_slug"] == "lebron_james"].iloc[0]
+    assert lebron["abs_err"] == pytest.approx(3.0) and lebron["err"] == pytest.approx(-3.0)
+    assert grade.append_prop_ledger(res) == 2
+    h = prop_headline(res)                        # |27-30|=3, |22-18|=4 -> MAE 3.5
+    assert h["n"] == 2 and h["mae"] == pytest.approx(3.5)
+    assert h["by_stat"]["PTS"] == pytest.approx(3.5)
+
+
+def test_grade_props_skips_unknown_actuals(tmp_path, monkeypatch):
+    monkeypatch.setattr(lock, "LOCKED_DIR", tmp_path / "locked")
+    lock.lock_predictions("nba", "2025-01-16", [_gp("2025-01-16")],
+                          prop_predictions=[_pp("luka_doncic", "AST", 9.0)])
+    assert grade.grade_props_date("nba", "2025-01-16", {}).empty

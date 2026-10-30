@@ -25,7 +25,6 @@ if str(BACKEND) not in sys.path:
 
 from config.paths import ARTIFACTS_DIR
 from model_training.validation import walk_forward_train
-from models.distribution import nb_dispersion_from_moments
 from sports.mlb.batter_features import (ANCHOR_COLS, FEATURE_COLS, MIN_PRIOR_GAMES,
                                         PROP_TARGETS, build_batter_frame)
 
@@ -67,13 +66,8 @@ def main() -> None:
         baseline = float(y_adj[ho].abs().mean()) if ho.any() else float(y_adj.abs().mean())
         skill = (1.0 - m["holdout_mae"] / baseline) * 100.0 if baseline else 0.0
 
-        lvl = pd.to_numeric(frame[target], errors="coerce")
-        rstd = m.get("holdout_resid_std") or 0.0
-        disp = nb_dispersion_from_moments(float(lvl.mean()), float((lvl ** 2).mean()), rstd ** 2)
-
         joblib.dump({"model": model, "target": target, "anchor_col": anchor_col,
-                     "feature_cols": FEATURE_COLS, "metrics": m,
-                     "nb_dispersion": None if not np.isfinite(disp) else round(disp, 4)},
+                     "feature_cols": FEATURE_COLS, "metrics": m},
                     args.out / f"batter_{target}.joblib")
         summary["targets"][target] = {
             "holdout_mae": m["holdout_mae"], "cv_mae": m.get("cv_mae"),

@@ -43,7 +43,6 @@ def test_prop_construction_and_game_key():
     p = PlayerPropPrediction(
         sport="nba", game_date="2025-01-15", player_slug="lebron_james",
         stat="PTS", mu=27.0, home="LAL", away="BOS",
-        dist_kind="normal", dist_params={"sigma": 6.0},
     )
     assert p.game_key == "nba:2025-01-15:BOS@LAL"
-    assert p.mu == 27.0 and p.dist_kind == "normal"
+    assert p.mu == 27.0 and p.stat == "PTS"

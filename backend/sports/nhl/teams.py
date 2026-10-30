@@ -1,8 +1,8 @@
 """Canonical NHL team identity (NHL API abbreviations) + alias/relocation folding.
 
 Franchise continuity: Atlanta Thrashers (ATL) -> Winnipeg (WPG, 2011); Phoenix/
-Arizona Coyotes (PHX/ARI) -> Utah (UTA, 2024). The Odds API full team names map
-in too, so odds, the NHL API, and content resolve to one code.
+Arizona Coyotes (PHX/ARI) -> Utah (UTA, 2024). Full team names map in too, so
+every source resolves to one code.
 """
 from __future__ import annotations
 

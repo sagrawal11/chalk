@@ -5,8 +5,8 @@ per-minute rate + teammate availability + light context).
 
 Per stat: rotation-gated (MIN_L10>=8), anchored (predict stat - stat_L10), honest
 walk-forward holdout via the shared trainer (which now excludes stub seasons via
-min_season_frac). Saved with feature_cols + anchor + NB dispersion for the
-predictive over/under distributions.
+min_season_frac). Saved with feature_cols + anchor; the projection is the
+predicted stat value (stat_L10 + adjustment).
 """
 from __future__ import annotations
 
@@ -26,7 +26,6 @@ if str(BACKEND) not in sys.path:
 
 from config.paths import ARTIFACTS_DIR
 from model_training.validation import walk_forward_train
-from models.distribution import nb_dispersion_from_moments
 from sports.nba.player_features import (ROTATION_MIN_L10, TARGET_STATS, build_player_frame,
                                         features_for)
 
@@ -56,7 +55,7 @@ def main() -> None:
     dates = frame["GAME_DATE"]
     logger.info("rotation rows (MIN_L10>=%.0f): %d\n", ROTATION_MIN_L10, len(frame))
 
-    metrics, dispersions = {}, {}
+    metrics = {}
     logger.info(f"{'stat':<6}{'n':>9}{'holdout_mae':>13}{'cv_mae':>9}{'best_it':>9}{'baseline':>10}{'skill':>8}")
     for t in TARGET_STATS:
         cols = features_for(t)
@@ -70,13 +69,8 @@ def main() -> None:
         baseline = float(y_adj[ho].abs().mean())               # predict L10 (adj 0)
         skill = (1.0 - m["holdout_mae"] / baseline) * 100.0 if baseline else 0.0
 
-        rstd = m.get("holdout_resid_std") or 0.0
-        lvl = pd.to_numeric(frame[t], errors="coerce")
-        disp = nb_dispersion_from_moments(float(lvl.mean()), float((lvl ** 2).mean()), rstd ** 2)
-        dispersions[t] = None if not np.isfinite(disp) else round(disp, 4)
-
         joblib.dump({"model": model, "target": t, "anchor_col": f"{t}_L10",
-                     "feature_cols": cols, "metrics": m, "nb_dispersion": dispersions[t]},
+                     "feature_cols": cols, "metrics": m},
                     args.out / f"player_{t}.joblib")
         metrics[t] = {"n": int(len(frame)), "holdout_mae": m["holdout_mae"], "cv_mae": m.get("cv_mae"),
                       "best_iteration": m.get("best_iteration"), "baseline_l10": baseline,
@@ -87,8 +81,6 @@ def main() -> None:
 
     with open(args.out / "nba_player_v3_metrics.json", "w") as f:
         json.dump(metrics, f, indent=2)
-    with open(args.out / "stat_dispersions.json", "w") as f:
-        json.dump(dispersions, f, indent=2)
     logger.info("\nDone. Artifacts in %s", args.out)
 
 
