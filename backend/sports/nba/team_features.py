@@ -36,8 +36,14 @@ _AVAIL_FEATURE_COLS: List[str] = (
     + ["OUT_PTS_DIFF", "OUT_MIN_DIFF"]
 )
 _ELO_FEATURE_COLS: List[str] = ["HOME_ELO", "AWAY_ELO", "ELO_DIFF"]
+# Matchup interaction terms (cheap, from existing cols, no new feed): pace x pace and
+# the offense-vs-defense cross-terms. The walk-forward keeps them (lowers margin + total
+# MAE, lifts SU acc); explicit interactions still help the tree here.
+_INTERACTION_FEATURE_COLS: List[str] = ["PACE_PROD", "H_OFF_x_A_DEF", "A_OFF_x_H_DEF"]
 # The model's feature contract (order matters, persisted with the artifact).
-TEAM_FEATURE_COLS: List[str] = _BASE_FEATURE_COLS + _AVAIL_FEATURE_COLS + _ELO_FEATURE_COLS
+TEAM_FEATURE_COLS: List[str] = (
+    _BASE_FEATURE_COLS + _AVAIL_FEATURE_COLS + _ELO_FEATURE_COLS + _INTERACTION_FEATURE_COLS
+)
 
 _ELO_BASE, _ELO_K, _ELO_HOME = 1500.0, 20.0, 100.0
 # League-typical fills for a team's very first game (no prior history); availability
@@ -74,6 +80,10 @@ def _assemble(
     row["HOME_ELO"] = h.get("ELO", _ELO_BASE)
     row["AWAY_ELO"] = a.get("ELO", _ELO_BASE)
     row["ELO_DIFF"] = h.get("ELO", _ELO_BASE) - a.get("ELO", _ELO_BASE)
+    # Matchup interactions: pace x pace (game tempo) and offense-vs-defense cross-terms.
+    row["PACE_PROD"] = h["PACE"] * a["PACE"]
+    row["H_OFF_x_A_DEF"] = h["OFF"] * a["DEF"]
+    row["A_OFF_x_H_DEF"] = a["OFF"] * h["DEF"]
     return row
 
 

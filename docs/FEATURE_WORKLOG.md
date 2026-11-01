@@ -172,3 +172,37 @@ the code wiring is what landed. Retrain with `python -m model_training.train_nfl
 and the soccer predictor rebuilds ratings lazily on first use.
 
 Measurement tooling: `scratch/measure.py` (binary sports), `scratch/measure_soccer_serving.py`.
+
+---
+
+## Run 2 (2026-11-01, cont.): NBA unblocked + retrains + CFB
+
+Owner provided Kaggle creds, so NBA data was stood up: `kaggle datasets download -d
+chrismunch/nba-game-team-statistics` + `build_team_stats_from_kaggle.py` ->
+`data/processed/kaggle_team_games.parquet` (51,172 rows; 23,965 games 2006-2025).
+
+### NBA baseline (28 cols: ratings + pace + availability + Elo)
+su_acc 0.6541, margin_mae 10.086, total_mae 14.915, winner_logloss 0.6157 (untouched
+holdout 2025, train+CV n=19043).
+
+### NBA matchup interactions (PACE x PACE + offense-vs-defense cross-terms) -> KEEP
+
+| metric (primary bold) | baseline (28) | +interactions (31) | delta |
+|---|---|---|---|
+| **margin_mae** | 10.086 | 10.077 | **-0.009** |
+| **total_mae** | 14.915 | 14.872 | **-0.043** |
+| su_acc | 0.6541 | 0.6567 | +0.0026 |
+| winner_logloss | 0.6157 | 0.6153 | -0.0004 |
+
+Every metric improves; explicit interactions still help the tree here. **KEEP** - wired
+`PACE_PROD`, `H_OFF_x_A_DEF`, `A_OFF_x_H_DEF` into `_assemble` + `TEAM_FEATURE_COLS` (both
+training and `matchup_features` inference). 3 NBA team tests green.
+
+### Retrains (served artifacts refreshed, gitignored; holdout 2025)
+- NFL team (20-col, run 1): margin 10.357 / total 10.816
+- NBA team (31-col): margin 11.445 / total 17.073 (holdout labeled 2025-26, partial)
+- NHL team: margin 2.168 / total 1.842
+- MLB team (SP_ERA KEPT per owner): margin 3.497 / total 3.613
+- Soccer: parametric, rebuilt at inference (cross-season on)
+
+### pyarrow pinned `<19` in `config/requirements.txt`; PR #6 merged to main.
