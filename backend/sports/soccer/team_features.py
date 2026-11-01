@@ -238,50 +238,98 @@ def predict_3way(home: str, away: str, ratings: Dict[str, Dict[str, float]], *,
     return probs
 
 
-def latest_team_ratings(matches: pd.DataFrame, *, window: int = ROLL) -> Dict[str, Dict[str, float]]:
-    """Each team's ratings for their NEXT match, rolling over their most recent
-    ACTUAL games (NOT the shifted training column, which is stale by one game).
-
-    Uses the LATEST season present so ratings reflect the current squad, and the
-    that season's league average. Keyed by canonical team name for inference.
-    """
-    if matches.empty:
-        return {}
-    df = matches.copy()
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
-    latest_season = df["season"].dropna().max()
-    df = df[df["season"] == latest_season].copy()
-    if df.empty:
-        return {}
-    df["fthg"] = pd.to_numeric(df["fthg"], errors="coerce")
-    df["ftag"] = pd.to_numeric(df["ftag"], errors="coerce")
-    tot = float(df["fthg"].sum() + df["ftag"].sum())
-    n = 2.0 * float(len(df))
-    la = (tot / n) if n else _LEAGUE_AVG_GOALS
-
+def _long_view(df: pd.DataFrame) -> pd.DataFrame:
+    """Per-(team, venue) goals-for/against long view from a match frame."""
     home_view = df[["date", "home", "fthg", "ftag"]].rename(
         columns={"home": "team", "fthg": "gf", "ftag": "ga"})
     home_view["venue"] = "home"
     away_view = df[["date", "away", "ftag", "fthg"]].rename(
         columns={"away": "team", "ftag": "gf", "fthg": "ga"})
     away_view["venue"] = "away"
-    long = pd.concat([home_view, away_view], ignore_index=True)
+    return pd.concat([home_view, away_view], ignore_index=True)
+
+
+def _prior_season_ratings(df: pd.DataFrame, prior_season) -> Dict:
+    """Each (canonical team, venue)'s mean attack/defense over the PRIOR season,
+    relative to that season's league average. Used by the cross-season prior so an
+    early-season team leans on last year's strength instead of the neutral 1.0."""
+    pdf = df[df["season"] == prior_season].copy()
+    if pdf.empty:
+        return {}
+    pdf["fthg"] = pd.to_numeric(pdf["fthg"], errors="coerce")
+    pdf["ftag"] = pd.to_numeric(pdf["ftag"], errors="coerce")
+    tot = float(pdf["fthg"].sum() + pdf["ftag"].sum())
+    n = 2.0 * float(len(pdf))
+    la = (tot / n) if n else _LEAGUE_AVG_GOALS
+    plong = _long_view(pdf)
+    out: Dict = {}
+    for (team, venue), vdf in plong.groupby(["team", "venue"]):
+        teamc = canonical_team(str(team), strict=False)
+        out[(teamc, venue)] = {
+            "attack": float(vdf["gf"].mean()) / la if la else 1.0,
+            "defense": float(vdf["ga"].mean()) / la if la else 1.0,
+        }
+    return out
+
+
+def latest_team_ratings(matches: pd.DataFrame, *, window: int = ROLL,
+                        cross_season: bool = False, prior_k: float = PRIOR_K
+                        ) -> Dict[str, Dict[str, float]]:
+    """Each team's ratings for their NEXT match, rolling over their most recent
+    ACTUAL games (NOT the shifted training column, which is stale by one game).
+
+    Uses the LATEST season present so ratings reflect the current squad, and the
+    that season's league average. Keyed by canonical team name for inference.
+
+    ``cross_season`` (default off) blends each (team, venue) current rating toward
+    its PRIOR-SEASON average with a ``prior_k`` pseudo-count, weighted by how few
+    games the team has this season (``w = prior_k / (n_prior + prior_k)``). This is
+    the SERVING twin of ``add_team_features(cross_season=True)``: the champion
+    soccer-v2 found the cross-season prior lowers 3-way log-loss, so the served
+    predictor turns it on. Leakage-safe (only the strictly-earlier season feeds the
+    blend); a team with no prior season keeps the neutral 1.0.
+    """
+    if matches.empty:
+        return {}
+    df = matches.copy()
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+    df["fthg"] = pd.to_numeric(df["fthg"], errors="coerce")
+    df["ftag"] = pd.to_numeric(df["ftag"], errors="coerce")
+    seasons = sorted(df["season"].dropna().unique())
+    if not seasons:
+        return {}
+    latest_season = seasons[-1]
+    prior = _prior_season_ratings(df, seasons[-2]) if (cross_season and len(seasons) >= 2) else {}
+
+    cur = df[df["season"] == latest_season].copy()
+    if cur.empty:
+        return {}
+    tot = float(cur["fthg"].sum() + cur["ftag"].sum())
+    n = 2.0 * float(len(cur))
+    la = (tot / n) if n else _LEAGUE_AVG_GOALS
+    long = _long_view(cur)
 
     out: Dict[str, Dict[str, float]] = {}
     for team, tdf in long.groupby("team"):
-        team = canonical_team(str(team), strict=False)
-        rec = out.setdefault(team, {"league_avg": round(la, 4)})
+        teamc = canonical_team(str(team), strict=False)
+        rec = out.setdefault(teamc, {"league_avg": round(la, 4)})
         for venue in ("home", "away"):
             vdf = tdf[tdf["venue"] == venue].sort_values("date")
             n_prior = int(len(vdf))
             if n_prior:
-                gf = float(vdf["gf"].tail(window).mean())
-                ga = float(vdf["ga"].tail(window).mean())
-                rec[f"{venue}_attack"] = gf / la if la else 1.0
-                rec[f"{venue}_defense"] = ga / la if la else 1.0
+                att = float(vdf["gf"].tail(window).mean()) / la if la else 1.0
+                def_ = float(vdf["ga"].tail(window).mean()) / la if la else 1.0
             else:
-                rec[f"{venue}_attack"] = 1.0
-                rec[f"{venue}_defense"] = 1.0
+                att = def_ = 1.0
+            if cross_season:
+                pr = prior.get((teamc, venue))
+                att_prior = pr["attack"] if pr else 1.0
+                def_prior = pr["defense"] if pr else 1.0
+                w = prior_k / (n_prior + prior_k)
+                att = (1.0 - w) * att + w * att_prior
+                def_ = (1.0 - w) * def_ + w * def_prior
+            rec[f"{venue}_attack"] = att
+            rec[f"{venue}_defense"] = def_
             rec[f"{venue}_n_prior"] = n_prior
     return out
 
