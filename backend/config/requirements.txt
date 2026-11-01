@@ -4,7 +4,9 @@ pandas==2.3.2
 # numpy<2, and the rest of the stack runs fine on 1.26.x; this is what CI already
 # resolved to before nfl_data_py was added.
 numpy>=1.26.4,<2
-pyarrow>=14.0.0
+# pyarrow <19: 19.0.0 regressed parquet reads ("Repetition level histogram size
+# mismatch") on the repo's cached parquets; 18.x reads them fine.
+pyarrow>=14.0.0,<19
 
 # Web API
 Flask>=3.0.0
