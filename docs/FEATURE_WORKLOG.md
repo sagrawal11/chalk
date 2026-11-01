@@ -92,8 +92,15 @@ Confirms the win lands on the served path, not just the backtest path. 24 soccer
 | winner_logloss | 0.6509 | 0.6502 | -0.0007 |
 
 Marginal but every metric moves the right way and none regress. Confirms the ledger
-(NFL-10 kept). **KEEP.** Action: add `HOME_OFF_ADJ`/`AWAY_OFF_ADJ` to the served trainer's
-feature set + the inference path (`latest_team_features` + `matchup_features`).
+(NFL-10 kept). **KEEP.**
+
+WIRED + VERIFIED (2026-11-01): added `HOME_OFF_ADJ`/`AWAY_OFF_ADJ` (the offense-only
+subset) to `TEAM_FEATURE_COLS`, so the served trainer (`train_nfl_team_model.py`, which
+reads `TEAM_FEATURE_COLS`) picks them up automatically. Closed the inference gap:
+`latest_team_features` now extracts `OFF_ADJ` from the timeline and `_assemble`/`matchup_features`
+emit `HOME_OFF_ADJ`/`AWAY_OFF_ADJ`, so the served column count went 18 -> 20 and the
+inference row matches. The delta above IS the re-measure (old 18-col served set vs the new
+20-col served set). DEF_ADJ deliberately left out. 8 NFL feature tests + experiments tests green.
 
 ### NFL opponent-adjusted DEFENSE (NFL-11) -> DROP
 

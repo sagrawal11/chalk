@@ -23,16 +23,18 @@ WEATHER_COLS = ["IS_DOME", "WIND", "TEMP"]
 CTX_COLS = ["DIV_GAME"]
 GAME_COLS = WEATHER_COLS + CTX_COLS
 _TEAM_COLS = [f"HOME_{k}" for k in _ORDER] + [f"AWAY_{k}" for k in _ORDER] + ["NET_DIFF", "REST_DIFF"]
-# The score model learns the absolute margin/total from team + weather + context
-# signal only; no betting line is ever an input.
-TEAM_FEATURE_COLS: List[str] = _TEAM_COLS + GAME_COLS
-_FILL = {"OFF": 22.0, "DEF": 22.0, "WINPCT": 0.5, "FORM": 0.0, "REST": 7.0, "PRIOR_DIFF": 0.0}
-_GAME_FILL = {"IS_DOME": 0, "WIND": 5.0, "TEMP": 60.0, "DIV_GAME": 0}
-# Opponent-adjusted OFF/DEF (Rung 3, NFL-10/11). Kept as SEPARATE columns so
-# TEAM_FEATURE_COLS (the base trainer's set) is unchanged; the experiment
-# harness toggles these via explicit feature_cols.
+# Opponent-adjusted OFF/DEF (Rung 3, NFL-10/11). OFFENSE (NFL-10) is now SERVED: the
+# walk-forward keeps it (lowers margin/total MAE, lifts SU acc, confirms the ledger).
+# DEFENSE (NFL-11) stays out of the served set (it worsened SU accuracy on the
+# re-test); the experiment harness can still toggle both via explicit feature_cols.
 _OPP_ADJ = ["OFF_ADJ", "DEF_ADJ"]
 OPP_ADJ_COLS = [f"HOME_{k}" for k in _OPP_ADJ] + [f"AWAY_{k}" for k in _OPP_ADJ]
+OFF_ADJ_COLS = ["HOME_OFF_ADJ", "AWAY_OFF_ADJ"]   # the served offense-only subset
+# The score model learns the absolute margin/total from team + opponent-adjusted
+# offense + weather + context signal only; no betting line is ever an input.
+TEAM_FEATURE_COLS: List[str] = _TEAM_COLS + OFF_ADJ_COLS + GAME_COLS
+_FILL = {"OFF": 22.0, "DEF": 22.0, "WINPCT": 0.5, "FORM": 0.0, "REST": 7.0, "PRIOR_DIFF": 0.0}
+_GAME_FILL = {"IS_DOME": 0, "WIND": 5.0, "TEMP": 60.0, "DIV_GAME": 0}
 
 
 def _team_timeline(tg: pd.DataFrame) -> pd.DataFrame:
@@ -79,6 +81,10 @@ def _assemble(h: Dict[str, float], a: Dict[str, float]) -> Dict[str, float]:
     row.update({f"AWAY_{k}": a[k] for k in _ORDER})
     row["NET_DIFF"] = (h["OFF"] - h["DEF"]) - (a["OFF"] - a["DEF"])
     row["REST_DIFF"] = h["REST"] - a["REST"]
+    # Served opponent-adjusted offense (NFL-10); 0.0 = neutral when a team has no
+    # prior-only rating yet (first game of a season, or missing at inference).
+    row["HOME_OFF_ADJ"] = h.get("OFF_ADJ", 0.0)
+    row["AWAY_OFF_ADJ"] = a.get("OFF_ADJ", 0.0)
     return row
 
 
@@ -121,7 +127,9 @@ def latest_team_features(tl: pd.DataFrame) -> Dict[str, Dict[str, float]]:
     out: Dict[str, Dict[str, float]] = {}
     for team, tdf in tl.sort_values("game_date").groupby("team"):
         r = tdf.iloc[-1]
-        out[team] = {k: float(r[k]) for k in _ORDER}
+        feats = {k: float(r[k]) for k in _ORDER}
+        feats["OFF_ADJ"] = float(r["OFF_ADJ"]) if "OFF_ADJ" in r.index else 0.0
+        out[team] = feats
     return out
 
 
