@@ -34,7 +34,9 @@ class SoccerPredictor:
             self._poisson_tried = True
             try:
                 from sports.soccer.team_features import build_epl_matches, latest_team_ratings
-                self._poisson_ratings = latest_team_ratings(build_epl_matches())
+                # cross_season=True: lean early-season ratings on last year's strength;
+                # the champion soccer-v2 found this lowers 3-way log-loss (SOC-03).
+                self._poisson_ratings = latest_team_ratings(build_epl_matches(), cross_season=True)
                 logger.info("Soccer Poisson team model ready (%d teams)",
                             len(self._poisson_ratings or {}))
             except Exception as e:
