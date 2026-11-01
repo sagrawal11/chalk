@@ -130,8 +130,45 @@ for MLB, this is a borderline keep worth a second look.
 
 ---
 
-## Pending this run
-- Wire soccer cross_season into served predictor + verify.
-- Wire NFL opp_adj_OFF into served trainer + inference + verify.
-- One measured pass over already-buildable team features (NBA blocked; NFL/NHL/MLB base
-  sets already validated above as the current best buildable-now sets).
+## One measured pass over buildable-now team features (2026-11-01)
+
+With cached data + reachable network, the only menu switch-on left that is NOT a new
+data-feed [BUILD] is the soccer Dixon-Coles rho knob. Measured it on top of the now-served
+cross-season prior:
+
+### Soccer Dixon-Coles rho (-0.13, pre-registered) -> DROP
+
+| metric (primary bold) | cross_season only (served) | + Dixon-Coles | delta |
+|---|---|---|---|
+| **3-way logloss** | 1.0500 | 1.0540 | **+0.004 (worse)** |
+| 3-way acc | 0.5212 | 0.5165 | -0.0047 (worse) |
+| total_mae | 1.492 | 1.492 | 0.000 |
+| draw pred/act | 0.198/0.225 | 0.221/0.225 | better calibrated |
+
+The rho fixes the draw under-prediction (draw_pred 0.198 -> 0.221, closer to the 0.225
+actual) but costs overall log-loss and accuracy. By the keep rule (lower the primary error
+without worsening the guard), it fails. **DROP** - leave `dixon_coles` off in serving. rho
+is pre-registered (not tuned on the holdout), so no grid-search here.
+
+## Status at stop (2026-11-01)
+
+**KEPT + wired (committed locally, not pushed):**
+- Soccer cross-season prior (SOC-03) -> `ea6b9f2`
+- NFL opponent-adjusted offense (NFL-10) -> `3beff03`
+
+**Measured + dropped (left out, by the OOS rule):** NFL opp-adj defense (NFL-11), MLB real
+SP_ERA (neutral/borderline, flagged for owner), soccer Dixon-Coles rho.
+
+**Blocked - needs the owner (new feed / credentials / network):**
+- NBA team model: `kaggle_team_games.parquet` + `team_availability.parquet` are missing
+  (Kaggle CLI + credentials). No baseline this run.
+- All remaining menu gains are new-feed [BUILD]s and were NOT started per scope: NFL EPA
+  (play-by-play), MLB Statcast + park factors + FIP, NHL MoneyPuck xG + starting goalie,
+  soccer Club Elo + Understat xG, the CFB plugin.
+
+**Env:** this run used `pyarrow==18.1.0` (downgraded from a broken 19.0.0) and
+`nfl_data_py==0.3.3 --no-deps`. Models were NOT retrained/served (artifacts are gitignored);
+the code wiring is what landed. Retrain with `python -m model_training.train_nfl_team_model`
+and the soccer predictor rebuilds ratings lazily on first use.
+
+Measurement tooling: `scratch/measure.py` (binary sports), `scratch/measure_soccer_serving.py`.
