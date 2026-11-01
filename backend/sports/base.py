@@ -109,8 +109,15 @@ def _make_soccer() -> Sport:
     return SoccerSport()
 
 
+def _make_cfb() -> Sport:
+    from sports.cfb.sport import CFBSport
+
+    return CFBSport()
+
+
 register_sport("nba", _make_nba)
 register_sport("nfl", _make_nfl)
 register_sport("mlb", _make_mlb)
 register_sport("nhl", _make_nhl)
 register_sport("soccer", _make_soccer)
+register_sport("cfb", _make_cfb)

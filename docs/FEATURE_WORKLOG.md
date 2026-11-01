@@ -172,3 +172,65 @@ the code wiring is what landed. Retrain with `python -m model_training.train_nfl
 and the soccer predictor rebuilds ratings lazily on first use.
 
 Measurement tooling: `scratch/measure.py` (binary sports), `scratch/measure_soccer_serving.py`.
+
+---
+
+## Run 2 (2026-11-01, cont.): NBA unblocked + retrains + CFB
+
+Owner provided Kaggle creds, so NBA data was stood up: `kaggle datasets download -d
+chrismunch/nba-game-team-statistics` + `build_team_stats_from_kaggle.py` ->
+`data/processed/kaggle_team_games.parquet` (51,172 rows; 23,965 games 2006-2025).
+
+### NBA baseline (28 cols: ratings + pace + availability + Elo)
+su_acc 0.6541, margin_mae 10.086, total_mae 14.915, winner_logloss 0.6157 (untouched
+holdout 2025, train+CV n=19043).
+
+### NBA matchup interactions (PACE x PACE + offense-vs-defense cross-terms) -> KEEP
+
+| metric (primary bold) | baseline (28) | +interactions (31) | delta |
+|---|---|---|---|
+| **margin_mae** | 10.086 | 10.077 | **-0.009** |
+| **total_mae** | 14.915 | 14.872 | **-0.043** |
+| su_acc | 0.6541 | 0.6567 | +0.0026 |
+| winner_logloss | 0.6157 | 0.6153 | -0.0004 |
+
+Every metric improves; explicit interactions still help the tree here. **KEEP** - wired
+`PACE_PROD`, `H_OFF_x_A_DEF`, `A_OFF_x_H_DEF` into `_assemble` + `TEAM_FEATURE_COLS` (both
+training and `matchup_features` inference). 3 NBA team tests green.
+
+### Retrains (served artifacts refreshed, gitignored; holdout 2025)
+- NFL team (20-col, run 1): margin 10.357 / total 10.816
+- NBA team (31-col): margin 11.445 / total 17.073 (holdout labeled 2025-26, partial)
+- NHL team: margin 2.168 / total 1.842
+- MLB team (SP_ERA KEPT per owner): margin 3.497 / total 3.613
+- Soccer: parametric, rebuilt at inference (cross-season on)
+
+### pyarrow pinned `<19` in `config/requirements.txt`; PR #6 merged to main.
+
+### CFB plugin built from scratch (owner provided the CFBD key)
+
+New `sports/cfb/` plugin mirroring the NFL engine: `data.py` (CFBD `/games` client,
+FBS-vs-FBS only, cached per season to `data/cfb/`), `teams.py` (lenient single-source
+canonicalization), `team_features.py` (box-score + opponent-adjusted offense + neutral-site
+/ conference-game context), `sport.py` (registered as `cfb`). Plus `cfb_team_predictor.py`,
+`train_cfb_team_model.py`, and `tests/test_cfb_plugin.py` (hermetic). CFBD key in
+`backend/.env` (gitignored).
+
+CFB baseline + opp-adj (2015-2024 train+CV, 2025 untouched, 8325 FBS games, n=5216):
+
+| feature set | su_acc | winner_LL | margin_mae | total_mae |
+|---|---|---|---|---|
+| baseline (16c) | 0.6967 | 0.5767 | 13.906 | 13.471 |
+| **+opp_adj_OFF (served, 18c)** | 0.6959 | 0.5740 | **13.825** | 13.471 |
+| +opp_adj_OFF+DEF (20c) | 0.7019 | 0.5726 | 13.778 | 13.496 |
+
+**Served = +opp_adj_OFF** (clean: margin_mae -0.081, winner_LL -0.0027, no regressions).
+FLAG FOR OWNER: unlike NFL, CFB's opp-adj DEFENSE also helps the winner/margin model
+(su_acc 0.6967 -> 0.7019, margin 13.906 -> 13.778) at the cost of a tiny total_mae regression
+(+0.025). Left DEF off to keep the no-regression rule, but it's a defensible upgrade if you
+value SU accuracy. Trained + served: margin holdout_mae 13.135, total 13.110 (holdout 2025).
+
+## Status at stop (run 2)
+All 5 original team models fresh + served; CFB added as the 6th (served). NBA unblocked +
+interactions kept. 176 tests green. Remaining new-feed [BUILD]s (NFL EPA, MLB Statcast/park,
+NHL xG/goalie, Club Elo/xG, CFB player props) await the owner's pick. pyarrow pinned.
