@@ -15,7 +15,7 @@ from typing import Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-from sports.nfl.data import game_context, load_team_games
+from sports.nfl.data import game_context, load_team_epa, load_team_games
 
 _ORDER = ["OFF", "DEF", "WINPCT", "FORM", "REST", "PRIOR_DIFF"]
 # Game-level context features (weather, division), all pregame-known.
@@ -30,14 +30,18 @@ _TEAM_COLS = [f"HOME_{k}" for k in _ORDER] + [f"AWAY_{k}" for k in _ORDER] + ["N
 _OPP_ADJ = ["OFF_ADJ", "DEF_ADJ"]
 OPP_ADJ_COLS = [f"HOME_{k}" for k in _OPP_ADJ] + [f"AWAY_{k}" for k in _OPP_ADJ]
 OFF_ADJ_COLS = ["HOME_OFF_ADJ", "AWAY_OFF_ADJ"]   # the served offense-only subset
+# EPA/play (NFL-19/20): offensive + defensive expected-points-added per play, the
+# strongest team-efficiency signal. Rolling prior-only, neutral 0.0 cold-start.
+_EPA = ["OFF_EPA", "DEF_EPA"]
+EPA_COLS = [f"HOME_{k}" for k in _EPA] + [f"AWAY_{k}" for k in _EPA]
 # The score model learns the absolute margin/total from team + opponent-adjusted
 # offense + weather + context signal only; no betting line is ever an input.
-TEAM_FEATURE_COLS: List[str] = _TEAM_COLS + OFF_ADJ_COLS + GAME_COLS
+TEAM_FEATURE_COLS: List[str] = _TEAM_COLS + OFF_ADJ_COLS + EPA_COLS + GAME_COLS
 _FILL = {"OFF": 22.0, "DEF": 22.0, "WINPCT": 0.5, "FORM": 0.0, "REST": 7.0, "PRIOR_DIFF": 0.0}
 _GAME_FILL = {"IS_DOME": 0, "WIND": 5.0, "TEMP": 60.0, "DIV_GAME": 0}
 
 
-def _team_timeline(tg: pd.DataFrame) -> pd.DataFrame:
+def _team_timeline(tg: pd.DataFrame, epa_df: Optional[pd.DataFrame] = None) -> pd.DataFrame:
     tg = tg.copy()
     tg["game_date"] = pd.to_datetime(tg["game_date"])
     tg = tg.sort_values(["team", "game_date"]).reset_index(drop=True)
@@ -66,6 +70,20 @@ def _team_timeline(tg: pd.DataFrame) -> pd.DataFrame:
     tg[_OPP_ADJ] = tg[_OPP_ADJ].fillna(0.0)      # first-of-season: neutral
     tg = tg.drop(columns=["OPP_OFF", "OPP_DEF"])
 
+    # EPA/play rolling (prior-only), merged from the aggregated per-team-game feed.
+    # Absent feed -> neutral 0.0 (keeps the engine usable offline + tests hermetic).
+    if epa_df is not None and not epa_df.empty:
+        tg = tg.merge(epa_df.drop_duplicates(["game_id", "team"]), on=["game_id", "team"], how="left")
+        ge = tg.groupby(["team", "season"], sort=False)
+        tg["OFF_EPA"] = ge["OFF_EPA_G"].transform(lambda s: s.shift(1).expanding().mean())
+        tg["DEF_EPA"] = ge["DEF_EPA_G"].transform(lambda s: s.shift(1).expanding().mean())
+        tg = tg.drop(columns=[c for c in ("OFF_EPA_G", "DEF_EPA_G") if c in tg.columns])
+    else:
+        tg["OFF_EPA"] = np.nan
+        tg["DEF_EPA"] = np.nan
+    tg["OFF_EPA"] = tg["OFF_EPA"].fillna(0.0)
+    tg["DEF_EPA"] = tg["DEF_EPA"].fillna(0.0)
+
     # prior-season point differential carried into the next season
     sd = tg.groupby(["team", "season"])["diff"].mean().reset_index().rename(columns={"diff": "PRIOR_DIFF"})
     sd["season"] = sd["season"] + 1
@@ -85,13 +103,17 @@ def _assemble(h: Dict[str, float], a: Dict[str, float]) -> Dict[str, float]:
     # prior-only rating yet (first game of a season, or missing at inference).
     row["HOME_OFF_ADJ"] = h.get("OFF_ADJ", 0.0)
     row["AWAY_OFF_ADJ"] = a.get("OFF_ADJ", 0.0)
+    # EPA/play off+def (NFL-19/20); 0.0 = neutral cold-start / missing at inference.
+    for k in _EPA:
+        row[f"HOME_{k}"] = h.get(k, 0.0)
+        row[f"AWAY_{k}"] = a.get(k, 0.0)
     return row
 
 
 def build_team_game_frame(years) -> pd.DataFrame:
     tg = load_team_games(list(years))
     tg = tg.dropna(subset=["pts", "opp_pts"])          # played games only
-    tl = _team_timeline(tg)
+    tl = _team_timeline(tg, load_team_epa(years))
 
     home = tl[tl["is_home"] == 1].set_index("game_id")
     away = tl[tl["is_home"] == 0].set_index("game_id")
@@ -103,6 +125,9 @@ def build_team_game_frame(years) -> pd.DataFrame:
         a = {k: float(r[f"{k}_a"]) for k in _ORDER}
         feat = _assemble(h, a)
         for k in _OPP_ADJ:   # opponent-adjusted OFF/DEF (Rung 3)
+            feat[f"HOME_{k}"] = float(r[f"{k}_h"])
+            feat[f"AWAY_{k}"] = float(r[f"{k}_a"])
+        for k in _EPA:       # EPA/play off+def (NFL-19/20)
             feat[f"HOME_{k}"] = float(r[f"{k}_h"])
             feat[f"AWAY_{k}"] = float(r[f"{k}_a"])
         feat.update({
@@ -129,6 +154,8 @@ def latest_team_features(tl: pd.DataFrame) -> Dict[str, Dict[str, float]]:
         r = tdf.iloc[-1]
         feats = {k: float(r[k]) for k in _ORDER}
         feats["OFF_ADJ"] = float(r["OFF_ADJ"]) if "OFF_ADJ" in r.index else 0.0
+        for k in _EPA:
+            feats[k] = float(r[k]) if k in r.index else 0.0
         out[team] = feats
     return out
 
@@ -146,4 +173,4 @@ def matchup_features(home: str, away: str, latest: Dict[str, Dict[str, float]],
 def build_timeline(years) -> pd.DataFrame:
     """Team timeline (per team-game features), for computing latest_team_features."""
     tg = load_team_games(list(years)).dropna(subset=["pts", "opp_pts"])
-    return _team_timeline(tg)
+    return _team_timeline(tg, load_team_epa(years))

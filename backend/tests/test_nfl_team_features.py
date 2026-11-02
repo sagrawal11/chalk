@@ -31,6 +31,19 @@ def test_offense_is_prior_only():
     assert kc.iloc[2]["OFF"] != pytest.approx((20 + 27 + 31) / 3)  # not through-current (no leak)
 
 
+def test_epa_is_prior_only():
+    epa = pd.DataFrame({
+        "game_id": ["g0", "g0", "g1", "g1", "g2", "g2"],
+        "team": ["KC", "BUF", "KC", "BUF", "KC", "BUF"],
+        "OFF_EPA_G": [0.1, -0.1, 0.2, -0.2, 0.3, -0.3],
+        "DEF_EPA_G": [-0.05, 0.05, -0.1, 0.1, -0.15, 0.15],
+    })
+    tl = _team_timeline(_tg(), epa)
+    kc = tl[tl["team"] == "KC"].sort_values("game_date")
+    assert kc.iloc[0]["OFF_EPA"] == pytest.approx(0.0)          # first game -> neutral (no prior)
+    assert kc.iloc[2]["OFF_EPA"] == pytest.approx((0.1 + 0.2) / 2)  # excludes current (no leak)
+
+
 def test_matchup_features_shape():
     latest = latest_team_features(_team_timeline(_tg()))
     X = matchup_features("KC", "BUF", latest)
