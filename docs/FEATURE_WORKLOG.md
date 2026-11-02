@@ -266,4 +266,42 @@ with EPA (margin 10.357 -> 10.439), but the 12-season train+CV referee (the sele
 instrument) clearly favors EPA, and 2024 - the most recent train+CV season - was the LARGEST
 EPA win (-0.224). EPA helps margin in 7/12 seasons, flat/noise in the rest, rarely hurts. The
 2025 blip is within one-season variance; the multi-season signal governs. New hermetic test
-`test_epa_is_prior_only` (leakage-safe). 177 tests green. pyarrow pinned.
+`test_epa_is_prior_only` (leakage-safe). 177 tests green. Merged: PR #8.
+
+### Feed 2/5: MLB park factors -> DROPPED (measured, no help)
+
+Computed a simple prior-season park factor from the data we already have (team home-game
+avg total runs / its road-game avg, carried forward one season, leakage-safe) - no new feed.
+It is a real signal (range 0.735-1.459, Coors high, Petco low) but on the referee it did
+NOT help:
+
+| metric | baseline | +PARK_FACTOR | delta |
+|---|---|---|---|
+| total_mae (primary) | 3.558 | 3.557 | -0.001 (noise) |
+| margin_mae | 3.457 | 3.457 | 0.000 |
+| winner_logloss | 0.6823 | 0.6826 | +0.0003 (worse) |
+
+Reason: the team OFF/DEF run rates already absorb most of the park signal (half a team's
+games are at home), so a crude park factor is redundant. Per the simplicity rule, DROPPED
+(reverted the code, no dead computation left). The deeper MLB lever (Statcast xwOBA/FIP via
+pybaseball - quality-of-contact info NOT in OFF/DEF) is a HEAVIER feed; flagged for a
+decision rather than auto-added.
+
+### Feed 3/5: NHL xG (MoneyPuck) -> SOURCE FOUND, build deferred (heavier ingestion)
+
+Working source: `https://peter-tanner.com/moneypuck/downloads/shots_{year}.zip` (shot-level,
+~20MB/season, 200 OK) and `https://moneypuck.com/moneypuck/playerData/seasonSummary/{year}/regular/teams.csv`
+(season summary, per-team-season only). Per-GAME team xG (needed for rolling prior-only
+features like EPA) requires the shot-level route: download ~20MB x ~10 seasons, aggregate
+shots -> team-game xGF/xGA, map MoneyPuck team codes to the schedule. That is a genuinely
+heavier, multi-step new feed. Build it next session (aggregate-and-cache pattern like NFL EPA).
+
+## Status (2026-11-02, mid data-feed builds)
+
+Done: **NFL EPA kept + served (PR #8 merged)**; MLB park factor measured + dropped.
+Remaining feeds each need a NEW external source + pipeline stood up:
+- NHL xG (MoneyPuck shots) - source confirmed above.
+- Soccer Club Elo / Understat xG (soccerdata lib).
+- CFB player props (CFBD player stats + a brand-new player-prop model - the biggest).
+Recommend one focused session per remaining feed (cheaper + higher quality + matches "one by
+one"). All six team models remain fresh + served from run 2 + NFL EPA. pyarrow pinned.
