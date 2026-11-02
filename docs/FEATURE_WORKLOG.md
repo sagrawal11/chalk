@@ -230,7 +230,40 @@ FLAG FOR OWNER: unlike NFL, CFB's opp-adj DEFENSE also helps the winner/margin m
 (+0.025). Left DEF off to keep the no-regression rule, but it's a defensible upgrade if you
 value SU accuracy. Trained + served: margin holdout_mae 13.135, total 13.110 (holdout 2025).
 
-## Status at stop (run 2)
+## Status after run 2
 All 5 original team models fresh + served; CFB added as the 6th (served). NBA unblocked +
-interactions kept. 176 tests green. Remaining new-feed [BUILD]s (NFL EPA, MLB Statcast/park,
-NHL xG/goalie, Club Elo/xG, CFB player props) await the owner's pick. pyarrow pinned.
+interactions kept. 176 tests green.
+
+---
+
+## Data-feed builds (2026-11-02): owner said "do all of them one by one", keep it simple
+
+Guiding principle (owner): most accurate engine statistically, built as SIMPLY as possible -
+add only each feed's highest-signal feature(s), keep only if the OOS referee says it helps,
+no kitchen-sink. See the memory `chalk-simplicity-accuracy`.
+
+### Feed 1/5: NFL EPA/play (NFL-19/20) -> KEEP, served
+
+Wired the heavy nflverse play-by-play down to one small cached row per team-game
+(`data/nfl/epa_{year}.parquet`: offensive EPA/play + defensive EPA/play allowed), then
+rolling prior-only `OFF_EPA`/`DEF_EPA` in the timeline (neutral 0.0 cold-start; feed-absent
+-> 0.0 so the engine stays offline-safe and tests hermetic). Kept it to just the 4 EPA cols
+(no CPOE / success-rate / pace / QB-adjusted pile).
+
+| metric (primary bold) | baseline (20c) | +EPA (24c) | delta |
+|---|---|---|---|
+| **margin_mae** | 10.497 | **10.458** | **-0.039** |
+| **total_mae** | 10.919 | 10.908 | -0.011 |
+| winner_logloss | 0.6505 | 0.6461 | -0.0044 |
+| su_acc | 0.6210 | 0.6204 | -0.0006 (noise) |
+
+Biggest NFL gain so far (~4x the opp-adj offense win), confirms the menu's "single most
+predictive" claim. **KEEP** + served (wired into `TEAM_FEATURE_COLS` + `_assemble` +
+`latest_team_features`). Retrained through 2025.
+
+HONEST NOTE (overfitting canary): the trainer's single 2025 holdout season is slightly worse
+with EPA (margin 10.357 -> 10.439), but the 12-season train+CV referee (the selection
+instrument) clearly favors EPA, and 2024 - the most recent train+CV season - was the LARGEST
+EPA win (-0.224). EPA helps margin in 7/12 seasons, flat/noise in the rest, rarely hurts. The
+2025 blip is within one-season variance; the multi-season signal governs. New hermetic test
+`test_epa_is_prior_only` (leakage-safe). 177 tests green. pyarrow pinned.

@@ -81,3 +81,53 @@ def load_weekly_player_stats(years: Sequence[int]) -> pd.DataFrame:
         if col in w.columns:
             w[col] = _canon(w[col])
     return w
+
+
+# EPA/play: the single most predictive team-efficiency signal. We aggregate the
+# heavy play-by-play down to one small row per team-game (offensive EPA/play and
+# defensive EPA/play allowed) and cache THAT per season, so a backtest never
+# re-downloads ~50k plays/season.
+import datetime as _dt  # noqa: E402
+from pathlib import Path  # noqa: E402
+
+_EPA_CACHE = Path(__file__).resolve().parents[2] / "data" / "nfl"
+_EPA_COLS = ["game_id", "team", "OFF_EPA_G", "DEF_EPA_G"]
+
+
+def _fetch_team_epa(year: int) -> pd.DataFrame:
+    """One row per team-game for one season: mean offensive EPA/play (posteam) and
+    mean defensive EPA/play allowed (defteam)."""
+    import nfl_data_py as nfl
+
+    try:
+        p = nfl.import_pbp_data([year], downcast=True)
+    except Exception:
+        return pd.DataFrame(columns=_EPA_COLS)
+    p = p[p["epa"].notna()]
+    off = (p[p["posteam"].notna()].groupby(["game_id", "posteam"])["epa"].mean()
+           .reset_index().rename(columns={"posteam": "team", "epa": "OFF_EPA_G"}))
+    deff = (p[p["defteam"].notna()].groupby(["game_id", "defteam"])["epa"].mean()
+            .reset_index().rename(columns={"defteam": "team", "epa": "DEF_EPA_G"}))
+    out = off.merge(deff, on=["game_id", "team"], how="outer")
+    out["team"] = _canon(out["team"])
+    return out[_EPA_COLS]
+
+
+def load_team_epa(years: Sequence[int]) -> pd.DataFrame:
+    """Per team-game offensive + defensive EPA/play for the given seasons, cached
+    per completed season to data/nfl/epa_{year}.parquet (the aggregate, not the raw
+    play-by-play). Returns empty if nfl_data_py / the PBP feed is unavailable."""
+    cur = _dt.date.today().year
+    frames: List[pd.DataFrame] = []
+    for y in years:
+        y = int(y)
+        cache = _EPA_CACHE / f"epa_{y}.parquet"
+        if y < cur and cache.exists():
+            frames.append(pd.read_parquet(cache))
+            continue
+        df = _fetch_team_epa(y)
+        if y < cur and not df.empty:
+            _EPA_CACHE.mkdir(parents=True, exist_ok=True)
+            df.to_parquet(cache, index=False)
+        frames.append(df)
+    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=_EPA_COLS)
