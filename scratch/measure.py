@@ -91,9 +91,13 @@ if __name__ == "__main__":
                                                      "HOME_DEF_ADJ", "AWAY_DEF_ADJ"],
         })
     elif sport == "nhl":
-        from sports.nhl.team_features import TEAM_FEATURE_COLS
+        from sports.nhl.team_features import TEAM_FEATURE_COLS, XG_COLS
+        base = [c for c in TEAM_FEATURE_COLS if c not in XG_COLS]
         fr = build_frame("nhl", 2015, 2025)
-        measure("nhl", fr, {"baseline(served)": TEAM_FEATURE_COLS})
+        measure("nhl", fr, {
+            "baseline": base,
+            "+xG": TEAM_FEATURE_COLS,
+        })
     elif sport == "mlb":
         from sports.mlb.team_features import TEAM_FEATURE_COLS
         base_no_era = [c for c in TEAM_FEATURE_COLS if "SP_ERA" not in c]

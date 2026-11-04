@@ -287,21 +287,55 @@ games are at home), so a crude park factor is redundant. Per the simplicity rule
 pybaseball - quality-of-contact info NOT in OFF/DEF) is a HEAVIER feed; flagged for a
 decision rather than auto-added.
 
-### Feed 3/5: NHL xG (MoneyPuck) -> SOURCE FOUND, build deferred (heavier ingestion)
+### Feed 3/5: NHL xG (MoneyPuck) -> KEEP, served (2026-11-04)
 
-Working source: `https://peter-tanner.com/moneypuck/downloads/shots_{year}.zip` (shot-level,
-~20MB/season, 200 OK) and `https://moneypuck.com/moneypuck/playerData/seasonSummary/{year}/regular/teams.csv`
-(season summary, per-team-season only). Per-GAME team xG (needed for rolling prior-only
-features like EPA) requires the shot-level route: download ~20MB x ~10 seasons, aggregate
-shots -> team-game xGF/xGA, map MoneyPuck team codes to the schedule. That is a genuinely
-heavier, multi-step new feed. Build it next session (aggregate-and-cache pattern like NFL EPA).
+Built the shot-level feed the simplest way: download MoneyPuck `shots_{year}.zip` (~20MB,
+~120k shots/season), sum each shot's `xGoal` per (game, shooting team) to total expected
+goals FOR and AGAINST, and cache ONE small row per team-game to `data/nhl/xg_{year}.parquet`
+(~63KB/season - the aggregate, not the raw shots), the same aggregate-and-cache pattern as
+NFL EPA. Join key: the NHL 10-digit `game_id` reconstructs exactly as
+`season*1_000_000 + MoneyPuck_game_id` (verified: regular-season ids match the schedule 1:1,
+**100% of schedule team-games covered 2015-2025**; playoff `03xxx` ids never match and drop
+out). MoneyPuck team codes canonicalize cleanly (ARI/PHX->UTA etc. already handled; zero
+unmapped across all seasons). Then rolling prior-only `OFF_XG`/`DEF_XG` in the timeline
+(neutral 2.9 cold-start; feed-absent -> 2.9 so the engine stays offline-safe + tests
+hermetic). Kept it to just the 2 xG cols (no Corsi/Fenwick/high-danger/special-teams pile).
 
-## Status (2026-11-02, mid data-feed builds)
+| metric (primary bold) | baseline (14c) | +xG (18c) | delta |
+|---|---|---|---|
+| **margin_mae** | 2.146 | **2.139** | **-0.007** |
+| su_acc | 0.5764 | 0.5820 | **+0.0056** |
+| winner_logloss | 0.6752 | 0.6736 | -0.0016 |
+| total_mae | 1.862 | 1.861 | -0.001 |
 
-Done: **NFL EPA kept + served (PR #8 merged)**; MLB park factor measured + dropped.
-Remaining feeds each need a NEW external source + pipeline stood up:
-- NHL xG (MoneyPuck shots) - source confirmed above.
+Clean win: the primary error (margin_mae) drops and BOTH guard metrics improve, none regress.
+The su_acc lift (+0.0056) is the strongest of any NHL team feature so far - xG is a genuine
+winner-prediction signal, the NHL analog of NFL EPA. **KEEP** + served (wired into
+`TEAM_FEATURE_COLS` + `_team_timeline` + `_assemble` + `latest_team_features` +
+`build_timeline`; registered as experiment builder `NHL-20` so the ledger still covers every
+served col). Retrained through 2024 + serve-verified (18-col model, live TOR/BOS prediction
+OK). New hermetic test `tests/test_nhl_team_features.py` (prior-only xG leakage + absent-feed
+neutral + matchup shape). 181 tests green.
+
+HONEST NOTE (overfitting canary): the trainer's single 2024 holdout is mixed with xG (margin
+2.168 -> 2.152 better, total 1.842 -> 1.894 worse) - one-season variance on the trainer's own
+holdout; the 7-season train+CV referee (the selection instrument) governs and shows margin
+-0.007 with total ~flat (-0.001). Same pattern as NFL EPA's 2025 blip: the multi-season
+signal decides, the single-season holdout is noisy.
+
+FLAG FOR OWNER (starting goalie): xG was a clean win, so per the plan the starting GOALIE is
+the next NHL lever to "consider" - but it's a genuinely heavier NEW feed. A PRE-game goalie
+signal needs confirmed-starter data (who is in net tonight, a projection problem) PLUS the
+boxscore endpoint for goalie rolling stats, not just the schedule. That is a new source and a
+pre-game-projection problem (harder than a historical aggregate), so I did NOT auto-build it -
+flagged as a separate decision rather than silently adding a heavy moving part (simplicity
+rule). MoneyPuck shots DO carry `goalieIdForShot`/`goalieNameForShot`, so post-game goalie xGA
+is cheap from the same feed; the hard part is the pre-game STARTER identity.
+
+## Status (2026-11-04): 3/5 feeds done
+
+Done: **NFL EPA kept + served (PR #8)**; **MLB park factor measured + dropped (PR #9)**;
+**NHL xG MoneyPuck kept + served (this PR)**. All six team models remain fresh + served; NHL
+retrained through 2024 with xG. pyarrow pinned <19. Remaining feeds (one focused session each):
 - Soccer Club Elo / Understat xG (soccerdata lib).
 - CFB player props (CFBD player stats + a brand-new player-prop model - the biggest).
-Recommend one focused session per remaining feed (cheaper + higher quality + matches "one by
-one"). All six team models remain fresh + served from run 2 + NFL EPA. pyarrow pinned.

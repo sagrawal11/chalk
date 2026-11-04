@@ -70,7 +70,11 @@ FEATURE_BUILDERS: Dict[str, Dict[str, List[str]]] = {
         # Rung 2: recent form + rest (NHL plays dense back-to-backs, so rest may bite).
         "NHL-06": ["HOME_FORM", "AWAY_FORM"],               # last-10 form (Rung 2)
         "NHL-07": ["HOME_REST", "AWAY_REST", "REST_DIFF"],  # rest / rest diff (Rung 2)
-        # The dominant NHL signal, the starting GOALIE, needs the boxscore endpoint
+        # Rung 3: expected goals for/against (MoneyPuck), rolling prior-only. The NHL
+        # analog of NFL EPA and the strongest team-quality signal beyond raw goals;
+        # aggregated from shot-level data (sports/nhl/data.load_team_xg). Team-signal only.
+        "NHL-20": ["HOME_OFF_XG", "AWAY_OFF_XG", "HOME_DEF_XG", "AWAY_DEF_XG"],  # expected goals (Rung 3)
+        # The other dominant NHL signal, the starting GOALIE, needs the boxscore endpoint
         # (the schedule only exposes the post-game winner), so it's a needs_builder
         # future rung, not wired here. Team-signal only: no betting line.
     },
