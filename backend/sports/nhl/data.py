@@ -86,3 +86,60 @@ def load_team_games(years: Sequence[int]) -> pd.DataFrame:
     if not df.empty:
         df["game_date"] = pd.to_datetime(df["game_date"], errors="coerce")
     return df
+
+
+# Expected goals (MoneyPuck): the NHL analog of NFL EPA, the strongest team-quality
+# signal beyond raw goals. We aggregate the ~120k shot-level rows/season down to one
+# small row per team-game (total xG for + against) and cache THAT per season, so a
+# backtest never re-downloads the 20MB shot file.
+_XG_URL = "https://peter-tanner.com/moneypuck/downloads/shots_{year}.zip"
+_XG_COLS = ["game_id", "team", "XGF_G", "XGA_G"]
+
+
+def _fetch_team_xg(year: int) -> pd.DataFrame:
+    """One row per team-game for one season: total expected goals FOR (shots the team
+    took) and AGAINST (shots it faced), summed from MoneyPuck shot-level xGoal."""
+    import io
+    import zipfile
+
+    import requests
+
+    try:
+        r = requests.get(_XG_URL.format(year=year), timeout=120)
+        if not r.ok:
+            return pd.DataFrame(columns=_XG_COLS)
+        zf = zipfile.ZipFile(io.BytesIO(r.content))
+        with zf.open(zf.namelist()[0]) as fh:
+            s = pd.read_csv(fh, usecols=["season", "game_id", "teamCode", "xGoal"])
+    except Exception:
+        return pd.DataFrame(columns=_XG_COLS)
+    # NHL 10-digit game id = season*1e6 + MoneyPuck within-season id (verified: the
+    # reconstructed regular-season ids match the schedule 1:1; playoff ids (03xxx)
+    # never match and drop out on the join downstream).
+    s["gid"] = s["season"].astype(int) * 1_000_000 + s["game_id"].astype(int)
+    per = s.groupby(["gid", "teamCode"], sort=False)["xGoal"].sum().reset_index(name="XGF_G")
+    tot = s.groupby("gid")["xGoal"].sum()
+    per["XGA_G"] = per["gid"].map(tot) - per["XGF_G"]       # against = game total - own
+    per["team"] = per["teamCode"].map(lambda t: canonical_team(t, strict=False))
+    per = per[per["team"] != ""]
+    return per.rename(columns={"gid": "game_id"})[_XG_COLS]
+
+
+def load_team_xg(years: Sequence[int]) -> pd.DataFrame:
+    """Per team-game expected goals for/against for the given seasons, cached per
+    completed season to data/nhl/xg_{year}.parquet (the aggregate, not the ~120k raw
+    shots). Empty if the MoneyPuck feed is unavailable (engine stays offline-safe)."""
+    cur = datetime.now().year
+    frames: List[pd.DataFrame] = []
+    for y in years:
+        y = int(y)
+        cache = _CACHE_DIR / f"xg_{y}.parquet"
+        if y < cur and cache.exists():
+            frames.append(pd.read_parquet(cache))
+            continue
+        df = _fetch_team_xg(y)
+        if y < cur and not df.empty:
+            _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            df.to_parquet(cache, index=False)
+        frames.append(df)
+    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=_XG_COLS)
