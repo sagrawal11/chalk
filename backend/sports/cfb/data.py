@@ -120,3 +120,130 @@ def load_team_games(years: Sequence[int]) -> pd.DataFrame:
     df["game_date"] = pd.to_datetime(df["game_date"], errors="coerce")
     df["season"] = pd.to_numeric(df["season"], errors="coerce").astype("Int64")
     return df
+
+
+# --- Player box-score feed (CFBD /games/players), for player-prop models --------
+_PLAYER_API = "https://api.collegefootballdata.com/games/players"
+# Box-score columns we extract (CFBD has no targets, so receptions is the receiving
+# usage signal). Mirrors the NFL weekly-stats columns the player features expect.
+PLAYER_STAT_COLS = ["passing_yards", "passing_tds", "attempts", "completions",
+                    "carries", "rushing_yards", "rushing_tds",
+                    "receptions", "receiving_yards", "receiving_tds"]
+_PLAYER_COLS = (["game_id", "season", "week", "game_date", "team", "opponent",
+                 "is_home", "player_id", "player_name"] + PLAYER_STAT_COLS)
+
+
+def _num(s) -> float:
+    try:
+        return float(str(s).replace(",", ""))
+    except (ValueError, TypeError):
+        return 0.0
+
+
+def _parse_team_players(team: str, categories: list) -> List[dict]:
+    """Pivot one team's nested passing/rushing/receiving categories into one row
+    per athlete with the box-score columns we model."""
+    rows: Dict[str, dict] = {}
+
+    def _row(aid: str, aname: str) -> dict:
+        r = rows.get(aid)
+        if r is None:
+            r = {c: 0.0 for c in PLAYER_STAT_COLS}
+            r.update({"player_id": aid, "player_name": aname, "team": team})
+            rows[aid] = r
+        return r
+
+    for cat in categories or []:
+        cname = cat.get("name")
+        if cname not in ("passing", "rushing", "receiving"):
+            continue
+        for ty in cat.get("types", []):
+            tyname = ty.get("name")
+            for ath in ty.get("athletes", []):
+                aid = str(ath.get("id", ""))
+                if not aid:
+                    continue
+                r = _row(aid, str(ath.get("name", "")))
+                stat = str(ath.get("stat", "")).strip()
+                if cname == "passing" and tyname == "C/ATT" and "/" in stat:
+                    c, a = stat.split("/", 1)
+                    r["completions"], r["attempts"] = _num(c), _num(a)
+                elif cname == "passing" and tyname == "YDS":
+                    r["passing_yards"] = _num(stat)
+                elif cname == "passing" and tyname == "TD":
+                    r["passing_tds"] = _num(stat)
+                elif cname == "rushing" and tyname == "CAR":
+                    r["carries"] = _num(stat)
+                elif cname == "rushing" and tyname == "YDS":
+                    r["rushing_yards"] = _num(stat)
+                elif cname == "rushing" and tyname == "TD":
+                    r["rushing_tds"] = _num(stat)
+                elif cname == "receiving" and tyname == "REC":
+                    r["receptions"] = _num(stat)
+                elif cname == "receiving" and tyname == "YDS":
+                    r["receiving_yards"] = _num(stat)
+                elif cname == "receiving" and tyname == "TD":
+                    r["receiving_tds"] = _num(stat)
+    return list(rows.values())
+
+
+def _fetch_player_year(year: int, fbs_ids: set) -> pd.DataFrame:
+    import requests
+
+    hdr = {"Authorization": f"Bearer {_api_key()}"}
+    out: List[dict] = []
+    # CFB weeks: regular 0-16 (week 0 since ~2016), postseason bowls under week 1-4.
+    for season_type, weeks in (("regular", range(0, 17)), ("postseason", range(1, 5))):
+        for wk in weeks:
+            try:
+                r = requests.get(_PLAYER_API, headers=hdr, timeout=60,
+                                 params={"year": year, "week": wk, "seasonType": season_type})
+                r.raise_for_status()
+                games = r.json()
+            except Exception:
+                continue
+            if not isinstance(games, list):
+                continue
+            for g in games:
+                gid = g.get("id")
+                if gid not in fbs_ids:  # FBS-vs-FBS only (join to the games cache)
+                    continue
+                for tm in g.get("teams", []):
+                    team = canonical_team(str(tm.get("team", "")), strict=False)
+                    for prow in _parse_team_players(team, tm.get("categories", [])):
+                        prow["game_id"] = gid
+                        out.append(prow)
+    return pd.DataFrame(out)
+
+
+def load_player_games(years: Sequence[int]) -> pd.DataFrame:
+    """One row per (FBS game, player) with box-score stats, cached per completed
+    season to ``data/cfb/player_games_{year}.parquet`` (the aggregate, not the raw
+    per-week pulls). Game context (season/week/date/opponent/home) is joined from
+    the FBS-vs-FBS games cache, which also filters out non-FBS games."""
+    cur = datetime.now().year
+    frames: List[pd.DataFrame] = []
+    for y in years:
+        y = int(y)
+        cache = _CACHE_DIR / f"player_games_{y}.parquet"
+        if y < cur and cache.exists():
+            frames.append(pd.read_parquet(cache))
+            continue
+        games = load_games([y])
+        if games.empty:
+            frames.append(pd.DataFrame(columns=_PLAYER_COLS))
+            continue
+        meta = games[["game_id", "season", "week", "game_date", "home", "away"]]
+        df = _fetch_player_year(y, set(games["game_id"]))
+        if df.empty:
+            frames.append(pd.DataFrame(columns=_PLAYER_COLS))
+            continue
+        df = df.merge(meta, on="game_id", how="inner")
+        df["is_home"] = (df["team"] == df["home"]).astype(int)
+        df["opponent"] = df["away"].where(df["is_home"] == 1, df["home"])
+        df = df[_PLAYER_COLS]
+        if y < cur and not df.empty:
+            _CACHE_DIR.mkdir(parents=True, exist_ok=True)
+            df.to_parquet(cache, index=False)
+        frames.append(df)
+    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=_PLAYER_COLS)

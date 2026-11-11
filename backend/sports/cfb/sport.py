@@ -1,5 +1,6 @@
 """CFB sport plugin implementing the shared ``Sport`` interface. Team margin/total
-model over CFBD FBS games; player props not built yet."""
+model over CFBD FBS games; anchored player-prop models (pass/rush/rec yards +
+receptions) over CFBD box scores."""
 from __future__ import annotations
 
 import logging
@@ -14,10 +15,11 @@ logger = logging.getLogger(__name__)
 class CFBSport(Sport):
     key = "cfb"
     display_name = "College Football"
-    capabilities = frozenset({"predict_game"})
+    capabilities = frozenset({"predict_game", "predict_player"})
 
     def __init__(self) -> None:
         self._team_predictor: Any = None
+        self._player_predictor: Any = None
 
     def canonical_team(self, code: str, *, strict: bool = True) -> str:
         return teams.canonical_team(code, strict=strict)
@@ -29,7 +31,7 @@ class CFBSport(Sport):
         return teams.season_from_date(game_date)
 
     def player_targets(self) -> List[str]:
-        return []  # player props (passing/rushing/receiving) not built yet
+        return ["passing_yards", "rushing_yards", "receiving_yards", "receptions"]
 
     def team_targets(self) -> List[str]:
         return ["margin", "total"]
@@ -48,6 +50,17 @@ class CFBSport(Sport):
             home=self.canonical_team(home, strict=False), away=self.canonical_team(away, strict=False),
             game_date=game_date, season=season or self.season_from_date(game_date),
         )
+
+    def predict_player(self, player_name: str, season: Optional[str] = None, **kw) -> Any:
+        """Anchored player-prop projections (pass/rush/rec yards, receptions).
+        Returns None until the CFB player models (artifacts/cfb_player/) exist."""
+        try:
+            from models.cfb_player_predictor import default_cfb_player_predictor
+        except ImportError:
+            return None
+        if self._player_predictor is None:
+            self._player_predictor = default_cfb_player_predictor()
+        return self._player_predictor.predict_player(player_name, season=season or self.current_season())
 
     def schedule(self, game_date: Optional[str] = None) -> List[Dict[str, Any]]:
         return []  # no free forward-schedule feed wired yet

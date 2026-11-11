@@ -339,3 +339,79 @@ Done: **NFL EPA kept + served (PR #8)**; **MLB park factor measured + dropped (P
 retrained through 2024 with xG. pyarrow pinned <19. Remaining feeds (one focused session each):
 - Soccer Club Elo / Understat xG (soccerdata lib).
 - CFB player props (CFBD player stats + a brand-new player-prop model - the biggest).
+
+---
+
+## Feed 4/5 (2026-11-09): soccer xG -- PARKED on branch `feed/soccer-xg` (not merged)
+
+Blocked purely on external source outages (Understat maintenance page, ClubElo 502,
+FBref free-xG gated by the 2024 Opta licensing change). Baselines reproduced exactly
+and a full resume playbook recorded on the `feed/soccer-xg` branch's copy of this
+worklog. Re-checked 2026-11-11: understat.com still serves the maintenance page
+(HTTP 200, no `teamsData`) and api.clubelo.com still 502, so Feed 4 stays parked.
+See the memory `chalk-accuracy-direction`.
+
+---
+
+## Feed 5/5 (2026-11-11): CFB player props via CFBD box scores -> KEEP, served
+
+Branch `feed/cfb-player-props` (off fresh `main`). The last and biggest feed: a
+brand-new player-prop model for CFB (the 6th sport, which had a team model but no
+player props). Built by mirroring the NFL player stack exactly -- anchored residual
+LightGBM per prop, usage-gated, leakage-safe prior-only rolls -- so it reuses the
+same machinery rather than inventing new infrastructure (simplicity rule).
+
+**Data feed (CFBD `/games/players`).** Added `load_player_games(years)` to
+`sports/cfb/data.py`: fetch the per-week player box scores, pivot the nested
+passing/rushing/receiving categories to one row per (game, player) with 10 box
+stats (pass/rush/rec yards + TDs, attempts, completions, carries, receptions), join
+to the FBS-vs-FBS games cache by `game_id` (which also drops non-FBS games), and
+cache ONE small per-season parquet `data/cfb/player_games_{year}.parquet` (the
+aggregate, not the ~3.5MB/week raw) -- the same aggregate-and-cache pattern as NFL
+EPA / NHL xG. Validated on 2024 before the full pull: 99.9% FBS-game coverage, 0
+canonicalization misses (every player's team maps to the game's home/away), stat
+realism exact (max single-game passing_yards 515 = Jaxson Dart vs Arkansas, real).
+No new dependency (uses `requests` + the existing CFBD key).
+
+**Features (`sports/cfb/player_features.py`).** Mirror of NFL: `STATS` (10 box
+stats), `PROP_TARGETS` = pass/rush/rec yards + receptions, per-prop `USAGE_GATE`
+(receptions is the receiving usage signal since CFBD has no targets), `FEATURE_COLS`
+= `{stat}_L3` + `{stat}_STD` (20 cols), `build_player_frame` /
+`latest_player_features`. Two deliberate differences from NFL, both noted in-code:
+ordering by `game_date` (CFB postseason week numbers restart, so the date is the
+unambiguous temporal key) and NO position feature (CFBD box scores carry no
+position; the usage gates already segment passer/rusher/receiver, so it is omitted
+on purpose -- curated, not kitchen-sink, per the degeneracy-probe finding).
+
+**Measured on the honest OOS referee** (`backtest/cfb_player_backtest.py`, holdout
+2025, 177,822-player-game frame): does the anchored model beat the free naive
+baselines a human would use (last-3 average, season-to-date average)?
+
+| prop | n_hold | model MAE | last-3 | seas-avg | skill vs L3 |
+|---|---|---|---|---|---|
+| passing_yards | 1502 | 71.14 | 75.04 | 73.58 | +5.2% |
+| rushing_yards | 5180 | 26.71 | 28.49 | 27.62 | +6.2% |
+| receiving_yards | 6249 | 24.25 | 26.45 | 25.49 | +8.3% |
+| receptions | 6249 | 1.53 | 1.66 | 1.60 | +7.9% |
+
+model_mae < last-3 < season-avg on every target; positive skill +5.2% to +8.3% over
+1.5k-6.2k holdout rows each. The curated 20-feature ML layer genuinely earns its
+place (confirms the NFL/NBA player-prop pattern; the kitchen-sink is correctly
+avoided). **KEEP all four.**
+
+**Wired + served + serve-verified.** New `models/cfb_player_predictor.py` (anchor +
+adjustment, usage-gated at inference); `sports/cfb/sport.py` now declares
+`predict_player` + `player_targets()` = the 4 props. Trained through 2025;
+artifacts in `models/artifacts/cfb_player/` (gitignored). Serve-verify via the sport
+plugin produced sane projections with the gates working: Kyle McCord (Syr QB) 324.8
+pass / 0 rush; Diego Pavia (Vandy dual-threat) 262.5 pass / 63.7 rush; RBs
+rushing-only; WRs receiving + receptions only, no phantom stats. New hermetic test
+`tests/test_cfb_player_features.py` (synthetic frame: prior-only leakage + curated
+schema + slug-keyed latest). 184 tests green (was 181).
+
+## Status (2026-11-11): all 5 data feeds resolved
+NFL EPA kept (PR #8); MLB park factor dropped (PR #9); NHL xG kept (PR #10); **soccer
+xG PARKED** (Feed 4, external sources down -- re-check Understat next session); **CFB
+player props kept + served (this branch, `feed/cfb-player-props`)**. All 6 sports now
+have served team models; NFL and CFB have served player-prop models. Nothing
+pushed/merged on this branch yet -- outward actions are the owner's call.

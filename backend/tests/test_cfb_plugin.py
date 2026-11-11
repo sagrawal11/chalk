@@ -45,4 +45,5 @@ def test_registry_and_identity():
     s = get_sport("cfb")
     assert s.key == "cfb" and isinstance(s, CFBSport)
     assert s.canonical_team("  Ohio State ") == "Ohio State"
-    assert s.team_targets() == ["margin", "total"] and s.player_targets() == []
+    assert s.team_targets() == ["margin", "total"]
+    assert s.player_targets() == ["passing_yards", "rushing_yards", "receiving_yards", "receptions"]
