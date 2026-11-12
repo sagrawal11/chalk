@@ -49,35 +49,95 @@ from track_record.lock import lock_path, lock_predictions
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
 
-# Sports with a wired slate+finals source in `_games_on`. Others are skipped until a
-# feed is added (one branch each) -- we never build a live feed speculatively.
-WIRED_SPORTS = ["nhl", "soccer"]
+# Sports with a wired slate+finals source in `_games_on`. Add a sport = one branch below.
+WIRED_SPORTS = ["nfl", "nba", "cfb", "nhl", "mlb", "soccer"]
+
+# Dated-games loaders that already expose home/away + scores (+ optional final-status col):
+# (home_pts_col, away_pts_col, status_col_or_None). NFL/CFB have no status column -- their
+# scores are null until the game is final, so score-present == final there.
+_LOADER_COLS = {
+    "nhl": ("home_goals", "away_goals", "status"),
+    "nfl": ("home_score", "away_score", None),
+    "cfb": ("home_score", "away_score", None),
+    "mlb": ("home_score", "away_score", "status"),
+}
+_FINAL_STATES = {"OFF", "FINAL", "Final"}  # NHL (OFF/FINAL) + MLB abstractGameState (Final)
 
 
-def _nhl_season_year(date: str) -> int:
-    """NHL season START year for a calendar date (the season spans Oct->Jun)."""
+def _season_year(sport: str, date: str) -> int:
+    """Season START year for a calendar date. MLB = the calendar year (Apr-Oct); NFL/NHL/CFB
+    are named by their start year, so a game in the new year counts back to the prior year."""
     d = datetime.strptime(date, "%Y-%m-%d")
-    return d.year - 1 if d.month <= 6 else d.year
+    if sport == "mlb":
+        return d.year
+    return d.year if d.month >= 8 else d.year - 1
+
+
+def _load_dated_games(sport: str, year: int) -> pd.DataFrame:
+    """The sport's dated-games frame for a season (live for the current season, cached past)."""
+    if sport == "nfl":
+        from sports.nfl.data import load_schedules
+        return load_schedules([year])
+    if sport == "mlb":
+        from sports.mlb.data import load_schedules
+        return load_schedules([year])
+    if sport == "cfb":
+        from sports.cfb.data import load_games
+        return load_games([year])
+    from sports.nhl.data import load_schedules  # nhl
+    return load_schedules([year])
+
+
+def _nba_games_on(date: str) -> pd.DataFrame:
+    """NBA slate + finals for a date from the ESPN scoreboard (?dates=YYYYMMDD) -- the same
+    source the NBA plugin's schedule() uses; `completed` games carry scores to grade."""
+    import requests
+    from sports.nba.sport import ESPN_SCOREBOARD_URL
+    from sports.nba.teams import canonical_team
+    try:
+        r = requests.get(ESPN_SCOREBOARD_URL, params={"dates": date.replace("-", "")}, timeout=20)
+        events = r.json().get("events", [])
+    except Exception:
+        events = []
+    rows = []
+    for ev in events:
+        try:
+            comp = ev["competitions"][0]
+            h = next(c for c in comp["competitors"] if c["homeAway"] == "home")
+            a = next(c for c in comp["competitors"] if c["homeAway"] == "away")
+            done = bool(comp.get("status", {}).get("type", {}).get("completed"))
+            hp = float(h["score"]) if done and str(h.get("score", "")) != "" else float("nan")
+            ap = float(a["score"]) if done and str(a.get("score", "")) != "" else float("nan")
+            rows.append({"home": canonical_team(h["team"]["abbreviation"], strict=False),
+                         "away": canonical_team(a["team"]["abbreviation"], strict=False),
+                         "home_pts": hp, "away_pts": ap, "final": done})
+        except (KeyError, StopIteration, IndexError, ValueError, TypeError):
+            continue
+    return pd.DataFrame(rows, columns=["home", "away", "home_pts", "away_pts", "final"])
 
 
 def _games_on(sport: str, date: str) -> Optional[pd.DataFrame]:
     """Every `sport` game on `date` as columns home/away/home_pts/away_pts/final.
 
-    `final` marks a game with a known result (gradeable). Scheduled-but-unplayed
-    games have final=False and NaN scores -- they are part of the slate (lockable)
-    but not yet gradeable. Returns None when the sport has no wired source yet.
+    `final` marks a game with a known result (gradeable). Scheduled-but-unplayed games have
+    final=False and NaN scores -- lockable but not yet gradeable. Returns None when the sport
+    has no wired source yet.
     """
-    if sport == "nhl":
-        from sports.nhl.data import load_schedules
-        s = load_schedules([_nhl_season_year(date)])
+    if sport in _LOADER_COLS:
+        hp_c, ap_c, st_c = _LOADER_COLS[sport]
+        s = _load_dated_games(sport, _season_year(sport, date))
         s = s[s["game_date"].astype(str).str[:10] == date]
-        hp = pd.to_numeric(s["home_goals"], errors="coerce")
-        ap = pd.to_numeric(s["away_goals"], errors="coerce")
+        hp = pd.to_numeric(s[hp_c], errors="coerce")
+        ap = pd.to_numeric(s[ap_c], errors="coerce")
+        final = (hp.notna() & ap.notna()).to_numpy()
+        if st_c and st_c in s.columns:
+            final = final & s[st_c].astype(str).isin(_FINAL_STATES).to_numpy()
         return pd.DataFrame({
             "home": s["home"].to_numpy(), "away": s["away"].to_numpy(),
-            "home_pts": hp.to_numpy(), "away_pts": ap.to_numpy(),
-            "final": (s["status"].isin(["OFF", "FINAL"]).to_numpy() & hp.notna().to_numpy()),
+            "home_pts": hp.to_numpy(), "away_pts": ap.to_numpy(), "final": final,
         })
+    if sport == "nba":
+        return _nba_games_on(date)
     if sport == "soccer":
         from sports.soccer.team_features import load_epl_raw
         m = load_epl_raw()
