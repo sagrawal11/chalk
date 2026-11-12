@@ -37,7 +37,7 @@ def test_matchup_features_shape():
     latest = latest_team_features(_team_timeline(_tg()))
     X = matchup_features("Georgia", "Alabama", latest)
     assert list(X.columns) == TEAM_FEATURE_COLS and len(X) == 1
-    assert "HOME_OFF_ADJ" in X.columns and "HOME_DEF_ADJ" not in X.columns  # offense-only served
+    assert "HOME_OFF_ADJ" in X.columns and "HOME_DEF_ADJ" in X.columns  # opp-adj off+def served
 
 
 def test_registry_and_identity():

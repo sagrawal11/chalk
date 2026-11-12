@@ -415,3 +415,41 @@ xG PARKED** (Feed 4, external sources down -- re-check Understat next session); 
 player props kept + served (this branch, `feed/cfb-player-props`)**. All 6 sports now
 have served team models; NFL and CFB have served player-prop models. Nothing
 pushed/merged on this branch yet -- outward actions are the owner's call.
+
+---
+
+## Breadth + polish phase (2026-11-12): owner chose "optimize for picking winners"
+
+Feeds are done; this phase tightens the existing models. Owner's stated priority:
+**winner accuracy over margin/total precision**, which resolves the flagged switch-ons.
+
+### Flagged switch-on: CFB opp-adj DEFENSE -> FLIPPED ON (branch `polish/winner-switch-ons`)
+Re-measured on the current train+CV (2015-2024, 2025 untouched, n=7517), off-only
+(served) vs off+def:
+
+| metric | off-only (served) | off+def | delta |
+|---|---|---|---|
+| **su_acc** | 0.6967 | **0.7003** | **+0.0036** |
+| winner_logloss | 0.5739 | 0.5725 | -0.0014 |
+| margin_mae | 13.826 | 13.787 | -0.039 |
+| total_mae | 13.447 | 13.485 | +0.038 (worse) |
+
+Better on su_acc, winner log-loss AND margin; only total_mae costs +0.038. Confirms
+Run 2. Under the picking-winners priority this is a clear **KEEP**: wired DEF_ADJ into
+`TEAM_FEATURE_COLS` + `_assemble` + `latest_team_features` (mirrors the NFL OFF_ADJ
+wiring), retrained (2025 holdout margin_mae 13.135 -> 12.987, total 13.110 -> 13.141),
+serve-verified (Georgia vs Alabama margin 6.7 / total 47.9 / p_home 0.659), test
+updated, 184 tests green.
+
+### Flagged switch-on: MLB real SP_ERA -> ALREADY ON (no change needed)
+Verified in code: `train_mlb_team_model` builds the frame with the default
+`fetch_sp_era=True`, and SP_ERA / SP_ERA_DIFF are in `TEAM_FEATURE_COLS`, so the served
+MLB model already uses real per-pitcher rolling ERA (kept per owner in Run 2). The Run-1
+"leave off" is already superseded; consistent with the picking-winners priority.
+
+### NFL opp-adj DEFENSE -> stays OFF (hurt su_acc even under picking-winners).
+
+### Still to do this phase: calibration breadth (extend `evaluate_calibration.py` beyond
+nba/nfl to mlb/nhl/cfb + a soccer 3-way variant; NBA probe showed calibration is
+already tight, cov80=0.79) and reviving the live nightly track record (`pipeline/`
+exists but cold; owner: wire it, I'll run it -- no launchd cron).
