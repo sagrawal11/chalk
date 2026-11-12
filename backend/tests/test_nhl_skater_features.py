@@ -4,7 +4,7 @@ leakage-safe rolling (prior games only) and the per-target inference anchors."""
 import numpy as np
 import pandas as pd
 
-from sports.nhl.skater_features import (ANCHOR_COLS, PROP_TARGETS,
+from sports.nhl.skater_features import (ANCHOR_COLS, MODELED_TARGETS, PROP_TARGETS,
                                         add_skater_features, latest_skater_features)
 
 
@@ -33,10 +33,12 @@ def test_latest_features_keyed_by_id_with_anchors():
     assert 42 in latest
     rec = latest[42]
     assert set(PROP_TARGETS) == {"points", "shots"}
+    assert MODELED_TARGETS == ["shots"]   # points served naive (last-10), not modeled
     assert "anchors" in rec and "feats" in rec
-    assert ANCHOR_COLS == {"points": "points_L5", "shots": "shots_L5"}
-    # anchors = the trailing-5 average entering the (unseen) next game
-    assert abs(rec["anchors"]["points"] - np.mean([1, 0, 3, 1, 2])) < 1e-6  # last 5 of pts
+    assert ANCHOR_COLS == {"points": "points_L10", "shots": "shots_L5"}
+    # anchors = the recent average entering the (unseen) next game: points on its
+    # last-10 (its best naive baseline), shots on last-5
+    assert abs(rec["anchors"]["points"] - np.mean([1, 0, 2, 1, 0, 3, 1, 2])) < 1e-6  # last 10 (all 8) of pts
     assert abs(rec["anchors"]["shots"] - np.mean([4, 1, 6, 3, 4])) < 1e-6   # last 5 of shots
 
 

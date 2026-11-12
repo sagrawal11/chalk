@@ -565,8 +565,36 @@ status so score-present == final. 10 track-record tests green (187 total expecte
 only sport also confirmed on a graded past slate (2026-01-15, PR #12); the others are verified
 on the LOCK path tonight and grade tomorrow.
 
-### Remaining broad work (next step): serve the other player-prop models
-NBA v3 / MLB batter / MLB pitcher / NHL skater have trainers but no served artifacts
-(only `nfl` + `cfb_player` are served). NHL skater has cached data (skater_games_2023/24);
-the others need their feature data built/pulled. Then: go DEEP on one lever (owner's pick;
-candidate = NHL starting goalie, the biggest same-day swing).
+### Serve the remaining player-prop models (4): NBA v3 / MLB batter / MLB pitcher / NHL skater
+These have trainers but served NO artifacts (only `nfl` + `cfb_player` were served). Each is
+trained, serve-verified via the sport plugin's `predict_player`, and measured on an honest OOS
+referee (beat naive last-N / season-avg), per the curated-not-kitchen-sink discipline.
+
+#### 1/4 NHL skater - shots KEPT (model), points served NAIVE [cached data]
+Trained on the cached 2023-24 seasons (74,073 usage-gated skater-games, >= 5 prior). Only 2
+seasons are cached, so `walk_forward_train` uses its degenerate temporal-80/20 holdout (no
+season-level CV). New `backtest/nhl_skater_backtest.py` is the honest referee: it reproduces
+that exact split and measures the model vs the naive last-5 / last-10 averages on the SAME
+14,815 holdout rows (the trainer's inline skill used a full-sample baseline - apples-to-oranges -
+because the degenerate path reports `holdout_season=None`).
+
+Measured (model_mae | last-5 | last-10 | skill vs L5):
+- `shots`:  1.048 | 1.103 | 1.063 | **+4.9%** -> KEEP (model beats BOTH naive baselines)
+- `points`: 0.543 | 0.545 | **0.534** | +0.3% -> model ties last-5 and LOSES to last-10;
+  re-anchoring points on L10 still lost (model 0.5425 > naive L10 0.5335). Per-game points
+  (goals+assists) is too noisy/low-count to model (matches the `player_degeneracy_probe` lesson).
+
+Decision (strictly by the OOS rule): serve `shots` via LightGBM; serve `points` as its naive
+last-10 average (no model). Implemented with `MODELED_TARGETS=["shots"]` (trainer fits only
+shots), `ANCHOR_COLS["points"]="points_L10"`, and a predictor fallback that serves the anchor for
+any `PROP_TARGET` lacking a model blob. Serve-verified via `sport.predict_player`: served points
+== the L10 anchor exactly; served shots adjusts off the L5 anchor (e.g. a 3.00-shot player -> 2.28,
+sensible regression). Artifact: `models/artifacts/nhl_skater/skater_shots.joblib` (gitignored).
+`tests/test_nhl_skater_features.py` updated for the new anchor; tests green.
+LIMIT (noted, not fixed): only 2 seasons cached -> the holdout is a temporal tail, not a full
+season. Pulling 2021-22 skater logs (same NHL-API feed, NOT a new feed) would give a proper
+season-holdout; deferred as low-value (shots' win is already clear; points is unmodelable).
+
+#### 2/4 MLB pitcher - PENDING (cached: `pitcher_starts_{2015..2025}.parquet`)
+#### 3/4 NBA v3 - PENDING (only team data cached; player logs need pulling)
+#### 4/4 MLB batter - PENDING (no batter cache; needs pulling)

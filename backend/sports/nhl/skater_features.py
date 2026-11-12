@@ -14,10 +14,17 @@ import pandas as pd
 
 from sports.nhl.skater_data import build_skater_games
 
-# The props this track serves. Each is anchored on its own last-5 average.
+# The props this track serves. SHOTS is modeled (the LightGBM adjustment beats a
+# naive recent average out-of-sample, +4.9% skill vs last-5). POINTS is NOT: on the
+# honest holdout the model (0.543) cannot beat the naive last-10 average (0.534) -
+# per-game points (goals+assists) is too noisy/low-count for a model to add signal
+# (see backtest/nhl_skater_backtest.py), so points is served as its last-10 average
+# (its anchor, no model). MODELED_TARGETS is what the trainer fits; any PROP_TARGET
+# not modeled is served naive from its anchor.
 PROP_TARGETS: List[str] = ["points", "shots"]
+MODELED_TARGETS: List[str] = ["shots"]
 FEATURE_COLS: List[str] = ["points_L5", "points_L10", "shots_L5", "shots_L10", "toi_L5"]
-ANCHOR_COLS: Dict[str, str] = {"points": "points_L5", "shots": "shots_L5"}
+ANCHOR_COLS: Dict[str, str] = {"points": "points_L10", "shots": "shots_L5"}
 MIN_PRIOR_GAMES = 5   # usage gate: need some history for a reliable projection
 
 
