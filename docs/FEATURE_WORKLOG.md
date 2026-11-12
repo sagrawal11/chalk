@@ -595,6 +595,20 @@ LIMIT (noted, not fixed): only 2 seasons cached -> the holdout is a temporal tai
 season. Pulling 2021-22 skater logs (same NHL-API feed, NOT a new feed) would give a proper
 season-holdout; deferred as low-value (shots' win is already clear; points is unmodelable).
 
-#### 2/4 MLB pitcher - PENDING (cached: `pitcher_starts_{2015..2025}.parquet`)
+#### 2/4 MLB pitcher - K KEPT (model) [cached data]
+Trained on the cached 2022-25 seasons (17,097 usage-gated starts, >= 3 prior). Proper
+walk-forward this time (cv_mae 1.886; holdout = 2025, 4,451 starts - the Aug-2025 cache is
+partial but substantial, a legit OOS season), so the trainer's inline baseline is already
+measured on the holdout rows. New `backtest/mlb_pitcher_backtest.py` reads the stored holdout_mae
+and adds the L10 baseline:
+- `K` (strikeouts, the #1 MLB prop): model **1.841** | last-5 1.929 | last-10 1.857 | **+4.6%**
+  vs L5 -> KEEP (beats BOTH naive baselines). Single target; pitcher code unchanged + already
+  tested (`tests/test_mlb_pitcher_features.py`).
+Serve-verified via the pitcher predictor directly (its serve path; note the MLB plugin's
+`predict_player` is the SEPARATE batter track, so pitcher K is served via the predictor's
+`predict`/`slate_projections`): sane K projections (4.1-6.2 for starters) regressing off the
+K_L5 anchor. Artifact `models/artifacts/mlb_pitcher/pitcher_K.joblib` (gitignored).
+NOTE: 2025 cache is partial (through Aug 24); refetching the complete 2025 season (same StatsAPI
+feed, not a new feed) is a cheap future refinement, not needed for the clear keep.
 #### 3/4 NBA v3 - PENDING (only team data cached; player logs need pulling)
 #### 4/4 MLB batter - PENDING (no batter cache; needs pulling)
