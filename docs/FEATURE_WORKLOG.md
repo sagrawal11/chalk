@@ -539,3 +539,34 @@ commands).
 On `polish/winner-switch-ons`, 4 local commits, nothing pushed (owner's call to open/merge):
 CFB opp-adj defense [7779212], calibration breadth [781cf5a], soccer home-bias fix [2c9bcbe],
 live track record [this commit]. 187 tests green.
+
+MERGED: PR #12 -> main (owner approved push+open+merge; main tip f9c9d9c).
+
+---
+
+## Going broad: start the live record + wire all 6 sports (2026-11-12, cont.)
+
+Owner: "start the live record, then go broad and get everything established, then go deep
+on one lever." Branch `feat/live-record-breadth` off main.
+
+### Live record STARTED
+Locked tonight's (2026-11-12) real pre-game slate on the live path: NHL 11, NFL 1 (TNF),
+NBA 4, CFB 3 = 19 games across the 4 in-season sports; MLB (offseason) and soccer (no live
+fixtures feed) empty, handled gracefully. Sane predictions across the board (NFL WAS@NYG
+p_home 0.64; NBA TOR@PHI 0.47; CFB UMass@Toledo 0.94; NHL MTL@BOS 0.60), all hashes valid.
+These are genuine forward locks -> grade them tomorrow to begin the real live OOS record.
+
+### Track record wired for ALL 6 sports [af93d79]
+Generalized `_games_on` from NHL+soccer to all six: a uniform dated-games loader dispatch
+(nhl/nfl/mlb `load_schedules`, cfb `load_games`) + an NBA ESPN-scoreboard branch + soccer
+replay. `_season_year` replaces `_nhl_season_year` (per-sport season-start rule). final =
+scores present AND status in {OFF,FINAL,Final} where a status column exists; NFL/CFB have no
+status so score-present == final. 10 track-record tests green (187 total expected). NHL is the
+only sport also confirmed on a graded past slate (2026-01-15, PR #12); the others are verified
+on the LOCK path tonight and grade tomorrow.
+
+### Remaining broad work (next step): serve the other player-prop models
+NBA v3 / MLB batter / MLB pitcher / NHL skater have trainers but no served artifacts
+(only `nfl` + `cfb_player` are served). NHL skater has cached data (skater_games_2023/24);
+the others need their feature data built/pulled. Then: go DEEP on one lever (owner's pick;
+candidate = NHL starting goalie, the biggest same-day swing).
