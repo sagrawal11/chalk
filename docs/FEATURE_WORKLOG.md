@@ -449,7 +449,29 @@ MLB model already uses real per-pitcher rolling ERA (kept per owner in Run 2). T
 
 ### NFL opp-adj DEFENSE -> stays OFF (hurt su_acc even under picking-winners).
 
-### Still to do this phase: calibration breadth (extend `evaluate_calibration.py` beyond
-nba/nfl to mlb/nhl/cfb + a soccer 3-way variant; NBA probe showed calibration is
-already tight, cov80=0.79) and reviving the live nightly track record (`pipeline/`
-exists but cold; owner: wire it, I'll run it -- no launchd cron).
+### Calibration breadth (2026-11-12) -> extended `evaluate_calibration.py` to all 6 sports
+Added mlb/nhl/cfb configs + a soccer 3-way variant (`evaluate_soccer_calibration`, since
+soccer is a Poisson not a margin model) + CLI choices. Out-of-sample (clean eval-model on
+seasons < holdout):
+
+| sport | holdout | n | winner_LL | ECE | margin cov80 | total cov80 | home-win act/pred |
+|---|---|---|---|---|---|---|---|
+| nba | 2025-26 | 1232 | 0.602 | 0.034 | 0.79 | 0.84 | 0.551/0.543 |
+| nfl | 2024 | 285 | 0.632 | 0.036 | 0.81 | 0.80 | 0.547/0.564 |
+| mlb | 2025 | 2442 | 0.685 | 0.036 | 0.81 | 0.82 | 0.544/0.508 |
+| nhl | 2024 | 1312 | 0.670 | 0.031 | 0.83 | 0.81 | 0.562/0.545 |
+| cfb | 2025 | 808 | 0.553 | 0.027 | 0.79 | 0.81 | 0.595/0.575 |
+
+The 5 team models are all WELL-CALIBRATED (cov80 ~0.80, ECE < 0.04; no fix needed). ECE =
+weighted mean |pred-obs| over winner reliability bins.
+
+SOCCER is the outlier (served cross_season-ON config, 3way_logloss 1.0500): materially
+HOME-BIASED -- H pred 0.538 vs obs 0.450 (+0.088), A pred 0.264 vs obs 0.325 (-0.061),
+D pred 0.198 vs obs 0.225 (-0.027). Overconfident in home teams (EPL 2021-24 home-win rate
+is only ~45%, historically low). A fix (shrink the home edge toward reality) likely helps
+3way_logloss too, not just calibration -- flagged as the one real calibration fix, to be
+done measured on 3way_logloss. 184 tests green (incl. 7 calibration tests after the extend).
+
+### Still to do this phase: (1) the soccer home-bias calibration fix (measured on
+3way_logloss), (2) reviving the live nightly track record (`pipeline/` exists but cold;
+owner: wire it, I'll run it -- no launchd cron).
