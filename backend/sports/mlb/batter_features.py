@@ -18,8 +18,14 @@ import pandas as pd
 
 from sports.mlb.batter_data import build_batter_games
 
-# Props we predict (anchored on each one's own _L5).
+# Props we SERVE (anchored on each one's own _L5).
 PROP_TARGETS: List[str] = ["hits", "totalBases", "homeRuns"]
+# Props we MODEL with LightGBM. hits/totalBases beat the naive last-5/last-10
+# averages out-of-sample (+6.9% / +5.4%); home runs do NOT (model 0.209 vs naive
+# 0.207 - too low-count per game to model, see backtest/mlb_batter_backtest.py), so
+# HR is served as its naive last-5 average (its anchor, no model). Anything in
+# PROP_TARGETS not modeled is served naive from its anchor.
+MODELED_TARGETS: List[str] = ["hits", "totalBases"]
 # Model features (all prior-only rolling): recent level of each prop + AB volume + HR rate.
 FEATURE_COLS: List[str] = [
     "hits_L5", "hits_L10", "TB_L5", "TB_L10", "HR_L5", "HR_L10", "HR_rate_L10", "AB_L5",

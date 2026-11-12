@@ -610,5 +610,40 @@ Serve-verified via the pitcher predictor directly (its serve path; note the MLB 
 K_L5 anchor. Artifact `models/artifacts/mlb_pitcher/pitcher_K.joblib` (gitignored).
 NOTE: 2025 cache is partial (through Aug 24); refetching the complete 2025 season (same StatsAPI
 feed, not a new feed) is a cheap future refinement, not needed for the clear keep.
-#### 3/4 NBA v3 - PENDING (only team data cached; player logs need pulling)
-#### 4/4 MLB batter - PENDING (no batter cache; needs pulling)
+#### 3/4 MLB batter - hits + totalBases KEPT (models), homeRuns served NAIVE [pulled data]
+Pulled the StatsAPI batter game logs 2022-25 (~400 regulars/season, cached to
+`data/mlb/batter_games_{year}.parquet`; 118,183 gated batter-games, >= 10 prior). Proper
+walk-forward (holdout = 2025 full season, 29,585 games). New `backtest/mlb_batter_backtest.py`
+(reads stored holdout_mae + L5/L10 baselines on the holdout):
+- `hits`:       0.688 | L5 0.740 | L10 0.717 | **+6.9%** -> KEEP
+- `totalBases`: 1.319 | L5 1.395 | L10 1.352 | **+5.4%** -> KEEP
+- `homeRuns`:   0.209 | L5 0.207 | L10 0.207 | **-1.1%** -> model LOSES to naive; HR is near-
+  irreducible per game (mostly 0), exactly as the trainer docstring predicted -> served NAIVE
+  (last-5), same `MODELED_TARGETS` treatment as NHL points.
+Decision: `MODELED_TARGETS=["hits","totalBases"]`; HR served from its HR_L5 anchor (no model);
+the predictor serves the naive anchor for any PROP_TARGET lacking a blob. Serve-verified via
+`sport.predict_player` (the MLB plugin's player track IS the batter): served HR == the HR_L5
+anchor exactly; hits/TB adjust off their anchors (e.g. Ohtani TB anchor 2.80 -> 1.9, regression).
+Artifacts `batter_hits.joblib` + `batter_totalBases.joblib` (gitignored).
+`tests/test_mlb_batter_features.py` updated; 187 tests green.
+
+#### 4/4 NBA v3 - BLOCKED on data (owner's call)
+The NBA v3 stack (trainer/predictor/features/backtest all exist) needs per-player game-log CSVs
+under `data/player_data/{slug}/{slug}_data.csv`, which are NOT present locally (only a `.gitkeep`
++ a `college` stub). Source options, none feasible unattended:
+- R2 training bundle (`utils/storage.download_full_training_bundle`) - the canonical home of
+  `data/player_data/`, but NO R2 creds in this env (R2_ACCOUNT_ID / R2_ACCESS_KEY_ID /
+  R2_SECRET_ACCESS_KEY all unset).
+- `data_collection/update_player_logs.py` scrapes Basketball-Reference ONE DAY at a time; a
+  multi-season bulk build = thousands of rate-limited / ToS-risky page fetches - NOT attempted.
+- No local NBA SQLite or player box-score source (only team-level Kaggle data).
+STOPPED per the guardrail (data to MEASURE unavailable; never serve an unmeasured model). Owner's
+call: (a) provide R2 creds so I can download the `player_data` bundle, then train + measure + serve
+like the others, or (b) defer NBA player props. (NBA v3 also expects `team_availability.parquet`
+for its availability signal - also absent; it would train on a graceful 0-fill if data existed.)
+
+### Scorecard (player props): 3 served, 1 blocked
+NHL skater (shots), MLB pitcher (K), MLB batter (hits + totalBases) KEPT as models + served;
+NHL points / MLB homeRuns served NAIVE (models can't beat the recent average - noisy low-count
+stats); NBA v3 BLOCKED on the player-log data (R2 creds or defer). With NFL + CFB (already
+served), that's 5 of 6 sports now serving player props.
