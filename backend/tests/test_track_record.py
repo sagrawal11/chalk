@@ -7,6 +7,7 @@ import pytest
 
 import track_record.grade as grade
 import track_record.lock as lock
+import pipeline.track_record as tr
 from track_record.aggregate import headline, summarize
 from predictions.schema import GamePrediction
 
@@ -111,3 +112,55 @@ def test_grade_props_skips_unknown_actuals(tmp_path, monkeypatch):
     lock.lock_predictions("nba", "2025-01-16", [_gp("2025-01-16")],
                           prop_predictions=[_pp("luka_doncic", "AST", 9.0)])
     assert grade.grade_props_date("nba", "2025-01-16", {}).empty
+
+
+# --- live orchestrator (pipeline.track_record): the new lock->grade->report loop ---
+def test_nhl_season_year_boundary():
+    assert tr._nhl_season_year("2026-01-15") == 2025   # Jan -> prior season start
+    assert tr._nhl_season_year("2025-11-12") == 2025   # Nov -> same year
+    assert tr._nhl_season_year("2026-10-08") == 2026
+
+
+def test_games_on_shapes_slate_and_finals(monkeypatch):
+    """A played game is gradeable (final=True, scores present); a scheduled game is
+    lockable but not gradeable (final=False, NaN scores)."""
+    import sports.nhl.data as nhldata
+    synth = pd.DataFrame({
+        "game_id": [1, 2], "season": [2025, 2025],
+        "game_date": ["2026-01-15", "2026-01-15"],
+        "home": ["BOS", "NYR"], "away": ["SEA", "TBL"],
+        "home_goals": [4, None], "away_goals": [2, None], "status": ["OFF", "FUT"],
+    })
+    monkeypatch.setattr(nhldata, "load_schedules", lambda years: synth)
+    g = tr._games_on("nhl", "2026-01-15")
+    assert list(g["final"]) == [True, False]
+    assert g.loc[0, "home_pts"] == 4 and pd.isna(g.loc[1, "home_pts"])
+    assert tr._games_on("basketballcricket", "2026-01-15") is None  # unwired -> skip
+
+
+def test_lock_grade_roundtrip(tmp_path, monkeypatch):
+    """cmd_lock predicts+locks a slate (matchup only), cmd_grade grades it vs finals.
+    Both picks favor home (mu +2): the home-winning game is a win, the away-winning a loss."""
+    monkeypatch.setattr(lock, "LOCKED_DIR", tmp_path / "locked")
+    monkeypatch.setattr(grade, "RESULTS_LEDGER", tmp_path / "ledger.parquet")
+    frame = pd.DataFrame({
+        "home": ["LAL", "MIA"], "away": ["BOS", "NYK"],
+        "home_pts": [4.0, 1.0], "away_pts": [2.0, 3.0], "final": [True, True],
+    })
+    monkeypatch.setattr(tr, "_games_on", lambda sport, date: frame)
+
+    class _FakeSport:  # home always favored by mu_margin +2
+        def predict_game(self, home, away, game_date):
+            return GamePrediction(sport="nhl", game_date=game_date, home=home, away=away,
+                                  mu_total=6.0, sigma_total=1.5, mu_margin=2.0,
+                                  sigma_margin=1.5, pred_home_pts=4.0, pred_away_pts=2.0,
+                                  p_home_win=0.6)
+    monkeypatch.setattr(tr, "get_sport", lambda s: _FakeSport())
+
+    assert tr.cmd_lock("nhl", "2026-01-15") == 2
+    assert lock.lock_path("nhl", "2026-01-15").exists()
+    assert tr.cmd_lock("nhl", "2026-01-15") == 0          # immutable: refuses re-lock
+    assert tr.cmd_grade("nhl", "2026-01-15") == 2
+    led = pd.read_parquet(tmp_path / "ledger.parquet")
+    assert (led["result"] == "win").sum() == 1 and (led["result"] == "loss").sum() == 1
+    assert grade.append_ledger(grade.grade_date("nhl", "2026-01-15", {})) == 0  # idempotent

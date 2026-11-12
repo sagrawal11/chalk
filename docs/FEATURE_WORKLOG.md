@@ -506,5 +506,36 @@ bias was entirely in the Poisson path). 14 soccer tests green. Tools:
 `scratch/measure_soccer_homefield.py` (backtest sweep), `scratch/measure_soccer_serving.py`
 (recreated the lost serving check).
 
-### Still to do this phase: reviving the live nightly track record (`pipeline/` exists but
-cold; owner: wire it, I'll run it -- no launchd cron).
+### Live track record revived (2026-11-12) -> wired, tested end-to-end, left ready
+
+The lock -> grade -> aggregate primitives (`track_record/{lock,grade,aggregate}.py`,
+`predictions/schema.py`) existed but were COLD: nothing drove them with a live loop, so
+`data/predictions/` was empty and every accuracy number was backtest-only. The gap was the
+orchestration + a per-sport slate/finals source (`Sport.schedule()` was unimplemented for
+every sport). Built `pipeline/track_record.py`:
+- `lock --sport S [--date D]`  : predict each game on D from the matchup only and write an
+  immutable SHA-256 lock (pre-game by construction). Default D = today.
+- `grade --sport S [--date D]` : grade the locked slate vs finals, append to the live ledger
+  (`source="live"`). Default D = yesterday. Idempotent.
+- `report [--sport S] [--all-sources]` : win% / streak / score-MAE from the ledger (live rows
+  only by default; `--all-sources` folds in the backtest seed).
+
+The only new glue is `_games_on(sport, date)` (-> home/away/home_pts/away_pts/final). NHL is
+wired LIVE (`sports/nhl/data.load_schedules` refetches the current season, caches past ones)
+and SOCCER from the cached EPL results (replay). Adding a sport = one `_games_on` branch + a
+`WIRED_SPORTS` entry.
+
+Tested END-TO-END offline on NHL 2026-01-15 (the 2025-26 season is cached AND out-of-sample --
+the NHL model trains through 2024): locked 10 games -> graded 5-5 (50% SU, n=10) -> score MAE
+1.495 goals/side. Verified the honesty guarantees: re-lock refuses (immutable), re-grade is
+idempotent (+0 rows), the lock hash validates, and the locked slate carries no result fields.
+3 new hermetic tests in `tests/test_track_record.py` (season-year boundary, `_games_on`
+slate/finals shaping, `cmd_lock`->`cmd_grade` round-trip); 187 tests green (was 184). Did NOT
+install any launchd cron (owner runs it). How-to: `docs/TRACK_RECORD.md`. The end-to-end test
+artifacts under `data/predictions/` were cleaned afterward (gitignored; reproducible via the
+commands).
+
+### Phase status (2026-11-12): breadth + polish complete, ready for ONE PR
+On `polish/winner-switch-ons`, 4 local commits, nothing pushed (owner's call to open/merge):
+CFB opp-adj defense [7779212], calibration breadth [781cf5a], soccer home-bias fix [2c9bcbe],
+live track record [this commit]. 187 tests green.
