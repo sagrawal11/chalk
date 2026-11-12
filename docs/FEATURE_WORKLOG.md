@@ -472,6 +472,39 @@ is only ~45%, historically low). A fix (shrink the home edge toward reality) lik
 3way_logloss too, not just calibration -- flagged as the one real calibration fix, to be
 done measured on 3way_logloss. 184 tests green (incl. 7 calibration tests after the extend).
 
-### Still to do this phase: (1) the soccer home-bias calibration fix (measured on
-3way_logloss), (2) reviving the live nightly track record (`pipeline/` exists but cold;
-owner: wire it, I'll run it -- no launchd cron).
+### Soccer home-bias fix (2026-11-12) -> KEEP at HOME_FIELD 0.90 (owner's call)
+
+The served soccer Poisson over-predicted home wins: calibration found pred_H 0.538 vs
+obs 0.450 (+0.088). Root cause is a DOUBLE-COUNT of the home edge -- the attack/defense
+ratings are already venue-split (home_attack from home games, away_defense from away
+games), which ALREADY encodes the home scoring advantage, and `HOME_FIELD = 1.19` (the raw
+home/away goal ratio) multiplied it again on top. Swept HOME_FIELD on the referee
+(`walk_forward_3way`, cross_season ON, n=1274); the log-loss minimum and the calibration
+target (pred_H -> 0.45) land on the SAME value, 0.90:
+
+| home_field | 3way_logloss | 3way_acc | total_mae | pred_H (obs 0.450) |
+|---|---|---|---|---|
+| 1.19 (old) | 1.0500 | 0.5212 | 1.492 | 0.538 (+0.088, biased) |
+| **0.90 (new)** | **1.0227** | 0.5149 | **1.423** | **0.443** (calibrated) |
+
+Backtest path: log-loss **-0.0273**, total_mae -0.069, all three outcomes now calibrated
+(H 0.443/0.450, D 0.231/0.225, A 0.326/0.325). three_way_acc -0.0063 (within 1 SE at
+n=1274 = noise; argmax-acc rewards over-forecasting the modal home outcome, so it peaks on
+the biased model). Serving path (`scratch/measure_soccer_serving.py`, the SERVED
+`latest_team_ratings` estimator, n=956): log-loss **1.0579 -> 1.0230 (-0.0349)** -- a
+bigger win than the backtest, the 1.19 baseline reproduces the documented 1.0579 exactly,
+acc UNCHANGED at 0.5262, pred_H 0.557 -> 0.460 (obs 0.455). On the served path there is
+ZERO accuracy cost; the tiny backtest acc dip does not manifest.
+
+Owner chose KEEP at 0.90 under the picking-winners priority (log-loss is the primary soccer
+metric and half of "winner accuracy/log-loss"; the acc dip is noise). Changed `HOME_FIELD`
+in `sports/soccer/team_features.py` (1.19 -> 0.90, with an in-code comment explaining the
+double-count) and pointed `soccer_backtest.BASELINE_PARAMS["home_field"]` at the constant
+so the referee and the served predictor can never drift again. `_BASE` in
+`models/soccer_predictor.py` left alone (its p_home 0.45 fallback was already correct; the
+bias was entirely in the Poisson path). 14 soccer tests green. Tools:
+`scratch/measure_soccer_homefield.py` (backtest sweep), `scratch/measure_soccer_serving.py`
+(recreated the lost serving check).
+
+### Still to do this phase: reviving the live nightly track record (`pipeline/` exists but
+cold; owner: wire it, I'll run it -- no launchd cron).
