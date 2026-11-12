@@ -24,9 +24,12 @@ _TEAM_COLS = [f"HOME_{k}" for k in _ORDER] + [f"AWAY_{k}" for k in _ORDER] + ["N
 _OPP_ADJ = ["OFF_ADJ", "DEF_ADJ"]
 OPP_ADJ_COLS = [f"HOME_{k}" for k in _OPP_ADJ] + [f"AWAY_{k}" for k in _OPP_ADJ]
 OFF_ADJ_COLS = ["HOME_OFF_ADJ", "AWAY_OFF_ADJ"]
-# Base set (for measuring without opp-adj) and the served set (with opp-adj offense).
+# Base set (for measuring without opp-adj) and the served set. Opp-adj OFFENSE was
+# the original keep; opp-adj DEFENSE flipped ON 2026-11-12 under the picking-winners
+# priority (train+CV 2015-2024: su_acc 0.6967 -> 0.7003, winner_LL 0.5739 -> 0.5725,
+# margin_mae 13.826 -> 13.787; small total_mae cost 13.447 -> 13.485).
 BASE_FEATURE_COLS: List[str] = _TEAM_COLS + CTX_COLS
-TEAM_FEATURE_COLS: List[str] = _TEAM_COLS + OFF_ADJ_COLS + CTX_COLS
+TEAM_FEATURE_COLS: List[str] = _TEAM_COLS + OPP_ADJ_COLS + CTX_COLS
 _FILL = {"OFF": 28.0, "DEF": 28.0, "WINPCT": 0.5, "FORM": 0.0, "REST": 7.0, "PRIOR_DIFF": 0.0}
 _CTX_FILL = {"IS_NEUTRAL": 0, "CONF_GAME": 0}
 
@@ -76,6 +79,8 @@ def _assemble(h: Dict[str, float], a: Dict[str, float]) -> Dict[str, float]:
     row["REST_DIFF"] = h["REST"] - a["REST"]
     row["HOME_OFF_ADJ"] = h.get("OFF_ADJ", 0.0)
     row["AWAY_OFF_ADJ"] = a.get("OFF_ADJ", 0.0)
+    row["HOME_DEF_ADJ"] = h.get("DEF_ADJ", 0.0)
+    row["AWAY_DEF_ADJ"] = a.get("DEF_ADJ", 0.0)
     return row
 
 
@@ -121,6 +126,7 @@ def latest_team_features(tl: pd.DataFrame) -> Dict[str, Dict[str, float]]:
         r = tdf.iloc[-1]
         feats = {k: float(r[k]) for k in _ORDER}
         feats["OFF_ADJ"] = float(r["OFF_ADJ"]) if "OFF_ADJ" in r.index else 0.0
+        feats["DEF_ADJ"] = float(r["DEF_ADJ"]) if "DEF_ADJ" in r.index else 0.0
         out[team] = feats
     return out
 

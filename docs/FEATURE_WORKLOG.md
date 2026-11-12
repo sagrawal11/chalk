@@ -415,3 +415,127 @@ xG PARKED** (Feed 4, external sources down -- re-check Understat next session); 
 player props kept + served (this branch, `feed/cfb-player-props`)**. All 6 sports now
 have served team models; NFL and CFB have served player-prop models. Nothing
 pushed/merged on this branch yet -- outward actions are the owner's call.
+
+---
+
+## Breadth + polish phase (2026-11-12): owner chose "optimize for picking winners"
+
+Feeds are done; this phase tightens the existing models. Owner's stated priority:
+**winner accuracy over margin/total precision**, which resolves the flagged switch-ons.
+
+### Flagged switch-on: CFB opp-adj DEFENSE -> FLIPPED ON (branch `polish/winner-switch-ons`)
+Re-measured on the current train+CV (2015-2024, 2025 untouched, n=7517), off-only
+(served) vs off+def:
+
+| metric | off-only (served) | off+def | delta |
+|---|---|---|---|
+| **su_acc** | 0.6967 | **0.7003** | **+0.0036** |
+| winner_logloss | 0.5739 | 0.5725 | -0.0014 |
+| margin_mae | 13.826 | 13.787 | -0.039 |
+| total_mae | 13.447 | 13.485 | +0.038 (worse) |
+
+Better on su_acc, winner log-loss AND margin; only total_mae costs +0.038. Confirms
+Run 2. Under the picking-winners priority this is a clear **KEEP**: wired DEF_ADJ into
+`TEAM_FEATURE_COLS` + `_assemble` + `latest_team_features` (mirrors the NFL OFF_ADJ
+wiring), retrained (2025 holdout margin_mae 13.135 -> 12.987, total 13.110 -> 13.141),
+serve-verified (Georgia vs Alabama margin 6.7 / total 47.9 / p_home 0.659), test
+updated, 184 tests green.
+
+### Flagged switch-on: MLB real SP_ERA -> ALREADY ON (no change needed)
+Verified in code: `train_mlb_team_model` builds the frame with the default
+`fetch_sp_era=True`, and SP_ERA / SP_ERA_DIFF are in `TEAM_FEATURE_COLS`, so the served
+MLB model already uses real per-pitcher rolling ERA (kept per owner in Run 2). The Run-1
+"leave off" is already superseded; consistent with the picking-winners priority.
+
+### NFL opp-adj DEFENSE -> stays OFF (hurt su_acc even under picking-winners).
+
+### Calibration breadth (2026-11-12) -> extended `evaluate_calibration.py` to all 6 sports
+Added mlb/nhl/cfb configs + a soccer 3-way variant (`evaluate_soccer_calibration`, since
+soccer is a Poisson not a margin model) + CLI choices. Out-of-sample (clean eval-model on
+seasons < holdout):
+
+| sport | holdout | n | winner_LL | ECE | margin cov80 | total cov80 | home-win act/pred |
+|---|---|---|---|---|---|---|---|
+| nba | 2025-26 | 1232 | 0.602 | 0.034 | 0.79 | 0.84 | 0.551/0.543 |
+| nfl | 2024 | 285 | 0.632 | 0.036 | 0.81 | 0.80 | 0.547/0.564 |
+| mlb | 2025 | 2442 | 0.685 | 0.036 | 0.81 | 0.82 | 0.544/0.508 |
+| nhl | 2024 | 1312 | 0.670 | 0.031 | 0.83 | 0.81 | 0.562/0.545 |
+| cfb | 2025 | 808 | 0.553 | 0.027 | 0.79 | 0.81 | 0.595/0.575 |
+
+The 5 team models are all WELL-CALIBRATED (cov80 ~0.80, ECE < 0.04; no fix needed). ECE =
+weighted mean |pred-obs| over winner reliability bins.
+
+SOCCER is the outlier (served cross_season-ON config, 3way_logloss 1.0500): materially
+HOME-BIASED -- H pred 0.538 vs obs 0.450 (+0.088), A pred 0.264 vs obs 0.325 (-0.061),
+D pred 0.198 vs obs 0.225 (-0.027). Overconfident in home teams (EPL 2021-24 home-win rate
+is only ~45%, historically low). A fix (shrink the home edge toward reality) likely helps
+3way_logloss too, not just calibration -- flagged as the one real calibration fix, to be
+done measured on 3way_logloss. 184 tests green (incl. 7 calibration tests after the extend).
+
+### Soccer home-bias fix (2026-11-12) -> KEEP at HOME_FIELD 0.90 (owner's call)
+
+The served soccer Poisson over-predicted home wins: calibration found pred_H 0.538 vs
+obs 0.450 (+0.088). Root cause is a DOUBLE-COUNT of the home edge -- the attack/defense
+ratings are already venue-split (home_attack from home games, away_defense from away
+games), which ALREADY encodes the home scoring advantage, and `HOME_FIELD = 1.19` (the raw
+home/away goal ratio) multiplied it again on top. Swept HOME_FIELD on the referee
+(`walk_forward_3way`, cross_season ON, n=1274); the log-loss minimum and the calibration
+target (pred_H -> 0.45) land on the SAME value, 0.90:
+
+| home_field | 3way_logloss | 3way_acc | total_mae | pred_H (obs 0.450) |
+|---|---|---|---|---|
+| 1.19 (old) | 1.0500 | 0.5212 | 1.492 | 0.538 (+0.088, biased) |
+| **0.90 (new)** | **1.0227** | 0.5149 | **1.423** | **0.443** (calibrated) |
+
+Backtest path: log-loss **-0.0273**, total_mae -0.069, all three outcomes now calibrated
+(H 0.443/0.450, D 0.231/0.225, A 0.326/0.325). three_way_acc -0.0063 (within 1 SE at
+n=1274 = noise; argmax-acc rewards over-forecasting the modal home outcome, so it peaks on
+the biased model). Serving path (`scratch/measure_soccer_serving.py`, the SERVED
+`latest_team_ratings` estimator, n=956): log-loss **1.0579 -> 1.0230 (-0.0349)** -- a
+bigger win than the backtest, the 1.19 baseline reproduces the documented 1.0579 exactly,
+acc UNCHANGED at 0.5262, pred_H 0.557 -> 0.460 (obs 0.455). On the served path there is
+ZERO accuracy cost; the tiny backtest acc dip does not manifest.
+
+Owner chose KEEP at 0.90 under the picking-winners priority (log-loss is the primary soccer
+metric and half of "winner accuracy/log-loss"; the acc dip is noise). Changed `HOME_FIELD`
+in `sports/soccer/team_features.py` (1.19 -> 0.90, with an in-code comment explaining the
+double-count) and pointed `soccer_backtest.BASELINE_PARAMS["home_field"]` at the constant
+so the referee and the served predictor can never drift again. `_BASE` in
+`models/soccer_predictor.py` left alone (its p_home 0.45 fallback was already correct; the
+bias was entirely in the Poisson path). 14 soccer tests green. Tools:
+`scratch/measure_soccer_homefield.py` (backtest sweep), `scratch/measure_soccer_serving.py`
+(recreated the lost serving check).
+
+### Live track record revived (2026-11-12) -> wired, tested end-to-end, left ready
+
+The lock -> grade -> aggregate primitives (`track_record/{lock,grade,aggregate}.py`,
+`predictions/schema.py`) existed but were COLD: nothing drove them with a live loop, so
+`data/predictions/` was empty and every accuracy number was backtest-only. The gap was the
+orchestration + a per-sport slate/finals source (`Sport.schedule()` was unimplemented for
+every sport). Built `pipeline/track_record.py`:
+- `lock --sport S [--date D]`  : predict each game on D from the matchup only and write an
+  immutable SHA-256 lock (pre-game by construction). Default D = today.
+- `grade --sport S [--date D]` : grade the locked slate vs finals, append to the live ledger
+  (`source="live"`). Default D = yesterday. Idempotent.
+- `report [--sport S] [--all-sources]` : win% / streak / score-MAE from the ledger (live rows
+  only by default; `--all-sources` folds in the backtest seed).
+
+The only new glue is `_games_on(sport, date)` (-> home/away/home_pts/away_pts/final). NHL is
+wired LIVE (`sports/nhl/data.load_schedules` refetches the current season, caches past ones)
+and SOCCER from the cached EPL results (replay). Adding a sport = one `_games_on` branch + a
+`WIRED_SPORTS` entry.
+
+Tested END-TO-END offline on NHL 2026-01-15 (the 2025-26 season is cached AND out-of-sample --
+the NHL model trains through 2024): locked 10 games -> graded 5-5 (50% SU, n=10) -> score MAE
+1.495 goals/side. Verified the honesty guarantees: re-lock refuses (immutable), re-grade is
+idempotent (+0 rows), the lock hash validates, and the locked slate carries no result fields.
+3 new hermetic tests in `tests/test_track_record.py` (season-year boundary, `_games_on`
+slate/finals shaping, `cmd_lock`->`cmd_grade` round-trip); 187 tests green (was 184). Did NOT
+install any launchd cron (owner runs it). How-to: `docs/TRACK_RECORD.md`. The end-to-end test
+artifacts under `data/predictions/` were cleaned afterward (gitignored; reproducible via the
+commands).
+
+### Phase status (2026-11-12): breadth + polish complete, ready for ONE PR
+On `polish/winner-switch-ons`, 4 local commits, nothing pushed (owner's call to open/merge):
+CFB opp-adj defense [7779212], calibration breadth [781cf5a], soccer home-bias fix [2c9bcbe],
+live track record [this commit]. 187 tests green.

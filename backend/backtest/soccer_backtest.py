@@ -18,11 +18,13 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 import pandas as pd
 
-from sports.soccer.team_features import add_team_features, three_way_from_lambdas
+from sports.soccer.team_features import HOME_FIELD, add_team_features, three_way_from_lambdas
 
 # The soccer-v1 baseline Poisson params; each experiment overrides individual keys.
+# home_field references the served constant so the referee and the predictor can
+# never drift (both now 0.90 after the 2026-11-12 home-bias fix).
 BASELINE_PARAMS: Dict[str, Any] = {
-    "roll": 6, "home_field": 1.19, "min_prior": 3, "max_goals": 10,
+    "roll": 6, "home_field": HOME_FIELD, "min_prior": 3, "max_goals": 10,
     "dixon_coles": False, "dc_rho": -0.13, "cross_season": False,
 }
 _OUTCOMES = np.array(["H", "D", "A"])

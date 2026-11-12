@@ -40,8 +40,14 @@ MIN_PRIOR = 3       # usage gate: need >= this many prior games for a data-backe
 MAX_GOALS = 10      # scoreline grid cap for the Poisson sum
 PRIOR_K = 5.0       # cross-season shrinkage pseudo-count: early-season ratings pull
                     # toward the team's prior-season level instead of neutral 1.0
-HOME_FIELD = 1.19   # home multiplier on home attack; empirical EPL home/away goal
-                    # ratio over 2021-22..2024-25 (mean home goals / mean away goals)
+HOME_FIELD = 0.90   # home multiplier on home attack. NOT a home disadvantage: the
+                    # attack/defense ratings are already venue-split (home_attack from
+                    # home games, away_defense from away games), so they ALREADY encode
+                    # the home scoring edge. The raw 1.19 home/away goal ratio applied on
+                    # top double-counted it -> the served Poisson over-predicted home wins
+                    # (0.538 vs 0.450 actual). 0.90 is the measured correction that
+                    # minimizes 3-way log-loss AND calibrates all three outcomes on EPL
+                    # 2021-24 (see docs/FEATURE_WORKLOG.md, 2026-11-12 home-bias fix).
 _LEAGUE_AVG_GOALS = 1.35  # a-priori per-team goals/game fallback when a season is thin
 
 _MATCH_COLS = ["season", "date", "home", "away", "fthg", "ftag"]

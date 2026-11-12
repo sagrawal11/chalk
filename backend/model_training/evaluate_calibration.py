@@ -197,11 +197,78 @@ def _nfl_config(start: int, end: int) -> Dict[str, Any]:
     }
 
 
+def _mlb_config(start: int, end: int) -> Dict[str, Any]:
+    from sports.mlb.team_features import TEAM_FEATURE_COLS, build_team_game_frame
+    from model_training.train_mlb_team_model import MLB_LGBM_PARAMS
+
+    frame = build_team_game_frame(range(start, end + 1))
+    return {
+        "sport": "mlb", "frame": frame, "feature_cols": TEAM_FEATURE_COLS,
+        "seasons": frame["season"].astype(str), "dates": frame["game_date"],
+        "params": MLB_LGBM_PARAMS, "model_dir": ARTIFACTS_DIR / "mlb_team",
+    }
+
+
+def _nhl_config(start: int, end: int) -> Dict[str, Any]:
+    from sports.nhl.team_features import TEAM_FEATURE_COLS, build_team_game_frame
+    from model_training.train_nhl_team_model import NHL_LGBM_PARAMS
+
+    frame = build_team_game_frame(range(start, end + 1))
+    return {
+        "sport": "nhl", "frame": frame, "feature_cols": TEAM_FEATURE_COLS,
+        "seasons": frame["season"].astype(str), "dates": frame["game_date"],
+        "params": NHL_LGBM_PARAMS, "model_dir": ARTIFACTS_DIR / "nhl_team",
+    }
+
+
+def _cfb_config(start: int, end: int) -> Dict[str, Any]:
+    from sports.cfb.team_features import TEAM_FEATURE_COLS, build_team_game_frame
+    from model_training.train_cfb_team_model import CFB_LGBM_PARAMS
+
+    frame = build_team_game_frame(range(start, end + 1))
+    return {
+        "sport": "cfb", "frame": frame, "feature_cols": TEAM_FEATURE_COLS,
+        "seasons": frame["season"].astype(str), "dates": frame["game_date"],
+        "params": CFB_LGBM_PARAMS, "model_dir": ARTIFACTS_DIR / "cfb_team",
+    }
+
+
+def evaluate_soccer_calibration(seasons: Sequence[int] = (2021, 2022, 2023, 2024)) -> Dict[str, Any]:
+    """3-way calibration for the soccer Poisson model, which breaks the binary
+    margin-sign harness (a draw is a real outcome). Walk-forward out-of-sample
+    3-way probabilities vs the actual H/D/A, reporting multiclass log-loss + a
+    per-outcome reliability check (does a predicted 45% home win hit ~45%?)."""
+    from backtest.soccer_backtest import predict_matches, three_way_logloss
+    from sports.soccer.team_features import build_epl_matches
+
+    # predict_matches gives per-match prior-only 3-way probs + the actual outcome
+    # (walk_forward_3way only returns per-season aggregates). cross_season=True so we
+    # calibrate the SERVED config (the soccer predictor runs cross_season on, SOC-03).
+    df = predict_matches(build_epl_matches(list(seasons)), {"cross_season": True})
+    if df is not None and not df.empty:
+        df = df.dropna(subset=["p_home", "p_draw", "p_away", "outcome"])
+    if df is None or df.empty:
+        return {"sport": "soccer", "error": "no out-of-sample matches"}
+    outcomes = df["outcome"].tolist()
+    rel = {}
+    for cls, col in (("H", "p_home"), ("D", "p_draw"), ("A", "p_away")):
+        y = np.asarray([1.0 if o == cls else 0.0 for o in outcomes], float)
+        rel[cls] = {"pred_mean": float(df[col].mean()), "obs_rate": float(y.mean()),
+                    "brier": brier_score(df[col].to_numpy(), y)}
+    return {
+        "sport": "soccer", "eval": "out_of_sample", "n_matches": int(len(df)),
+        "three_way_logloss": three_way_logloss(outcomes, df["p_home"], df["p_draw"], df["p_away"]),
+        "reliability": rel,
+    }
+
+
 def evaluate_team_model(
     sport: str = "nba",
     parquet: Path = KAGGLE_TEAM_GAMES_PARQUET,
     nfl_start: int = 2010,
     nfl_end: int = 2024,
+    start: int = 0,
+    end: int = 0,
 ) -> Dict[str, Any]:
     """Out-of-sample calibration report for a team score model.
 
@@ -213,8 +280,14 @@ def evaluate_team_model(
         cfg = _nba_config(parquet)
     elif sport == "nfl":
         cfg = _nfl_config(nfl_start, nfl_end)
-    else:  # pragma: no cover - guarded by argparse choices
-        raise ValueError(f"unknown sport {sport!r} (expected 'nba' or 'nfl')")
+    elif sport == "mlb":
+        cfg = _mlb_config(start or 2015, end or 2025)
+    elif sport == "nhl":
+        cfg = _nhl_config(start or 2015, end or 2024)   # 2025-26 in progress; hold out 2024-25
+    elif sport == "cfb":
+        cfg = _cfb_config(start or 2015, end or 2025)
+    else:  # pragma: no cover - soccer routed to evaluate_soccer_calibration
+        raise ValueError(f"unknown sport {sport!r}")
 
     frame, feats = cfg["frame"], cfg["feature_cols"]
     seasons, dates, params = cfg["seasons"], cfg["dates"], cfg["params"]
@@ -247,31 +320,43 @@ def evaluate_team_model(
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--sport", choices=["nba", "nfl"], default="nba")
+    ap.add_argument("--sport", choices=["nba", "nfl", "mlb", "nhl", "cfb", "soccer"], default="nba")
     ap.add_argument("--parquet", type=Path, default=KAGGLE_TEAM_GAMES_PARQUET,
                     help="NBA team-games parquet")
     ap.add_argument("--nfl-start", type=int, default=2010)
     ap.add_argument("--nfl-end", type=int, default=2024)
+    ap.add_argument("--start", type=int, default=0, help="season range start (mlb/nhl/cfb; 0=default)")
+    ap.add_argument("--end", type=int, default=0, help="season range end (mlb/nhl/cfb; 0=default)")
     ap.add_argument("--out", type=Path, default=None,
                     help="override output path (defaults to the sport's artifact dir)")
     args = ap.parse_args()
 
-    report = evaluate_team_model(
-        sport=args.sport, parquet=args.parquet,
-        nfl_start=args.nfl_start, nfl_end=args.nfl_end,
-    )
-    default_dir = ARTIFACTS_DIR / ("team" if args.sport == "nba" else "nfl_team")
+    if args.sport == "soccer":
+        report = evaluate_soccer_calibration()
+        default_dir = ARTIFACTS_DIR / "soccer"
+    else:
+        report = evaluate_team_model(
+            sport=args.sport, parquet=args.parquet,
+            nfl_start=args.nfl_start, nfl_end=args.nfl_end,
+            start=args.start, end=args.end,
+        )
+        default_dir = ARTIFACTS_DIR / {"nba": "team", "nfl": "nfl_team", "mlb": "mlb_team",
+                                       "nhl": "nhl_team", "cfb": "cfb_team"}[args.sport]
     default_dir.mkdir(parents=True, exist_ok=True)
     out = args.out or (default_dir / "calibration_report.json")
     with open(out, "w", encoding="utf-8") as f:
         json.dump(report, f, indent=2)
-    logger.info(
-        "%s calibration (OOS) | holdout=%s n=%d | home win: actual=%.3f pred=%.3f | "
-        "Winner Brier=%.4f | margin cov80=%.2f total cov80=%.2f",
-        args.sport.upper(), report["holdout_season"], report["n_games"],
-        report["home_win_rate_actual"], report["home_win_prob_mean"],
-        report["winner_brier"], report["margin"]["coverage_80"], report["total"]["coverage_80"],
-    )
+    if args.sport == "soccer":
+        logger.info("SOCCER 3-way calibration (OOS) | n=%d | 3-way logloss=%.4f",
+                    report.get("n_matches", 0), report.get("three_way_logloss", float("nan")))
+    else:
+        logger.info(
+            "%s calibration (OOS) | holdout=%s n=%d | home win: actual=%.3f pred=%.3f | "
+            "Winner Brier=%.4f | margin cov80=%.2f total cov80=%.2f",
+            args.sport.upper(), report["holdout_season"], report["n_games"],
+            report["home_win_rate_actual"], report["home_win_prob_mean"],
+            report["winner_brier"], report["margin"]["coverage_80"], report["total"]["coverage_80"],
+        )
     print(json.dumps(report, indent=2))
 
 
