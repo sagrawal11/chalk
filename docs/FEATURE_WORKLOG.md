@@ -647,3 +647,38 @@ NHL skater (shots), MLB pitcher (K), MLB batter (hits + totalBases) KEPT as mode
 NHL points / MLB homeRuns served NAIVE (models can't beat the recent average - noisy low-count
 stats); NBA v3 BLOCKED on the player-log data (R2 creds or defer). With NFL + CFB (already
 served), that's 5 of 6 sports now serving player props.
+
+## Deep lever: NHL starting goalie (Phase 1 measured -> NO winner signal, 2026-11-13)
+Owner picked NHL starting goalie as the deep lever (the intuitive "biggest same-day swing"), Phase 1
+approved. Measure-first, existing NHL API (no new external feed): built `sports/nhl/goalie_data.py`
+(goalie game logs via the NHL API - the goalies the skater feed skips - with retry/backoff; cached
+`data/nhl/goalie_games_2015-2024.parquet`, all 10 seasons) + `sports/nhl/goalie_features.py` (each
+goalie's prior-only shot-weighted rolling save% over last-10 appearances; the ACTUAL starter's save%
+joined per team-game as HOME/AWAY_GOALIE_SV + the differential) + `scratch/measure_nhl_goalie.py`.
+
+Measured on the honest winner referee (`walk_forward_backtest`, 2015-2024, 90.1% starter coverage,
+22,308 starts):
+
+| variant      | su_acc | win_LL | margin | total |
+|--------------|--------|--------|--------|-------|
+| baseline     | 0.5802 | 0.6740 | 2.144  | 1.865 |
+| +goalie_sv   | 0.5773 | 0.6750 | 2.146  | 1.864 |
+| +goalie_diff | 0.5799 | 0.6746 | 2.145  | 1.863 |
+| +goalie_all  | 0.5776 | 0.6754 | 2.147  | 1.865 |
+
+RESULT: NO winner signal. Baseline ties/beats every goalie variant on BOTH su_acc and winner_logloss
+(the priority). Likely the team DEF + xG ratings already encode goaltending (good goalie -> fewer
+goals against -> better DEF/DEF_XG), making recent save% redundant; NHL winners are also near their
+practical ceiling (~0.58 SU). Per the OOS rule -> DROP. Surprising (contradicts the "biggest swing"
+expectation) -> STOPPED for the owner: (a) accept the drop (delete the goalie code, keep the cached
+data), (b) try a heavier GSAx metric (goals-saved-above-expected, needs per-goalie expected-goals-
+faced = a NEW extraction), or (c) pick a different lever. Goalie code is UNCOMMITTED pending that call.
+
+RESOLUTION (2026-11-15): owner chose (c) pick a different lever -> goalie DROPPED; the 3 goalie code
+files removed (`goalie_data.py`, `goalie_features.py`, `scratch/measure_nhl_goalie.py`), the cached
+`data/nhl/goalie_games_2015-2024.parquet` kept for any future GSAx attempt. Re-checked the soccer xG
+sources for the pivot: understat.com still serves the maintenance page (no `teamsData`),
+api.clubelo.com still 502 -> soccer xG STILL BLOCKED on the source outage (unchanged since
+2026-11-09). The remaining deep-lever candidate is MLB Statcast (xwOBA/FIP via pybaseball = a NEW
+dependency + heavy pull) -> owner's call before investing. Net deep-lever outcome: goalie measured +
+dropped (no winner signal); the branch's shippable work is unchanged (track record + 3 served props).
