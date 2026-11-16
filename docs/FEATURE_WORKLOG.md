@@ -781,3 +781,57 @@ and the simplicity principle. Removed the unwired heavy code (`sports/mlb/statca
 `game_xwoba_*` parquets (gitignored, ~10 min to re-pull) for any future variant (e.g. a different
 aggregation, or a batter-vs-pitcher matchup xwOBA). Net MLB Statcast outcome: the LEAN prior-season
 xwOBA KEEP stands (served + on main); the HEAVY rolling path measured + dropped.
+
+---
+
+## Deepen NFL EPA (2026-11-16): sub-features DROPPED, QB-adjusted DIFFERENTIAL KEPT
+
+Owner picked "deepen an already-wired feed" -> NFL EPA (the most predictive, no new creds; the PBP is
+already pulled). Three candidates off the same play-by-play, measured one at a time on the walk-forward
+referee (2010-2024 train+CV, 2025 untouched holdout) AND confirmed on the honest 2025 holdout.
+
+### Success rate + pass/rush EPA split -> DROPPED
+Re-aggregated PBP to per-team-game success rate + pass/rush EPA split (off+def), cached
+`epa_sub_{year}.parquet`. Measured vs the served baseline:
+
+| set | margin | total | su_acc | 2025-holdout su_acc |
+|---|---|---|---|---|
+| baseline | 10.459 | 10.900 | 0.6283 | 0.5754 |
+| +success_rate | 10.440 | 10.886 | 0.6253 (worse) | - |
+| +pass/rush | 10.486 (worse) | 10.936 (worse) | 0.6253 | - |
+| +both | 10.417 | 10.927 (worse) | 0.6310 | 0.5719 (worse) |
+
+Neither helps alone; only "+both" looked positive on train+CV, but on the UNTOUCHED 2025 holdout it was
+WORSE on both su_acc (0.5754->0.5719) and margin (10.625->10.804) -> a CV-split overfit. DROP. The base
+OFF/DEF EPA already captures the efficiency signal; success rate correlates with it and the pass/rush
+decomposition adds noise (same lesson as the MLB rolling-xwOBA drop: the aggregate beats its parts).
+
+### QB-adjusted EPA -> KEPT as the home-away DIFFERENTIAL (not the raw columns)
+`load_qb_epa` aggregates PBP to per-(game, passer) passing EPA (cached `qb_epa_{year}.parquet`);
+`load_team_qb_epa` rolls each QB's prior-only last-10 passing EPA and attaches it to each team-game via
+the schedule's confirmed starter (home_qb_id/away_qb_id; 92.4% coverage, ids match 1:1). The mechanism
+the team aggregate gets WRONG: a QB injury/benching.
+
+The RAW two columns (HOME/AWAY_QB_EPA) regressed argmax su_acc systematically (8/12 seasons, mean
+-0.0081) -> dropped. The home-away DIFFERENTIAL (QB_EPA_DIFF = home starter minus away starter, the
+matchup edge) is the clean keep:
+
+| set | su_acc (ref) | winner_LL (ref) | total (ref) | 2025 holdout su / margin |
+|---|---|---|---|---|
+| baseline | 0.6283 | 0.6457 | 10.900 | 0.5754 / 10.625 |
+| +QB raw (2 cols) | 0.6201 (worse) | 0.6430 | 10.851 | 0.6035 / 10.291 |
+| **+QB_EPA_DIFF (served)** | **0.6299** | **0.6385 (-0.0072)** | 10.942 (+0.042) | **0.5895 / 10.397** |
+
+Under the picking-winners priority this is a clear KEEP: su_acc holds/ticks up (+0.0016), winner_logloss
+drops a solid -0.0072 (the calibrated winner metric), and the untouched 2025 holdout improves on BOTH
+su_acc and margin; the only cost is total_mae +0.042 (totals are not the priority). Owner confirmed KEEP
+after a dig-deeper pass (the per-season su_acc breakdown + the differential formulation) resolved the
+raw-column ambiguity.
+
+**Wired + served + verified.** `QB_EPA_DIFF` added to `TEAM_FEATURE_COLS` (data `load_qb_epa` /
+`load_team_qb_epa`; `_team_timeline` merges the pre-rolled QB_EPA; `_assemble` forms the differential at
+inference; `latest_team_features` carries QB_EPA). Retrained (margin holdout 10.289, total 10.028) +
+serve-verified (KC/BUF sane + home-field consistent). New hermetic tests (`test_qb_epa_served_as_
+differential`, `test_qb_epa_absent_feed_is_neutral`); 193 tests green (was 191). The dropped sub-feature
+code was removed; its `epa_sub_*` cache + the orphaned `scratch/measure_nfl_epa_sub.py` are dead
+(gitignored / untracked, GateGuard blocked the rm - safe to delete).

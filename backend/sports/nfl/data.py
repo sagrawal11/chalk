@@ -131,3 +131,74 @@ def load_team_epa(years: Sequence[int]) -> pd.DataFrame:
             df.to_parquet(cache, index=False)
         frames.append(df)
     return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=_EPA_COLS)
+
+
+# QB-ADJUSTED EPA (NFL-43): attribute passing EPA to the ACTUAL starting QB, not the
+# team. The team OFF_EPA rolls whoever played; this rolls the specific starter's prior
+# passing EPA and attaches it via the confirmed starter (schedule home_qb_id/away_qb_id)
+# - the one signal the team aggregate gets wrong on a QB injury/benching. Same
+# aggregate-and-cache pattern; cached per season to data/nfl/qb_epa_{year}.parquet.
+_QB_EPA_COLS = ["game_id", "passer_id", "QB_PEPA_G", "n_db"]
+_QB_MIN_DB = 10   # dropbacks to count a game as a meaningful start (skip mop-up/trick plays)
+
+
+def _fetch_qb_epa(year: int) -> pd.DataFrame:
+    """Per (game_id, passer) mean passing EPA + dropback count for one season."""
+    import nfl_data_py as nfl
+
+    try:
+        p = nfl.import_pbp_data([year], downcast=True)
+    except Exception:
+        return pd.DataFrame(columns=_QB_EPA_COLS)
+    p = p[p["epa"].notna() & (p.get("pass") == 1) & p.get("passer_player_id").notna()]
+    if p.empty:
+        return pd.DataFrame(columns=_QB_EPA_COLS)
+    g = (p.groupby(["game_id", "passer_player_id"])
+         .agg(QB_PEPA_G=("epa", "mean"), n_db=("epa", "size")).reset_index()
+         .rename(columns={"passer_player_id": "passer_id"}))
+    return g[g["n_db"] >= _QB_MIN_DB][_QB_EPA_COLS]
+
+
+def load_qb_epa(years: Sequence[int]) -> pd.DataFrame:
+    """Per (game_id, passer) passing EPA, cached per completed season to
+    data/nfl/qb_epa_{year}.parquet. Empty if the PBP feed is absent."""
+    cur = _dt.date.today().year
+    frames: List[pd.DataFrame] = []
+    for y in years:
+        y = int(y)
+        cache = _EPA_CACHE / f"qb_epa_{y}.parquet"
+        if y < cur and cache.exists():
+            frames.append(pd.read_parquet(cache))
+            continue
+        df = _fetch_qb_epa(y)
+        if y < cur and not df.empty:
+            _EPA_CACHE.mkdir(parents=True, exist_ok=True)
+            df.to_parquet(cache, index=False)
+        frames.append(df)
+    return pd.concat(frames, ignore_index=True) if frames else pd.DataFrame(columns=_QB_EPA_COLS)
+
+
+def load_team_qb_epa(years: Sequence[int]) -> pd.DataFrame:
+    """Per (game_id, team) the STARTING QB's prior-only rolling passing EPA (last-10
+    starts, leakage-safe), attached via the schedule's confirmed starter. Returns
+    [game_id, team, QB_EPA]; empty if the PBP feed is absent. The rolling lives here
+    (per-QB, across seasons) because a team's starter changes - a per-team roll would
+    mix QBs."""
+    qb = load_qb_epa(years)
+    if qb.empty:
+        return pd.DataFrame(columns=["game_id", "team", "QB_EPA"])
+    sched = load_schedules(years)
+    qb = qb.merge(sched[["game_id", "game_date"]], on="game_id", how="left")
+    qb["game_date"] = pd.to_datetime(qb["game_date"], errors="coerce")
+    qb = qb.sort_values(["passer_id", "game_date"])
+    qb["QB_EPA"] = (qb.groupby("passer_id", sort=False)["QB_PEPA_G"]
+                    .transform(lambda s: s.shift(1).rolling(10, min_periods=3).mean()))
+    # map the confirmed starter to each team-game
+    rows: List[dict] = []
+    for _, r in sched.iterrows():
+        rows.append({"game_id": r["game_id"], "team": r["home"], "passer_id": r.get("home_qb_id")})
+        rows.append({"game_id": r["game_id"], "team": r["away"], "passer_id": r.get("away_qb_id")})
+    starters = pd.DataFrame(rows)
+    out = starters.merge(qb[["game_id", "passer_id", "QB_EPA"]], on=["game_id", "passer_id"], how="left")
+    out["team"] = _canon(out["team"])
+    return out[["game_id", "team", "QB_EPA"]]

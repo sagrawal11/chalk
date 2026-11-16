@@ -51,3 +51,26 @@ def test_matchup_features_shape():
     assert X["NET_DIFF"].iloc[0] == pytest.approx(
         (X["HOME_OFF"].iloc[0] - X["HOME_DEF"].iloc[0]) - (X["AWAY_OFF"].iloc[0] - X["AWAY_DEF"].iloc[0])
     )
+
+
+def test_qb_epa_served_as_differential():
+    # load_team_qb_epa pre-rolls per-QB, so the timeline merges QB_EPA directly (no
+    # re-roll); the served feature is the home-away differential formed at assemble.
+    qb = pd.DataFrame({
+        "game_id": ["g0", "g0", "g1", "g1", "g2", "g2"],
+        "team": ["KC", "BUF", "KC", "BUF", "KC", "BUF"],
+        "QB_EPA": [0.30, 0.10, 0.28, 0.12, 0.26, 0.14],
+    })
+    tl = _team_timeline(_tg(), None, qb)
+    kc = tl[tl["team"] == "KC"].sort_values("game_date")
+    assert kc.iloc[2]["QB_EPA"] == pytest.approx(0.26)     # merged as-is (loader already prior-rolled)
+    X = matchup_features("KC", "BUF", latest_team_features(tl))
+    assert "QB_EPA_DIFF" in X.columns
+    assert X["QB_EPA_DIFF"].iloc[0] == pytest.approx(0.26 - 0.14)   # home starter minus away starter
+
+
+def test_qb_epa_absent_feed_is_neutral():
+    tl = _team_timeline(_tg())                              # no QB feed -> neutral 0.0, no error
+    assert (tl["QB_EPA"] == 0.0).all()
+    X = matchup_features("KC", "BUF", latest_team_features(tl))
+    assert X["QB_EPA_DIFF"].iloc[0] == pytest.approx(0.0)
