@@ -57,12 +57,14 @@ class NHLSkaterPredictor:
         return self._names[pid]
 
     def _predict_one(self, target: str, rec: dict) -> Optional[float]:
-        blob = self._blobs.get(target)
-        if blob is None or rec is None:
+        if rec is None:
             return None
         anchor = float(rec["anchors"].get(target, 0.0))
-        if rec.get("n_prior", 0) < MIN_PRIOR_GAMES:
-            return round(max(0.0, anchor), 2)   # too little history -> recent-average fallback
+        blob = self._blobs.get(target)
+        if blob is None or rec.get("n_prior", 0) < MIN_PRIOR_GAMES:
+            # not modeled (points -> served as its last-10 average), or too little
+            # history -> naive recent-average fallback
+            return round(max(0.0, anchor), 2)
         X = pd.DataFrame([rec["feats"]]).reindex(columns=blob["feature_cols"]).fillna(0.0)
         adj = float(blob["model"].predict(X)[0])
         return round(max(0.0, anchor + adj), 2)
@@ -74,7 +76,7 @@ class NHLSkaterPredictor:
         rec = self._ensure(season or "2024").get(int(player_id))
         if rec is None:
             return None
-        out = {t: self._predict_one(t, rec) for t in PROP_TARGETS if t in self._blobs}
+        out = {t: self._predict_one(t, rec) for t in PROP_TARGETS}
         return {t: v for t, v in out.items() if v is not None} or None
 
     def slate_projections(self, games, season: Optional[str] = None, limit: int = 4) -> list:

@@ -539,3 +539,216 @@ commands).
 On `polish/winner-switch-ons`, 4 local commits, nothing pushed (owner's call to open/merge):
 CFB opp-adj defense [7779212], calibration breadth [781cf5a], soccer home-bias fix [2c9bcbe],
 live track record [this commit]. 187 tests green.
+
+MERGED: PR #12 -> main (owner approved push+open+merge; main tip f9c9d9c).
+
+---
+
+## Going broad: start the live record + wire all 6 sports (2026-11-12, cont.)
+
+Owner: "start the live record, then go broad and get everything established, then go deep
+on one lever." Branch `feat/live-record-breadth` off main.
+
+### Live record STARTED
+Locked tonight's (2026-11-12) real pre-game slate on the live path: NHL 11, NFL 1 (TNF),
+NBA 4, CFB 3 = 19 games across the 4 in-season sports; MLB (offseason) and soccer (no live
+fixtures feed) empty, handled gracefully. Sane predictions across the board (NFL WAS@NYG
+p_home 0.64; NBA TOR@PHI 0.47; CFB UMass@Toledo 0.94; NHL MTL@BOS 0.60), all hashes valid.
+These are genuine forward locks -> grade them tomorrow to begin the real live OOS record.
+
+### Track record wired for ALL 6 sports [af93d79]
+Generalized `_games_on` from NHL+soccer to all six: a uniform dated-games loader dispatch
+(nhl/nfl/mlb `load_schedules`, cfb `load_games`) + an NBA ESPN-scoreboard branch + soccer
+replay. `_season_year` replaces `_nhl_season_year` (per-sport season-start rule). final =
+scores present AND status in {OFF,FINAL,Final} where a status column exists; NFL/CFB have no
+status so score-present == final. 10 track-record tests green (187 total expected). NHL is the
+only sport also confirmed on a graded past slate (2026-01-15, PR #12); the others are verified
+on the LOCK path tonight and grade tomorrow.
+
+### Serve the remaining player-prop models (4): NBA v3 / MLB batter / MLB pitcher / NHL skater
+These have trainers but served NO artifacts (only `nfl` + `cfb_player` were served). Each is
+trained, serve-verified via the sport plugin's `predict_player`, and measured on an honest OOS
+referee (beat naive last-N / season-avg), per the curated-not-kitchen-sink discipline.
+
+#### 1/4 NHL skater - shots KEPT (model), points served NAIVE [cached data]
+Trained on the cached 2023-24 seasons (74,073 usage-gated skater-games, >= 5 prior). Only 2
+seasons are cached, so `walk_forward_train` uses its degenerate temporal-80/20 holdout (no
+season-level CV). New `backtest/nhl_skater_backtest.py` is the honest referee: it reproduces
+that exact split and measures the model vs the naive last-5 / last-10 averages on the SAME
+14,815 holdout rows (the trainer's inline skill used a full-sample baseline - apples-to-oranges -
+because the degenerate path reports `holdout_season=None`).
+
+Measured (model_mae | last-5 | last-10 | skill vs L5):
+- `shots`:  1.048 | 1.103 | 1.063 | **+4.9%** -> KEEP (model beats BOTH naive baselines)
+- `points`: 0.543 | 0.545 | **0.534** | +0.3% -> model ties last-5 and LOSES to last-10;
+  re-anchoring points on L10 still lost (model 0.5425 > naive L10 0.5335). Per-game points
+  (goals+assists) is too noisy/low-count to model (matches the `player_degeneracy_probe` lesson).
+
+Decision (strictly by the OOS rule): serve `shots` via LightGBM; serve `points` as its naive
+last-10 average (no model). Implemented with `MODELED_TARGETS=["shots"]` (trainer fits only
+shots), `ANCHOR_COLS["points"]="points_L10"`, and a predictor fallback that serves the anchor for
+any `PROP_TARGET` lacking a model blob. Serve-verified via `sport.predict_player`: served points
+== the L10 anchor exactly; served shots adjusts off the L5 anchor (e.g. a 3.00-shot player -> 2.28,
+sensible regression). Artifact: `models/artifacts/nhl_skater/skater_shots.joblib` (gitignored).
+`tests/test_nhl_skater_features.py` updated for the new anchor; tests green.
+LIMIT (noted, not fixed): only 2 seasons cached -> the holdout is a temporal tail, not a full
+season. Pulling 2021-22 skater logs (same NHL-API feed, NOT a new feed) would give a proper
+season-holdout; deferred as low-value (shots' win is already clear; points is unmodelable).
+
+#### 2/4 MLB pitcher - K KEPT (model) [cached data]
+Trained on the cached 2022-25 seasons (17,097 usage-gated starts, >= 3 prior). Proper
+walk-forward this time (cv_mae 1.886; holdout = 2025, 4,451 starts - the Aug-2025 cache is
+partial but substantial, a legit OOS season), so the trainer's inline baseline is already
+measured on the holdout rows. New `backtest/mlb_pitcher_backtest.py` reads the stored holdout_mae
+and adds the L10 baseline:
+- `K` (strikeouts, the #1 MLB prop): model **1.841** | last-5 1.929 | last-10 1.857 | **+4.6%**
+  vs L5 -> KEEP (beats BOTH naive baselines). Single target; pitcher code unchanged + already
+  tested (`tests/test_mlb_pitcher_features.py`).
+Serve-verified via the pitcher predictor directly (its serve path; note the MLB plugin's
+`predict_player` is the SEPARATE batter track, so pitcher K is served via the predictor's
+`predict`/`slate_projections`): sane K projections (4.1-6.2 for starters) regressing off the
+K_L5 anchor. Artifact `models/artifacts/mlb_pitcher/pitcher_K.joblib` (gitignored).
+NOTE: 2025 cache is partial (through Aug 24); refetching the complete 2025 season (same StatsAPI
+feed, not a new feed) is a cheap future refinement, not needed for the clear keep.
+#### 3/4 MLB batter - hits + totalBases KEPT (models), homeRuns served NAIVE [pulled data]
+Pulled the StatsAPI batter game logs 2022-25 (~400 regulars/season, cached to
+`data/mlb/batter_games_{year}.parquet`; 118,183 gated batter-games, >= 10 prior). Proper
+walk-forward (holdout = 2025 full season, 29,585 games). New `backtest/mlb_batter_backtest.py`
+(reads stored holdout_mae + L5/L10 baselines on the holdout):
+- `hits`:       0.688 | L5 0.740 | L10 0.717 | **+6.9%** -> KEEP
+- `totalBases`: 1.319 | L5 1.395 | L10 1.352 | **+5.4%** -> KEEP
+- `homeRuns`:   0.209 | L5 0.207 | L10 0.207 | **-1.1%** -> model LOSES to naive; HR is near-
+  irreducible per game (mostly 0), exactly as the trainer docstring predicted -> served NAIVE
+  (last-5), same `MODELED_TARGETS` treatment as NHL points.
+Decision: `MODELED_TARGETS=["hits","totalBases"]`; HR served from its HR_L5 anchor (no model);
+the predictor serves the naive anchor for any PROP_TARGET lacking a blob. Serve-verified via
+`sport.predict_player` (the MLB plugin's player track IS the batter): served HR == the HR_L5
+anchor exactly; hits/TB adjust off their anchors (e.g. Ohtani TB anchor 2.80 -> 1.9, regression).
+Artifacts `batter_hits.joblib` + `batter_totalBases.joblib` (gitignored).
+`tests/test_mlb_batter_features.py` updated; 187 tests green.
+
+#### 4/4 NBA v3 - BLOCKED on data (owner's call)
+The NBA v3 stack (trainer/predictor/features/backtest all exist) needs per-player game-log CSVs
+under `data/player_data/{slug}/{slug}_data.csv`, which are NOT present locally (only a `.gitkeep`
++ a `college` stub). Source options, none feasible unattended:
+- R2 training bundle (`utils/storage.download_full_training_bundle`) - the canonical home of
+  `data/player_data/`, but NO R2 creds in this env (R2_ACCOUNT_ID / R2_ACCESS_KEY_ID /
+  R2_SECRET_ACCESS_KEY all unset).
+- `data_collection/update_player_logs.py` scrapes Basketball-Reference ONE DAY at a time; a
+  multi-season bulk build = thousands of rate-limited / ToS-risky page fetches - NOT attempted.
+- No local NBA SQLite or player box-score source (only team-level Kaggle data).
+STOPPED per the guardrail (data to MEASURE unavailable; never serve an unmeasured model). Owner's
+call: (a) provide R2 creds so I can download the `player_data` bundle, then train + measure + serve
+like the others, or (b) defer NBA player props. (NBA v3 also expects `team_availability.parquet`
+for its availability signal - also absent; it would train on a graceful 0-fill if data existed.)
+
+### Scorecard (player props): 3 served, 1 blocked
+NHL skater (shots), MLB pitcher (K), MLB batter (hits + totalBases) KEPT as models + served;
+NHL points / MLB homeRuns served NAIVE (models can't beat the recent average - noisy low-count
+stats); NBA v3 BLOCKED on the player-log data (R2 creds or defer). With NFL + CFB (already
+served), that's 5 of 6 sports now serving player props.
+
+## Deep lever: NHL starting goalie (Phase 1 measured -> NO winner signal, 2026-11-13)
+Owner picked NHL starting goalie as the deep lever (the intuitive "biggest same-day swing"), Phase 1
+approved. Measure-first, existing NHL API (no new external feed): built `sports/nhl/goalie_data.py`
+(goalie game logs via the NHL API - the goalies the skater feed skips - with retry/backoff; cached
+`data/nhl/goalie_games_2015-2024.parquet`, all 10 seasons) + `sports/nhl/goalie_features.py` (each
+goalie's prior-only shot-weighted rolling save% over last-10 appearances; the ACTUAL starter's save%
+joined per team-game as HOME/AWAY_GOALIE_SV + the differential) + `scratch/measure_nhl_goalie.py`.
+
+Measured on the honest winner referee (`walk_forward_backtest`, 2015-2024, 90.1% starter coverage,
+22,308 starts):
+
+| variant      | su_acc | win_LL | margin | total |
+|--------------|--------|--------|--------|-------|
+| baseline     | 0.5802 | 0.6740 | 2.144  | 1.865 |
+| +goalie_sv   | 0.5773 | 0.6750 | 2.146  | 1.864 |
+| +goalie_diff | 0.5799 | 0.6746 | 2.145  | 1.863 |
+| +goalie_all  | 0.5776 | 0.6754 | 2.147  | 1.865 |
+
+RESULT: NO winner signal. Baseline ties/beats every goalie variant on BOTH su_acc and winner_logloss
+(the priority). Likely the team DEF + xG ratings already encode goaltending (good goalie -> fewer
+goals against -> better DEF/DEF_XG), making recent save% redundant; NHL winners are also near their
+practical ceiling (~0.58 SU). Per the OOS rule -> DROP. Surprising (contradicts the "biggest swing"
+expectation) -> STOPPED for the owner: (a) accept the drop (delete the goalie code, keep the cached
+data), (b) try a heavier GSAx metric (goals-saved-above-expected, needs per-goalie expected-goals-
+faced = a NEW extraction), or (c) pick a different lever. Goalie code is UNCOMMITTED pending that call.
+
+RESOLUTION (2026-11-15): owner chose (c) pick a different lever -> goalie DROPPED; the 3 goalie code
+files removed (`goalie_data.py`, `goalie_features.py`, `scratch/measure_nhl_goalie.py`), the cached
+`data/nhl/goalie_games_2015-2024.parquet` kept for any future GSAx attempt. Re-checked the soccer xG
+sources for the pivot: understat.com still serves the maintenance page (no `teamsData`),
+api.clubelo.com still 502 -> soccer xG STILL BLOCKED on the source outage (unchanged since
+2026-11-09). The remaining deep-lever candidate is MLB Statcast (xwOBA/FIP via pybaseball = a NEW
+dependency + heavy pull) -> owner's call before investing. Net deep-lever outcome: goalie measured +
+dropped (no winner signal); the branch's shippable work is unchanged (track record + 3 served props).
+
+---
+
+## Live record graded (2026-11-16): first real out-of-sample slate
+
+Graded the 2026-11-12 forward-locked slate (the breadth session's genuine pre-game locks) via
+`python -m pipeline.track_record grade --sport all --date 2026-11-12` then `report`. This begins
+the real live OOS record (prior accuracy was backtest-only). Only one locked date exists under
+`data/predictions/locked/` (2026-11-12, all 4 in-season sports); MLB + soccer had no lock (offseason /
+no live feed), handled gracefully.
+
+| sport | SU | score MAE |
+|---|---|---|
+| cfb | 3-0 (100%) | 11.43 |
+| nba | 3-1 (75%) | 15.44 |
+| nfl | 0-1 (0%, the one TNF game) | 3.85 |
+| nhl | 5-6 (45.5%) | 1.53 (goals/side) |
+| **ALL** | **11-8 (57.9%), n=19** | **6.14** |
+
+Thin first sample (19 games), but the live ledger (`source="live"`) is now accruing. Grade is
+idempotent; the ledger lives under gitignored `data/predictions/` (nothing to commit). The owner keeps
+adding to it by running `lock` pre-game + `grade` next-morning (no cron installed).
+
+---
+
+## Deep lever: MLB Statcast - LEAN prior-season xwOBA -> KEEP, served (2026-11-16)
+
+Owner-approved deep lever; measure-first, curated. The LEAN path first (cheap, before any heavy
+pitch-level pull): attach each player's **prior-SEASON xwOBA** as a leakage-safe, season-constant
+quality prior, from the light Baseball Savant expected-stats leaderboards
+(`statcast_{pitcher,batter}_expected_stats`, ~700 rows/season via pybaseball, cached small to
+`data/mlb/xwoba_{kind}_{year}.parquet` - the NHL-xG aggregate pattern). A game in season Y joins the
+leaderboard for Y-1 (strictly past -> leakage-safe); cold-start (rookie / no prior row) gets a
+league-average neutral fill (0.315), so the engine stays offline-safe. 100% of our pitcher/batter ids
+match the leaderboard `player_id` (MLBAM); prior-season coverage 87.4% pitchers / 97.4% batters.
+
+Measured apples-to-apples (`scratch/measure_mlb_statcast.py`): build the gated frame ONCE, run the SAME
+honest `walk_forward_train` twice per target - baseline `FEATURE_COLS` vs `+xwOBA_prior` - on identical
+rows/target/seasons/dates, 2022-2025, untouched holdout 2025. Deterministic (bit-identical across
+re-runs); the baseline reproduces the served numbers exactly, so the deltas are honest.
+
+| target | base holdout_mae | +xwOBA_prior | delta | skill vs L5 |
+|---|---|---|---|---|
+| pitcher K (#1 MLB prop) | 1.8407 | **1.8329** | **-0.0078** | 4.6% -> 5.0% |
+| batter totalBases | 1.3190 | **1.3115** | **-0.0075** | 5.4% -> 6.0% |
+| batter hits | 0.6885 | **0.6875** | **-0.0009** | 6.9% -> 7.1% |
+
+All three LOWER the holdout MAE, none regress -> **KEEP all three** by the OOS rule. The hits gain is
+small (0.13%) but real + reproducible; pitcher K and TB are the meaningful wins (~0.5%). A season-
+constant quality prior genuinely helps the anchored-residual models distinguish a true-talent arm/bat
+from a hot/cold streak, which the recent-form rolls (K_L5 etc.) can't see - without the kitchen-sink.
+
+**Wired + served + verified.** New `sports/mlb/statcast_data.py` (leaderboard fetch/cache +
+`add_prior_xwoba` leakage-safe join); `xwOBA_prior` added to `FEATURE_COLS` in both
+`pitcher_features.py` / `batter_features.py`, attached in `build_*_frame` (the network path; the pure
+`add_*_features` stays hermetic), carried through `latest_*_features` for inference (latest value
+in-season; neutral when the column is absent). Retrained + serve-verified (Logan Webb 5.4 K; Devers
+0.91 hits / 1.75 TB). OOS backtests confirm the served models still beat both naive baselines (K 5.0%,
+hits 7.1%, TB 6.0%). New hermetic `tests/test_mlb_statcast.py` (monkeypatched leaderboard: the
+prior-season join + neutral fill); 191 tests green (was 187). `pybaseball>=2.2` added to
+`config/requirements.txt` (the feature is kept -> the soccerdata rule). HR stays served naive (the
+prior feeds only the modeled hits/TB).
+
+**HEAVY path NOT started (owner's call).** The next step per the plan is the heavy per-season
+pitch-level `statcast()` pull (~2.4M rows/season) -> per-(pitcher/batter,game) xwOBA aggregates ->
+prior-only ROLLING xwOBA (within-season reactive, sharper than the season-constant prior) -> re-measure.
+It is hours of rate-limited pulls and a much bigger moving part - exactly the "Statcast big-investment
+[BUILD]" the guardrails flag for a STOP-AND-ASK - and the lean wins are modest, so stopped here for the
+owner to weigh (proceed vs bank the lean win) under the simplicity principle. Lean work committed
+locally on `feat/live-record-breadth`.

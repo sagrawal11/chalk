@@ -26,7 +26,7 @@ if str(BACKEND) not in sys.path:
 from config.paths import ARTIFACTS_DIR
 from model_training.validation import walk_forward_train
 from sports.mlb.batter_features import (ANCHOR_COLS, FEATURE_COLS, MIN_PRIOR_GAMES,
-                                        PROP_TARGETS, build_batter_frame)
+                                        MODELED_TARGETS, build_batter_frame)
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 logger = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ def main() -> None:
     logger.info("MLB batter frame: %d gated batter-games (%d-%d)", len(frame), args.start, args.end)
 
     summary = {"n": int(len(frame)), "targets": {}}
-    for target in PROP_TARGETS:
+    for target in MODELED_TARGETS:   # homeRuns is served naive (last-5), not modeled
         anchor_col = ANCHOR_COLS[target]
         anchor = pd.to_numeric(frame[anchor_col], errors="coerce").fillna(0.0)
         y_adj = pd.to_numeric(frame[target], errors="coerce").fillna(0.0) - anchor

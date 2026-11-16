@@ -56,22 +56,27 @@ class MLBBatterPredictor:
         return self._names[bid]
 
     def predict(self, batter_id: int, season: Optional[str] = None) -> Optional[Dict[str, float]]:
-        """Anchored per-prop projection dict {hits, totalBases, homeRuns}. With too
-        little history, falls back to the batter's recent average per prop."""
+        """Anchored per-prop projection dict {hits, totalBases, homeRuns}. hits/TB use
+        the LightGBM model; homeRuns (not modeled - can't beat naive) and any prop with
+        too little history fall back to the batter's recent-average anchor."""
         if not self.available():
             return None
         rec = self._ensure(season or "2024").get(int(batter_id))
         if rec is None:
             return None
         anchors = rec["anchors"]
-        if rec.get("n_prior", 0) < MIN_PRIOR_GAMES:
-            return {t: round(max(0.0, float(anchors.get(t, 0.0))), 2) for t in self._m}
+        too_few = rec.get("n_prior", 0) < MIN_PRIOR_GAMES
         X = pd.DataFrame([rec["feats"]])
         out: Dict[str, float] = {}
-        for t, blob in self._m.items():
-            adj = float(blob["model"].predict(X.reindex(columns=blob["feature_cols"]).fillna(0.0))[0])
-            out[t] = round(max(0.0, float(anchors.get(t, 0.0)) + adj), 2)
-        return out
+        for t in PROP_TARGETS:
+            anchor = float(anchors.get(t, 0.0))
+            blob = self._m.get(t)
+            if blob is None or too_few:
+                out[t] = round(max(0.0, anchor), 2)   # not modeled (homeRuns), or too little history -> naive
+            else:
+                adj = float(blob["model"].predict(X.reindex(columns=blob["feature_cols"]).fillna(0.0))[0])
+                out[t] = round(max(0.0, anchor + adj), 2)
+        return out or None
 
     def slate_projections(self, games, season: Optional[str] = None, limit: int = 4) -> list:
         """Prop cards for the slate's regular hitters: project every batter whose

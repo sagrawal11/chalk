@@ -115,10 +115,11 @@ def test_grade_props_skips_unknown_actuals(tmp_path, monkeypatch):
 
 
 # --- live orchestrator (pipeline.track_record): the new lock->grade->report loop ---
-def test_nhl_season_year_boundary():
-    assert tr._nhl_season_year("2026-01-15") == 2025   # Jan -> prior season start
-    assert tr._nhl_season_year("2025-11-12") == 2025   # Nov -> same year
-    assert tr._nhl_season_year("2026-10-08") == 2026
+def test_season_year_boundary():
+    assert tr._season_year("nhl", "2026-01-15") == 2025   # Jan -> prior season start
+    assert tr._season_year("nfl", "2026-11-12") == 2026   # Nov -> same year
+    assert tr._season_year("cfb", "2027-01-02") == 2026   # bowl in Jan -> prior start
+    assert tr._season_year("mlb", "2026-07-04") == 2026   # MLB = calendar year
 
 
 def test_games_on_shapes_slate_and_finals(monkeypatch):

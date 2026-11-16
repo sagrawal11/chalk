@@ -4,7 +4,7 @@ leakage-safe rolling (prior games only) and the id-keyed latest-features."""
 import numpy as np
 import pandas as pd
 
-from sports.mlb.batter_features import (ANCHOR_COLS, PROP_TARGETS,
+from sports.mlb.batter_features import (ANCHOR_COLS, MODELED_TARGETS, PROP_TARGETS,
                                         add_batter_features,
                                         latest_batter_features)
 
@@ -44,6 +44,7 @@ def test_latest_features_keyed_by_id_multi_target():
     assert 42 in latest
     rec = latest[42]
     assert set(rec["anchors"]) == set(PROP_TARGETS) and ANCHOR_COLS["hits"] == "hits_L5"
+    assert MODELED_TARGETS == ["hits", "totalBases"]   # homeRuns served naive, not modeled
     # anchor = recent avg over the last-5 ACTUAL games entering the (unseen) next game
     assert abs(rec["anchors"]["hits"] - np.mean([1, 2, 1, 0, 3])) < 1e-9         # last 5 of hits tuple
     assert abs(rec["anchors"]["totalBases"] - np.mean([1, 5, 1, 0, 3])) < 1e-9   # last 5 of tb tuple

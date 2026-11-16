@@ -50,6 +50,11 @@ kaggle>=1.6
 # `pip install --no-deps nfl_data_py==0.3.3`. Its only runtime dep not already pinned
 # here is appdirs (fastparquet is declared but unused by the import paths we call).
 appdirs>=1.4
+# pybaseball: Baseball Savant expected-stats leaderboards (statcast_{pitcher,batter}_
+# expected_stats) for the MLB xwOBA prior on the pitcher-K + batter hit/TB prop models.
+# Added only now that the feature is a measured keep (the soccerdata rule). Installs
+# clean on pandas 2.x; the engine stays offline-safe if it is absent (neutral fill).
+pybaseball>=2.2
 
 # Config / experiment harness (experiments/roadmap.yaml)
 PyYAML>=6.0
