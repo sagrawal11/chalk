@@ -745,10 +745,39 @@ prior-season join + neutral fill); 191 tests green (was 187). `pybaseball>=2.2` 
 `config/requirements.txt` (the feature is kept -> the soccerdata rule). HR stays served naive (the
 prior feeds only the modeled hits/TB).
 
-**HEAVY path NOT started (owner's call).** The next step per the plan is the heavy per-season
-pitch-level `statcast()` pull (~2.4M rows/season) -> per-(pitcher/batter,game) xwOBA aggregates ->
-prior-only ROLLING xwOBA (within-season reactive, sharper than the season-constant prior) -> re-measure.
-It is hours of rate-limited pulls and a much bigger moving part - exactly the "Statcast big-investment
-[BUILD]" the guardrails flag for a STOP-AND-ASK - and the lean wins are modest, so stopped here for the
-owner to weigh (proceed vs bank the lean win) under the simplicity principle. Lean work committed
-locally on `feat/live-record-breadth`.
+**Lean status:** KEPT + served + MERGED to main (owner approved push+merge; it rode PR #13 as commit
+`da0a030`; main tip = the #13 merge `4806346`).
+
+## Deep lever: MLB Statcast - HEAVY rolling xwOBA -> MEASURED, DROPPED (2026-11-16)
+
+Owner chose "proceed with the heavy pull" after the lean earned it. Built the pitch-level path the
+simplest way (`sports/mlb/statcast_pitch_data.py`): pull `statcast(start,end)` month-by-month (~2.4M
+pitches/season), keep PA-ending rows, aggregate to ONE row per (player, game) with
+xwOBA = sum(expected wOBA value)/sum(woba_denom) - estimated_woba_using_speedangle on balls in play,
+the deterministic woba_value on K/BB/HBP (Savant's own formula). One pull yields both the per-pitcher
+(xwOBA-against) and per-batter aggregate; cached small to `data/mlb/game_xwoba_{kind}_{year}.parquet`
+(8 files, ~0.2-0.3MB each - the NHL-xG aggregate pattern). Whole 2022-2025 pull took ~10 min (not the
+feared hours). Validated: 2022 pitcher xwOBA-against ranges 0.245 (aces) to 0.386, league mean 0.313 -
+matches the leaderboard exactly. Then a prior-only within-season ROLLING xwOBA (`add_rolling_xwoba`,
+shifted, >=3 prior games this season, neutral cold-start), joined per (player, date).
+
+Measured against the LEAN served model (baseline already carries `xwOBA_prior`), three configs per
+target on identical rows, holdout 2025, windows 10 AND 5 (pre-registered, not grid-searched):
+
+| target | lean (served) | +roll (w10) | roll_only (w10) | +roll (w5) | verdict |
+|---|---|---|---|---|---|
+| pitcher K | 1.8329 | 1.8376 (+0.0048) | 1.8422 (+0.0093) | 1.8354 (+0.0025) | **worse** |
+| batter hits | 0.6875 | 0.6873 (-0.0003) | 0.6881 (+0.0006) | 0.6871 (-0.0005) | wash |
+| batter totalBases | 1.3115 | 1.3115 (-0.0000) | 1.3180 (+0.0065) | 1.3114 (-0.0001) | wash |
+
+**DROP.** The rolling xwOBA does NOT beat the lean season-prior: for the #1 prop (pitcher K) it is
+clearly WORSE at both windows, and for the batters it is a wash (sub-0.001, ~0.07% - noise floor, vs
+the lean prior's own 0.13-0.57% gains). Root cause: the season-constant prior already captures the
+xwOBA true-talent quality cleanly, while per-game xwOBA is noisy (small per-game BIP sample) and the
+existing recent-form rolls (K_L5, hits_L5, ...) already encode within-season form - so rolling xwOBA is
+redundant + adds noise. A large new moving part for negative-to-nil benefit -> drop by both the OOS rule
+and the simplicity principle. Removed the unwired heavy code (`sports/mlb/statcast_pitch_data.py`,
+`scratch/measure_mlb_statcast_rolling.py`) per the NHL-goalie precedent; KEPT the cached
+`game_xwoba_*` parquets (gitignored, ~10 min to re-pull) for any future variant (e.g. a different
+aggregation, or a batter-vs-pitcher matchup xwOBA). Net MLB Statcast outcome: the LEAN prior-season
+xwOBA KEEP stands (served + on main); the HEAVY rolling path measured + dropped.
