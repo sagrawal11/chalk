@@ -17,6 +17,7 @@ import numpy as np
 import pandas as pd
 
 from sports.mlb.batter_data import build_batter_games
+from sports.mlb.statcast_data import NEUTRAL_XWOBA, add_prior_xwoba
 
 # Props we SERVE (anchored on each one's own _L5).
 PROP_TARGETS: List[str] = ["hits", "totalBases", "homeRuns"]
@@ -26,9 +27,12 @@ PROP_TARGETS: List[str] = ["hits", "totalBases", "homeRuns"]
 # HR is served as its naive last-5 average (its anchor, no model). Anything in
 # PROP_TARGETS not modeled is served naive from its anchor.
 MODELED_TARGETS: List[str] = ["hits", "totalBases"]
-# Model features (all prior-only rolling): recent level of each prop + AB volume + HR rate.
+# Model features (all prior-only rolling): recent level of each prop + AB volume + HR
+# rate, plus xwOBA_prior = the batter's PRIOR-season xwOBA (Statcast quality prior,
+# leakage-safe, season-constant); a measured keep (holdout hits 0.688->0.687, TB
+# 1.319->1.311). HR stays served naive, so the prior only feeds the modeled hits/TB.
 FEATURE_COLS: List[str] = [
-    "hits_L5", "hits_L10", "TB_L5", "TB_L10", "HR_L5", "HR_L10", "HR_rate_L10", "AB_L5",
+    "hits_L5", "hits_L10", "TB_L5", "TB_L10", "HR_L5", "HR_L10", "HR_rate_L10", "AB_L5", "xwOBA_prior",
 ]
 # Per-prop anchor column (recent average the model adjusts around).
 ANCHOR_COLS: Dict[str, str] = {"hits": "hits_L5", "totalBases": "TB_L5", "homeRuns": "HR_L5"}
@@ -57,7 +61,10 @@ def add_batter_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_batter_frame(years) -> pd.DataFrame:
-    return add_batter_features(build_batter_games(years))
+    # add_prior_xwoba fetches the Statcast leaderboards (cached); the pure rolling
+    # computation (add_batter_features) stays network-free + hermetic for tests.
+    return add_prior_xwoba(add_batter_features(build_batter_games(years)),
+                           "batter", "batter_id")
 
 
 def latest_batter_features(frame: pd.DataFrame) -> Dict[int, Dict]:
@@ -75,6 +82,10 @@ def latest_batter_features(frame: pd.DataFrame) -> Dict[int, Dict]:
         f["AB_L5"] = float(p["atBats"].tail(5).mean())
         ab10 = float(p["atBats"].tail(10).sum())
         f["HR_rate_L10"] = float(p["homeRuns"].tail(10).sum() / ab10) if ab10 else 0.0
+        # prior-season xwOBA is season-constant: take this batter's latest value
+        # (correct in-season); neutral when the column is absent (pure-frame tests).
+        f["xwOBA_prior"] = (float(p["xwOBA_prior"].iloc[-1])
+                            if "xwOBA_prior" in p.columns and not p.empty else NEUTRAL_XWOBA)
         anchors = {t: f[ANCHOR_COLS[t]] for t in PROP_TARGETS}
         out[int(pid)] = {"feats": {c: f[c] for c in FEATURE_COLS}, "anchors": anchors,
                          "n_prior": int(len(p)),

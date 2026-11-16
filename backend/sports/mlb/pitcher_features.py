@@ -13,8 +13,11 @@ import numpy as np
 import pandas as pd
 
 from sports.mlb.pitcher_data import build_pitcher_starts
+from sports.mlb.statcast_data import NEUTRAL_XWOBA, add_prior_xwoba
 
-FEATURE_COLS: List[str] = ["K_L3", "K_L5", "K_L10", "IP_L5", "BF_L5", "K_per_BF_L5"]
+# xwOBA_prior = the pitcher's PRIOR-season xwOBA-against (Statcast quality prior,
+# leakage-safe, season-constant); a measured keep (holdout K MAE 1.841 -> 1.833).
+FEATURE_COLS: List[str] = ["K_L3", "K_L5", "K_L10", "IP_L5", "BF_L5", "K_per_BF_L5", "xwOBA_prior"]
 ANCHOR_COL = "K_L5"
 MIN_PRIOR_STARTS = 3   # usage gate: need some history for a reliable projection
 
@@ -39,7 +42,10 @@ def add_pitcher_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def build_pitcher_frame(years) -> pd.DataFrame:
-    return add_pitcher_features(build_pitcher_starts(years))
+    # add_prior_xwoba fetches the Statcast leaderboards (cached); the pure rolling
+    # computation (add_pitcher_features) stays network-free + hermetic for tests.
+    return add_prior_xwoba(add_pitcher_features(build_pitcher_starts(years)),
+                           "pitcher", "pitcher_id")
 
 
 def latest_pitcher_features(frame: pd.DataFrame) -> Dict[int, Dict]:
@@ -54,5 +60,9 @@ def latest_pitcher_features(frame: pd.DataFrame) -> Dict[int, Dict]:
         f["BF_L5"] = float(p["BF"].tail(5).mean())
         bc = float(p["BF"].tail(5).sum())
         f["K_per_BF_L5"] = float(p["K"].tail(5).sum() / bc) if bc else 0.0
+        # prior-season xwOBA is season-constant: take this pitcher's latest value
+        # (correct in-season); neutral when the column is absent (pure-frame tests).
+        f["xwOBA_prior"] = (float(p["xwOBA_prior"].iloc[-1])
+                            if "xwOBA_prior" in p.columns and not p.empty else NEUTRAL_XWOBA)
         out[int(pid)] = {"feats": {c: f[c] for c in FEATURE_COLS}, "anchor": f["K_L5"], "n_prior": int(len(p))}
     return out

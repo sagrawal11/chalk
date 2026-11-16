@@ -682,3 +682,73 @@ api.clubelo.com still 502 -> soccer xG STILL BLOCKED on the source outage (uncha
 2026-11-09). The remaining deep-lever candidate is MLB Statcast (xwOBA/FIP via pybaseball = a NEW
 dependency + heavy pull) -> owner's call before investing. Net deep-lever outcome: goalie measured +
 dropped (no winner signal); the branch's shippable work is unchanged (track record + 3 served props).
+
+---
+
+## Live record graded (2026-11-16): first real out-of-sample slate
+
+Graded the 2026-11-12 forward-locked slate (the breadth session's genuine pre-game locks) via
+`python -m pipeline.track_record grade --sport all --date 2026-11-12` then `report`. This begins
+the real live OOS record (prior accuracy was backtest-only). Only one locked date exists under
+`data/predictions/locked/` (2026-11-12, all 4 in-season sports); MLB + soccer had no lock (offseason /
+no live feed), handled gracefully.
+
+| sport | SU | score MAE |
+|---|---|---|
+| cfb | 3-0 (100%) | 11.43 |
+| nba | 3-1 (75%) | 15.44 |
+| nfl | 0-1 (0%, the one TNF game) | 3.85 |
+| nhl | 5-6 (45.5%) | 1.53 (goals/side) |
+| **ALL** | **11-8 (57.9%), n=19** | **6.14** |
+
+Thin first sample (19 games), but the live ledger (`source="live"`) is now accruing. Grade is
+idempotent; the ledger lives under gitignored `data/predictions/` (nothing to commit). The owner keeps
+adding to it by running `lock` pre-game + `grade` next-morning (no cron installed).
+
+---
+
+## Deep lever: MLB Statcast - LEAN prior-season xwOBA -> KEEP, served (2026-11-16)
+
+Owner-approved deep lever; measure-first, curated. The LEAN path first (cheap, before any heavy
+pitch-level pull): attach each player's **prior-SEASON xwOBA** as a leakage-safe, season-constant
+quality prior, from the light Baseball Savant expected-stats leaderboards
+(`statcast_{pitcher,batter}_expected_stats`, ~700 rows/season via pybaseball, cached small to
+`data/mlb/xwoba_{kind}_{year}.parquet` - the NHL-xG aggregate pattern). A game in season Y joins the
+leaderboard for Y-1 (strictly past -> leakage-safe); cold-start (rookie / no prior row) gets a
+league-average neutral fill (0.315), so the engine stays offline-safe. 100% of our pitcher/batter ids
+match the leaderboard `player_id` (MLBAM); prior-season coverage 87.4% pitchers / 97.4% batters.
+
+Measured apples-to-apples (`scratch/measure_mlb_statcast.py`): build the gated frame ONCE, run the SAME
+honest `walk_forward_train` twice per target - baseline `FEATURE_COLS` vs `+xwOBA_prior` - on identical
+rows/target/seasons/dates, 2022-2025, untouched holdout 2025. Deterministic (bit-identical across
+re-runs); the baseline reproduces the served numbers exactly, so the deltas are honest.
+
+| target | base holdout_mae | +xwOBA_prior | delta | skill vs L5 |
+|---|---|---|---|---|
+| pitcher K (#1 MLB prop) | 1.8407 | **1.8329** | **-0.0078** | 4.6% -> 5.0% |
+| batter totalBases | 1.3190 | **1.3115** | **-0.0075** | 5.4% -> 6.0% |
+| batter hits | 0.6885 | **0.6875** | **-0.0009** | 6.9% -> 7.1% |
+
+All three LOWER the holdout MAE, none regress -> **KEEP all three** by the OOS rule. The hits gain is
+small (0.13%) but real + reproducible; pitcher K and TB are the meaningful wins (~0.5%). A season-
+constant quality prior genuinely helps the anchored-residual models distinguish a true-talent arm/bat
+from a hot/cold streak, which the recent-form rolls (K_L5 etc.) can't see - without the kitchen-sink.
+
+**Wired + served + verified.** New `sports/mlb/statcast_data.py` (leaderboard fetch/cache +
+`add_prior_xwoba` leakage-safe join); `xwOBA_prior` added to `FEATURE_COLS` in both
+`pitcher_features.py` / `batter_features.py`, attached in `build_*_frame` (the network path; the pure
+`add_*_features` stays hermetic), carried through `latest_*_features` for inference (latest value
+in-season; neutral when the column is absent). Retrained + serve-verified (Logan Webb 5.4 K; Devers
+0.91 hits / 1.75 TB). OOS backtests confirm the served models still beat both naive baselines (K 5.0%,
+hits 7.1%, TB 6.0%). New hermetic `tests/test_mlb_statcast.py` (monkeypatched leaderboard: the
+prior-season join + neutral fill); 191 tests green (was 187). `pybaseball>=2.2` added to
+`config/requirements.txt` (the feature is kept -> the soccerdata rule). HR stays served naive (the
+prior feeds only the modeled hits/TB).
+
+**HEAVY path NOT started (owner's call).** The next step per the plan is the heavy per-season
+pitch-level `statcast()` pull (~2.4M rows/season) -> per-(pitcher/batter,game) xwOBA aggregates ->
+prior-only ROLLING xwOBA (within-season reactive, sharper than the season-constant prior) -> re-measure.
+It is hours of rate-limited pulls and a much bigger moving part - exactly the "Statcast big-investment
+[BUILD]" the guardrails flag for a STOP-AND-ASK - and the lean wins are modest, so stopped here for the
+owner to weigh (proceed vs bank the lean win) under the simplicity principle. Lean work committed
+locally on `feat/live-record-breadth`.
